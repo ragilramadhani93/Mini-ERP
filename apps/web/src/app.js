@@ -82,6 +82,17 @@ export async function initApp() {
     }
   }
 
+  // Setup auto-logout callback
+  auth.onLogoutCallback = () => {
+    router.navigate('/login')
+  }
+
+  // Setup idle event listeners
+  const events = ['mousedown', 'mousemove', 'keydown', 'scroll', 'touchstart', 'click']
+  events.forEach(event => {
+    document.addEventListener(event, () => auth.resetIdleTimer(), true)
+  })
+
   renderApp()
 
   router.onRouteChange = (route) => {

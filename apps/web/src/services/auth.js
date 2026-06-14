@@ -3,6 +3,9 @@ export class AuthService {
     this.supabase = supabase
     this.user = null
     this.profile = null
+    this.idleTimeout = null
+    this.idleTime = 15 * 60 * 1000 // 15 menit idle
+    this.onLogoutCallback = null
   }
 
   async setUser(user) {
@@ -14,6 +17,9 @@ export class AuthService {
         .eq('id', user.id)
         .single()
       this.profile = data
+      this.startIdleTimer()
+    } else {
+      this.stopIdleTimer()
     }
   }
 
@@ -58,10 +64,14 @@ export class AuthService {
   }
 
   async logout() {
+    this.stopIdleTimer()
     const { error } = await this.supabase.auth.signOut()
     if (error) throw error
     this.user = null
     this.profile = null
+    if (this.onLogoutCallback) {
+      this.onLogoutCallback()
+    }
   }
 
   getRole() {
@@ -75,5 +85,25 @@ export class AuthService {
 
   isAuthenticated() {
     return !!this.user
+  }
+
+  startIdleTimer() {
+    this.stopIdleTimer()
+    this.idleTimeout = setTimeout(() => {
+      this.logout()
+    }, this.idleTime)
+  }
+
+  stopIdleTimer() {
+    if (this.idleTimeout) {
+      clearTimeout(this.idleTimeout)
+      this.idleTimeout = null
+    }
+  }
+
+  resetIdleTimer() {
+    if (this.isAuthenticated()) {
+      this.startIdleTimer()
+    }
   }
 }
