@@ -61,12 +61,12 @@ export class Layout {
       <aside class="hidden md:flex w-64 bg-white border-r border-gray-200 flex-col">
         <div class="p-4 border-b border-gray-200">
           <div class="flex items-center gap-3">
-            <div class="w-10 h-10 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center text-white font-semibold overflow-hidden">
-              <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop&crop=face" alt="Profile" class="w-full h-full object-cover">
-            </div>
+            <img src="https://coresg-normal.trae.ai/api/ide/v1/text-to-image?prompt=StokCuan%20logo%20with%20checklist%2C%20growth%20chart%2C%20and%20Indonesian%20rupiah%20coin&image_size=square" 
+                 alt="StokCuan Logo" 
+                 class="w-12 h-12 object-contain">
             <div>
-              <h1 class="text-lg font-bold text-gray-900">Seller ERP</h1>
-              <p class="text-xs text-gray-500">Administrator</p>
+              <h1 class="text-xl font-bold text-primary-600">StokCuan</h1>
+              <p class="text-xs text-gray-500">Sistem Manajemen Stok</p>
             </div>
           </div>
         </div>
@@ -92,7 +92,7 @@ export class Layout {
       <div id="mobile-menu-overlay" class="fixed inset-0 bg-black/50 z-30 hidden md:hidden" style="${this.menuOpen ? '' : 'display:none'}">
         <div class="w-72 h-full bg-white overflow-y-auto" id="mobile-menu-drawer">
           <div class="p-4 border-b border-gray-200 flex items-center justify-between">
-            <h1 class="text-xl font-bold text-primary-600">Seller ERP</h1>
+            <h1 class="text-xl font-bold text-primary-600">StokCuan</h1>
             <button id="close-mobile-menu" class="text-gray-400 hover:text-gray-600">
               <i data-lucide="x" class="w-6 h-6"></i>
             </button>

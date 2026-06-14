@@ -11,8 +11,11 @@ export class LoginPage {
       <div class="min-h-screen flex items-center justify-center bg-gray-50 px-4">
         <div class="w-full max-w-md">
           <div class="text-center mb-8">
-            <h1 class="text-3xl font-bold text-primary-600">Seller ERP</h1>
-            <p class="text-gray-500 mt-2">Masuk ke akun Anda</p>
+            <img src="https://coresg-normal.trae.ai/api/ide/v1/text-to-image?prompt=StokCuan%20logo%20with%20checklist%2C%20growth%20chart%2C%20and%20Indonesian%20rupiah%20coin&image_size=square" 
+                 alt="StokCuan Logo" 
+                 class="w-20 h-20 mx-auto mb-4 object-contain">
+            <h1 class="text-3xl font-bold text-primary-600">StokCuan</h1>
+            <p class="text-gray-500 mt-2">Sistem Manajemen Stok & Bisnis</p>
           </div>
           <div class="card p-6">
             ${this.error ? `
