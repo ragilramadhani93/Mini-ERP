@@ -13,7 +13,7 @@ export class LoginPage {
           <div class="text-center mb-8">
             <img src="https://wpnejkrfjlblxkcakzrg.supabase.co/storage/v1/object/public/Logo/ChatGPT%20Image%20Jun%2014,%202026,%2002_58_56%20PM.png" 
                  alt="StokCuan Logo" 
-                 class="w-48 h-32 mx-auto mb-4 object-contain">
+                 class="w-full max-w-md mx-auto mb-4 object-contain">
             <h1 class="text-3xl font-bold text-primary-600">StokCuan</h1>
             <p class="text-gray-500 mt-2">Sistem Manajemen Stok & Bisnis</p>
           </div>

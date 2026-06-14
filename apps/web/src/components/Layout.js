@@ -63,7 +63,7 @@ export class Layout {
           <div class="flex items-center gap-3">
             <img src="https://wpnejkrfjlblxkcakzrg.supabase.co/storage/v1/object/public/Logo/ChatGPT%20Image%20Jun%2014,%202026,%2002_58_56%20PM.png" 
                  alt="StokCuan Logo" 
-                 class="w-24 h-16 object-contain">
+                 class="w-full object-contain">
             <div>
               <h1 class="text-xl font-bold text-primary-600">StokCuan</h1>
               <p class="text-xs text-gray-500">Sistem Manajemen Stok</p>
