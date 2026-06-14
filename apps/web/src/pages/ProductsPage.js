@@ -33,15 +33,6 @@ export class ProductsPage {
   }
 
   render() {
-    const outlet = document.getElementById('router-outlet')
-    if (outlet) {
-      outlet.innerHTML = this.renderHTML()
-    }
-    this.attachEvents()
-    if (window.lucide) window.lucide.createIcons()
-  }
-
-  renderHTML() {
     const filtered = this.products.filter(p =>
       !this.searchQuery || p.name?.toLowerCase().includes(this.searchQuery.toLowerCase()) ||
       p.sku?.toLowerCase().includes(this.searchQuery.toLowerCase())
@@ -119,15 +110,15 @@ export class ProductsPage {
               </tbody>
             </table>
           </div>
-          ${this.renderPaginationHTML(filtered.length)}
+          ${this.renderPagination(filtered.length)}
         </div>
 
-        ${this.showModal ? this.renderModalHTML() : ''}
+        ${this.showModal ? this.renderModal() : ''}
       </div>
     `
   }
 
-  renderPaginationHTML(total) {
+  renderPagination(total) {
     this.totalPages = Math.ceil(total / this.itemsPerPage) || 1
     if (this.totalPages <= 1) return ''
 
@@ -147,7 +138,7 @@ export class ProductsPage {
     `
   }
 
-  renderModalHTML() {
+  renderModal() {
     const p = this.editingProduct
     const profit = p ? (p.sell_price || 0) - (p.cost_price || 0) : 0
     const margin = p && p.sell_price > 0 ? ((profit / p.sell_price) * 100).toFixed(1) : 0
@@ -240,20 +231,20 @@ export class ProductsPage {
 
   async bindEvents() {
     await this.loadData()
-    this.render()
+    this.renderAndBind()
   }
 
-  attachEvents() {
+  _bindListeners() {
     document.getElementById('add-product-btn')?.addEventListener('click', () => {
       this.editingProduct = null
       this.showModal = true
-      this.render()
+      this.renderAndBind()
     })
 
     document.getElementById('search-product')?.addEventListener('input', (e) => {
       this.searchQuery = e.target.value
       this.currentPage = 1
-      this.render()
+      this.renderAndBind()
     })
 
     document.querySelectorAll('.edit-product').forEach(btn => {
@@ -261,7 +252,7 @@ export class ProductsPage {
         const id = btn.dataset.id
         this.editingProduct = this.products.find(p => p.id === id) || null
         this.showModal = true
-        this.render()
+        this.renderAndBind()
       })
     })
 
@@ -272,11 +263,11 @@ export class ProductsPage {
           try {
             await this.supabase.from('products').delete().eq('id', id)
             await this.loadData()
-            this.render()
+            this.renderAndBind()
           } catch (err) {
             console.error('❌ Delete product error:', err)
             this.error = err.message
-            this.render()
+            this.renderAndBind()
           }
         }
       })
@@ -287,32 +278,32 @@ export class ProductsPage {
         const page = parseInt(btn.dataset.page)
         if (page >= 1 && page <= this.totalPages) {
           this.currentPage = page
-          this.render()
+          this.renderAndBind()
         }
       })
     })
 
-    this.bindModalEvents()
+    this._bindModalEvents()
   }
 
-  bindModalEvents() {
+  _bindModalEvents() {
     document.getElementById('close-modal')?.addEventListener('click', () => {
       this.showModal = false
       this.editingProduct = null
-      this.render()
+      this.renderAndBind()
     })
 
     document.getElementById('cancel-modal')?.addEventListener('click', () => {
       this.showModal = false
       this.editingProduct = null
-      this.render()
+      this.renderAndBind()
     })
 
     document.getElementById('modal-overlay')?.addEventListener('click', (e) => {
       if (e.target === e.currentTarget) {
         this.showModal = false
         this.editingProduct = null
-        this.render()
+        this.renderAndBind()
       }
     })
 
@@ -342,12 +333,21 @@ export class ProductsPage {
         this.showModal = false
         this.editingProduct = null
         await this.loadData()
-        this.render()
+        this.renderAndBind()
       } catch (err) {
         console.error('❌ Save product error:', err)
         this.error = err.message
-        this.render()
+        this.renderAndBind()
       }
     })
+  }
+
+  renderAndBind() {
+    const outlet = document.getElementById('router-outlet')
+    if (outlet) {
+      outlet.innerHTML = this.render()
+    }
+    this._bindListeners()
+    if (window.lucide) window.lucide.createIcons()
   }
 }
