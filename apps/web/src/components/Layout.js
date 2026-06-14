@@ -61,9 +61,9 @@ export class Layout {
       <aside class="hidden md:flex w-64 bg-white border-r border-gray-200 flex-col">
         <div class="p-4 border-b border-gray-200">
           <div class="flex items-center gap-3">
-            <img src="https://coresg-normal.trae.ai/api/ide/v1/text-to-image?prompt=StokCuan%20logo%20with%20checklist%2C%20growth%20chart%2C%20and%20Indonesian%20rupiah%20coin&image_size=square" 
+            <img src="https://wpnejkrfjlblxkcakzrg.supabase.co/storage/v1/object/public/Logo/ChatGPT%20Image%20Jun%2014,%202026,%2002_58_56%20PM.png" 
                  alt="StokCuan Logo" 
-                 class="w-12 h-12 object-contain">
+                 class="w-24 h-16 object-contain">
             <div>
               <h1 class="text-xl font-bold text-primary-600">StokCuan</h1>
               <p class="text-xs text-gray-500">Sistem Manajemen Stok</p>
