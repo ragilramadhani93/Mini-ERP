@@ -90,7 +90,7 @@
   }
   .sidebar-link.justify-center i {
     @apply w-6 h-6;
-  }
+  } */
   .bottom-tab {
     @apply flex flex-col items-center justify-center text-gray-400 transition-colors;
   }
