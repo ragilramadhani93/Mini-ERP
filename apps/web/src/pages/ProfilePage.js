@@ -8,6 +8,8 @@ export class ProfilePage {
 
   render() {
     const p = this.auth.profile
+    console.log('Profile data:', p)
+    console.log('Avatar URL:', p?.avatar_url)
     const avatarUrl = p?.avatar_url || 'https://coresg-normal.trae.ai/api/ide/v1/text-to-image?prompt=default%20user%20avatar%20placeholder&image_size=square'
     
     return `
