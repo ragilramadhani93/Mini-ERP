@@ -109,12 +109,17 @@ export class SalesPage {
       warning: 'bg-warning-50 text-warning-600',
       info: 'bg-primary-50 text-primary-600'
     }
+    
+    // Labels yang tidak butuh Rp
+    const noRpLabels = ['Transaksi', 'Produk Terjual']
+    const showRp = !noRpLabels.includes(label)
+    
     return `
       <div class="card p-4">
         <div class="flex items-center justify-between">
           <div>
             <p class="text-xs text-gray-500">${label}</p>
-            <p class="text-lg font-bold text-gray-900 mt-1">${typeof value === 'number' ? `Rp ${this.formatNumber(value)}` : value}</p>
+            <p class="text-lg font-bold text-gray-900 mt-1">${typeof value === 'number' ? (showRp ? `Rp ${this.formatNumber(value)}` : this.formatNumber(value)) : value}</p>
           </div>
           <div class="p-2 rounded-xl ${colors[color]}">
             <i data-lucide="${icon}" class="w-5 h-5"></i>
