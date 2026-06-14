@@ -282,22 +282,7 @@ Berikan 5-7 insight bisnis paling penting!`
           </div>
         `}
         
-        ${!this.useGroqAI ? `
-          <div class="card p-4 bg-blue-50 border border-blue-200">
-            <div class="flex items-start gap-3">
-              <i data-lucide="lightbulb" class="w-5 h-5 text-blue-600 mt-0.5"></i>
-              <div>
-                <h4 class="font-semibold text-blue-900">Ingin AI Sungguhan?</h4>
-                <p class="text-sm text-blue-800 mt-1">Set API Key Groq di file .env dan ubah VITE_USE_GROQ_AI=true untuk menggunakan AI analisis sesungguhan.</p>
-                <ol class="text-sm text-blue-800 mt-2 list-decimal list-inside space-y-1">
-                  <li>Dapatkan API key di <a href="https://console.groq.com/" target="_blank" class="underline font-medium">console.groq.com</a></li>
-                  <li>Update file <code class="bg-white px-1.5 py-0.5 rounded">src/.env</code></li>
-                  <li>Restart dev server</li>
-                </ol>
-              </div>
-            </div>
-          </div>
-        ` : ''}
+
       </div>
     `
   }

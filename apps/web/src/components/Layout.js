@@ -59,10 +59,10 @@ export class Layout {
   renderSidebar(items) {
     return `
       <aside class="hidden md:flex w-64 bg-white border-r border-gray-200 flex-col">
-        <div class="p-4 border-b border-gray-200">
+        <div class="p-4 border-b border-gray-200 flex justify-center">
           <img src="https://wpnejkrfjlblxkcakzrg.supabase.co/storage/v1/object/public/Logo/ChatGPT%20Image%20Jun%2014,%202026,%2002_58_56%20PM.png" 
                alt="StokCuan Logo" 
-               class="w-full object-contain">
+               class="w-full max-w-xs object-contain">
         </div>
         <nav class="flex-1 p-4 space-y-1 overflow-y-auto scrollbar-thin" id="sidebar-nav">
           ${items.map(item => `
