@@ -6,31 +6,42 @@ export class DashboardPage {
   }
 
   async loadData() {
-    const { data: sales } = await this.supabase
-      .from('sales')
-      .select('total_amount, created_at, sale_items(quantity, unit_price, discount, products(cost_price))')
-      .gte('created_at', this.getDateRange(30).toISOString())
+    console.log('Loading Dashboard data...')
+    try {
+      const { data: sales, error: salesError } = await this.supabase
+        .from('sales')
+        .select('total_amount, created_at, sale_items(quantity, unit_price, discount, products(cost_price))')
+        .gte('created_at', this.getDateRange(30).toISOString())
 
-    const { data: cash } = await this.supabase
-      .from('cash_transactions')
-      .select('type, amount, created_at')
+      const { data: cash, error: cashError } = await this.supabase
+        .from('cash_transactions')
+        .select('type, amount, created_at')
 
-    const { data: products } = await this.supabase
-      .from('products')
-      .select('id, name, sku, current_stock, min_stock, cost_price, sell_price')
-      .order('name')
+      const { data: products, error: productsError } = await this.supabase
+        .from('products')
+        .select('id, name, sku, current_stock, min_stock, cost_price, sell_price')
+        .order('name')
 
-    const { data: categories } = await this.supabase
-      .from('categories')
-      .select('id, name')
+      const { data: categories, error: categoriesError } = await this.supabase
+        .from('categories')
+        .select('id, name')
 
-    const { data: recentSales } = await this.supabase
-      .from('sales')
-      .select('*, sale_items(*, products(name, sku)), created_by_user:users(full_name)')
-      .order('created_at', { ascending: false })
-      .limit(5)
+      console.log('Sales:', sales)
+      console.log('Cash:', cash)
+      console.log('Products:', products)
+      console.log('Categories:', categories)
 
-    this.data = { sales, cash, products, categories, recentSales }
+      this.data = { 
+        sales: sales || [], 
+        cash: cash || [], 
+        products: products || [], 
+        categories: categories || [], 
+        recentSales: [] 
+      }
+    } catch (error) {
+      console.error('Error loading data:', error)
+      this.data = { sales: [], cash: [], products: [], categories: [], recentSales: [] }
+    }
   }
 
   render() {
@@ -246,6 +257,11 @@ export class DashboardPage {
   }
 
   async bindEvents() {
+    const outlet = document.getElementById('router-outlet')
+    if (outlet) {
+      outlet.innerHTML = '<div class="flex items-center justify-center min-h-[400px]"><div class="text-gray-500">Memuat data...</div></div>'
+    }
+    
     await this.loadData()
     this.renderAndBind()
     if (window.lucide) window.lucide.createIcons()
