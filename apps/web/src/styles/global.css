@@ -84,6 +84,13 @@
   .sidebar-link.active {
     @apply bg-indigo-100 text-gray-900 font-semibold rounded-xl;
   }
+  /* Sidebar Icon Style saat collapse
+  .sidebar-link i {
+    @apply w-5 h-5;
+  }
+  .sidebar-link.justify-center i {
+    @apply w-6 h-6;
+  }
   .bottom-tab {
     @apply flex flex-col items-center justify-center text-gray-400 transition-colors;
   }

@@ -66,19 +66,19 @@ export class Layout {
         <div class="p-4 border-b border-gray-200 flex justify-center">
           <img src="https://wpnejkrfjlblxkcakzrg.supabase.co/storage/v1/object/public/Logo/ChatGPT%20Image%20Jun%2014,%202026,%2002_58_56%20PM.png" 
                alt="StokCuan Logo" 
-               class="${collapsed ? 'w-12' : 'w-full max-w-xs'} object-contain transition-all">
+               class="${collapsed ? 'w-12 h-12' : 'w-full max-w-xs'} object-contain transition-all">
         </div>
         <nav class="flex-1 p-4 space-y-1 overflow-y-auto scrollbar-thin" id="sidebar-nav">
           ${items.map(item => `
             <a href="#${item.path}" class="sidebar-link ${collapsed ? 'justify-center' : ''}" data-path="${item.path}">
-              <i data-lucide="${item.icon}" class="w-5 h-5"></i>
+              <i data-lucide="${item.icon}" class="${collapsed ? 'w-7 h-7' : 'w-5 h-5'}"></i>
               ${collapsed ? '' : item.label}
             </a>
           `).join('')}
         </nav>
         <div class="p-4 border-t border-gray-200 space-y-2">
           <div class="flex items-center gap-3 ${collapsed ? 'justify-center' : ''}">
-            <div class="w-10 h-10 rounded-full overflow-hidden bg-gray-100 border-2 border-gray-200">
+            <div class="${collapsed ? 'w-12 h-12' : 'w-10 h-10'} rounded-full overflow-hidden bg-gray-100 border-2 border-gray-200">
               <img src="${avatarUrl}" alt="Avatar" class="w-full h-full object-cover">
             </div>
             ${collapsed ? '' : `
@@ -89,10 +89,10 @@ export class Layout {
             `}
           </div>
           <button id="toggle-sidebar-btn" class="w-full py-2 px-4 border-2 border-gray-300 text-gray-600 rounded-lg font-semibold hover:bg-gray-50 flex items-center justify-center gap-2">
-            <i data-lucide="${collapsed ? 'chevron-right' : 'chevron-left'}" class="w-5 h-5"></i>
+            <i data-lucide="${collapsed ? 'chevron-right' : 'chevron-left'}" class="${collapsed ? 'w-6 h-6' : 'w-5 h-5'}"></i>
           </button>
           <button id="logout-btn" class="w-full py-2 px-4 border-2 border-red-600 text-red-600 rounded-lg font-semibold hover:bg-red-50 flex items-center justify-center gap-2">
-            <i data-lucide="log-out" class="w-5 h-5"></i>
+            <i data-lucide="log-out" class="${collapsed ? 'w-6 h-6' : 'w-5 h-5'}"></i>
             ${collapsed ? '' : 'Keluar'}
           </button>
         </div>
