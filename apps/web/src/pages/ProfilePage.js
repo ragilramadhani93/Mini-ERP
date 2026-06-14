@@ -3,18 +3,27 @@ export class ProfilePage {
     this.supabase = supabase
     this.auth = auth
     this.saving = false
+    this.uploading = false
   }
 
   render() {
     const p = this.auth.profile
+    const avatarUrl = p?.avatar_url || 'https://coresg-normal.trae.ai/api/ide/v1/text-to-image?prompt=default%20user%20avatar%20placeholder&image_size=square'
+    
     return `
       <div class="max-w-2xl mx-auto space-y-6">
         <div class="card p-6">
-          <div class="flex items-center gap-4 mb-6">
-            <div class="w-16 h-16 bg-primary-100 rounded-full flex items-center justify-center">
-              <i data-lucide="user" class="w-8 h-8 text-primary-600"></i>
+          <div class="flex flex-col items-center mb-6">
+            <div class="relative mb-4">
+              <div class="w-24 h-24 rounded-full overflow-hidden border-4 border-primary-100 bg-gray-100">
+                <img src="${avatarUrl}" alt="Avatar" class="w-full h-full object-cover" id="avatar-preview">
+              </div>
+              <label class="absolute bottom-0 right-0 w-8 h-8 bg-primary-600 rounded-full flex items-center justify-center cursor-pointer hover:bg-primary-700 transition-colors shadow-lg">
+                <i data-lucide="camera" class="w-4 h-4 text-white"></i>
+                <input type="file" id="avatar-file" accept="image/*" class="hidden">
+              </label>
             </div>
-            <div>
+            <div class="text-center">
               <h3 class="text-lg font-semibold">${p?.full_name || 'Pengguna'}</h3>
               <p class="text-sm text-gray-500">${p?.email}</p>
             </div>
@@ -34,10 +43,6 @@ export class ProfilePage {
             <div>
               <label for="phone">Telepon</label>
               <input type="text" id="phone" name="phone" value="${p?.phone || ''}" placeholder="08xxxxxxxxxx">
-            </div>
-            <div>
-              <label for="avatar_url">URL Foto Profil</label>
-              <input type="url" id="avatar_url" name="avatar_url" value="${p?.avatar_url || ''}" placeholder="https://example.com/avatar.jpg">
             </div>
             <div class="pt-4 border-t border-gray-100">
               <button type="submit" class="btn-primary" ${this.saving ? 'disabled' : ''}>
@@ -60,6 +65,46 @@ export class ProfilePage {
     return labels[role] || role
   }
 
+  async uploadAvatar(file) {
+    this.uploading = true
+    this.renderAndBind()
+
+    try {
+      const fileExt = file.name.split('.').pop()
+      const fileName = `${this.auth.user.id}-${Date.now()}.${fileExt}`
+      const filePath = `avatars/${fileName}`
+
+      // Upload file ke Supabase Storage
+      const { error: uploadError } = await this.supabase.storage
+        .from('avatars')
+        .upload(filePath, file, {
+          cacheControl: '3600',
+          upsert: true
+        })
+
+      if (uploadError) throw uploadError
+
+      // Dapatkan public URL
+      const { data: { publicUrl } } = this.supabase.storage
+        .from('avatars')
+        .getPublicUrl(filePath)
+
+      // Update avatar_url di tabel users
+      await this.supabase.from('users')
+        .update({ avatar_url: publicUrl })
+        .eq('id', this.auth.user.id)
+
+      // Refresh auth profile
+      await this.auth.setUser(this.auth.user)
+      alert('Foto profil berhasil diupload!')
+    } catch (err) {
+      alert('Gagal upload foto: ' + err.message)
+    } finally {
+      this.uploading = false
+      this.renderAndBind()
+    }
+  }
+
   async bindEvents() {
     this.renderAndBind()
   }
@@ -74,14 +119,30 @@ export class ProfilePage {
       const formData = new FormData(form)
       const data = {
         full_name: formData.get('full_name'),
-        phone: formData.get('phone'),
-        avatar_url: formData.get('avatar_url')
+        phone: formData.get('phone')
       }
 
       await this.supabase.from('users').update(data).eq('id', this.auth.user.id)
       this.saving = false
       await this.auth.setUser(this.auth.user)
       this.renderAndBind()
+    })
+
+    const avatarFile = document.getElementById('avatar-file')
+    avatarFile?.addEventListener('change', async (e) => {
+      const file = e.target.files?.[0]
+      if (file) {
+        // Preview image
+        const reader = new FileReader()
+        reader.onload = (e) => {
+          const preview = document.getElementById('avatar-preview')
+          if (preview) preview.src = e.target.result
+        }
+        reader.readAsDataURL(file)
+        
+        // Upload to Supabase
+        await this.uploadAvatar(file)
+      }
     })
   }
 

@@ -59,6 +59,8 @@ export class Layout {
 
   renderSidebar(items) {
     const collapsed = this.sidebarCollapsed
+    const p = this.auth.profile
+    const avatarUrl = p?.avatar_url || 'https://coresg-normal.trae.ai/api/ide/v1/text-to-image?prompt=default%20user%20avatar%20placeholder&image_size=square'
     return `
       <aside class="hidden md:flex ${collapsed ? 'w-20' : 'w-64'} bg-white border-r border-gray-200 flex-col transition-all duration-300" id="sidebar">
         <div class="p-4 border-b border-gray-200 flex justify-center">
@@ -74,7 +76,18 @@ export class Layout {
             </a>
           `).join('')}
         </nav>
-        <div class="p-4 border-t border-gray-200 flex flex-col gap-2">
+        <div class="p-4 border-t border-gray-200 space-y-2">
+          <div class="flex items-center gap-3 ${collapsed ? 'justify-center' : ''}">
+            <div class="w-10 h-10 rounded-full overflow-hidden bg-gray-100 border-2 border-gray-200">
+              <img src="${avatarUrl}" alt="Avatar" class="w-full h-full object-cover">
+            </div>
+            ${collapsed ? '' : `
+              <div class="flex-1 min-w-0">
+                <p class="text-sm font-medium text-gray-900 truncate">${p?.full_name || 'Pengguna'}</p>
+                <p class="text-xs text-gray-500 truncate">${p?.email}</p>
+              </div>
+            `}
+          </div>
           <button id="toggle-sidebar-btn" class="w-full py-2 px-4 border-2 border-gray-300 text-gray-600 rounded-lg font-semibold hover:bg-gray-50 flex items-center justify-center gap-2">
             <i data-lucide="${collapsed ? 'chevron-right' : 'chevron-left'}" class="w-5 h-5"></i>
           </button>
@@ -119,6 +132,8 @@ export class Layout {
     const roleLabels = { owner: 'Pemilik', admin: 'Admin', staff_gudang: 'Staff Gudang', staff_keuangan: 'Staff Keuangan' }
     const now = new Date()
     const timeString = now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })
+    const p = this.auth.profile
+    const avatarUrl = p?.avatar_url || 'https://coresg-normal.trae.ai/api/ide/v1/text-to-image?prompt=default%20user%20avatar%20placeholder&image_size=square'
     
     return `
       <header class="bg-white border-b border-gray-200 px-4 md:px-6 py-3 md:py-4">
@@ -145,8 +160,8 @@ export class Layout {
                 <p class="text-sm font-semibold text-gray-900">${userName}</p>
                 <p class="text-xs text-gray-500">Last login: ${timeString}</p>
               </div>
-              <div class="w-10 h-10 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center text-white font-semibold overflow-hidden">
-                <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop&crop=face" alt="Profile" class="w-full h-full object-cover">
+              <div class="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center overflow-hidden border-2 border-gray-200">
+                <img src="${avatarUrl}" alt="Profile" class="w-full h-full object-cover">
               </div>
             </div>
           </div>
