@@ -66,7 +66,7 @@ export class DashboardPage {
         <!-- Stat Cards -->
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           ${this.renderStatCard('Penjualan Hari Ini', `Rp ${this.formatNumber(todaySalesAmount)}`, 'camera', 'indigo', '')}
-          ${this.renderStatCard('Profit', `Rp ${this.formatNumber(profit)}`, 'trending-up', 'cyan', profit >= 0 ? '+' : '')}
+          ${this.renderStatCard('Profit', `Rp ${this.formatNumber(profit)}`, 'trending-up', 'cyan', '')}
           ${this.renderStatCard('Pemasukan', `Rp ${this.formatNumber(todayIncome)}`, 'receipt', 'orange', '')}
           ${this.renderStatCard('Pengeluaran', `Rp ${this.formatNumber(todayExpense)}`, 'cart', 'red', '')}
         </div>
@@ -228,15 +228,20 @@ export class DashboardPage {
         }).join(' ')}" 
               fill="none" stroke="#1e40af" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
         
-        <!-- Points -->
+        <!-- Points & Labels -->
         ${data.map((d, i) => {
           const x = 50 + i * (700 / (data.length - 1))
           const y = 200 - (d.sales / maxValue) * 150
-          return `<circle cx="${x}" cy="${y}" r="5" fill="#1e40af"/>
-                  <circle cx="${x}" cy="${y}" r="9" fill="white" stroke="#1e40af" stroke-width="2"/>`
+          return `
+            <circle cx="${x}" cy="${y}" r="5" fill="#1e40af" class="cursor-pointer chart-point" data-index="${i}"/>
+            <circle cx="${x}" cy="${y}" r="9" fill="white" stroke="#1e40af" stroke-width="2" class="cursor-pointer chart-point" data-index="${i}"/>
+            <text x="${x}" y="${y - 20}" text-anchor="middle" class="text-xs fill-gray-700 font-semibold" style="font-size: 12px;">
+              ${d.sales > 0 ? `Rp ${this.formatNumber(d.sales)}` : ''}
+            </text>
+          `
         }).join('')}
         
-        <!-- Labels -->
+        <!-- Date Labels -->
         ${data.map((d, i) => {
           const x = 50 + i * (700 / (data.length - 1))
           return `<text x="${x}" y="235" text-anchor="middle" class="text-xs fill-gray-600" style="font-size: 12px;">${d.date}</text>`
@@ -272,6 +277,19 @@ export class DashboardPage {
     if (outlet) {
       outlet.innerHTML = this.render()
     }
+    
+    // Bind chart click events
+    document.querySelectorAll('.chart-point').forEach(point => {
+      point.addEventListener('click', (e) => {
+        const index = parseInt(e.target.dataset.index)
+        const chartData = this.generateChartData(this.data.sales || [])
+        const dataPoint = chartData[index]
+        if (dataPoint) {
+          alert(`Tanggal: ${dataPoint.date}\nPenjualan: Rp ${this.formatNumber(dataPoint.sales)}`)
+        }
+      })
+    })
+    
     if (window.lucide) window.lucide.createIcons()
   }
 }
