@@ -254,7 +254,7 @@ Berikan 5-7 insight bisnis paling penting!`
             <h2 class="text-lg font-semibold text-gray-900 flex items-center gap-2">
               <i data-lucide="bot" class="w-6 h-6 text-primary-600"></i>
               AI Business Assistant
-              ${this.useGroqAI ? '<span class="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full">AI Active (Groq)</span>' : '<span class="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">Demo Mode</span>'}
+              ${this.useGroqAI ? '<span class="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full">AI Active (Groq)</span>' : ''}
             </h2>
             <p class="text-sm text-gray-500">Analisa cerdas untuk bisnis Anda ${this.lastUpdated ? `• Diperbarui ${this.lastUpdated.toLocaleTimeString('id-ID')}` : ''}</p>
           </div>

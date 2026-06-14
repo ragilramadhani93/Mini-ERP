@@ -34,10 +34,8 @@ export class LoginPage {
               </button>
             </form>
           </div>
-          <div class="text-center text-sm text-gray-500 mt-6 space-y-1">
-            <p class="font-medium text-gray-700">🔐 Demo Mode</p>
-            <p>admin@seller.com / password123</p>
-            <p class="text-xs">Atau: owner@seller.com, gudang@seller.com, keuangan@seller.com</p>
+          <div class="text-center text-sm text-gray-500 mt-6">
+            <p>Masuk dengan akun Anda</p>
           </div>
         </div>
       </div>

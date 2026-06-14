@@ -8,17 +8,6 @@ insert into roles (name, description) values
   ('staff_keuangan', 'Staff keuangan, mengelola transaksi keuangan')
 on conflict (name) do nothing;
 
--- CATATAN: Untuk users, kamu perlu membuat user di Supabase Auth terlebih dahulu!
--- Setelah membuat user di Auth, kamu dapat menjalankan query di bawah dengan mengganti ID user yang sesuai:
-
--- Contoh insert users (ganti ID dengan UUID user dari Supabase Auth):
--- insert into users (id, email, full_name, phone, role_id, is_active) values
---   ('UUID_OWNER', 'owner@seller.com', 'Pemilik Toko', '081234567890', (select id from roles where name='owner'), true),
---   ('UUID_ADMIN', 'admin@seller.com', 'Administrator', '081234567891', (select id from roles where name='admin'), true),
---   ('UUID_GUDANG', 'gudang@seller.com', 'Staff Gudang', '081234567892', (select id from roles where name='staff_gudang'), true),
---   ('UUID_KEUANGAN', 'keuangan@seller.com', 'Staff Keuangan', '081234567893', (select id from roles where name='staff_keuangan'), true)
--- on conflict (id) do nothing;
-
 -- 2. Categories
 insert into categories (name, description) values
   ('Makanan & Minuman', 'Produk makanan dan minuman'),
@@ -95,13 +84,12 @@ insert into purchase_items (purchase_id, product_id, quantity, unit_price) value
   ((select id from purchases where po_number = 'PO-2406-0004'),
    (select id from products where sku = 'PRD-005'), 350, 8000),
   ((select id from purchases where po_number = 'PO-2406-0003'),
-   (select id from products where sku = 'PRD-006'), 7, 10000)
-on conflict do nothing;
+   (select id from products where sku = 'PRD-006'), 7, 10000);
 
 -- 7. Initial Sales
 insert into sales (invoice_number, customer_name, customer_phone, total_amount, payment_method, created_by) values
   ('INV-2406-0001', 'Rumah Tangga Bahagia', '081234567890', 225000, 'cash', null),
-  ('INV-2406-0002', 'Toko Elektronik Jaya', '085234567890', 550000, 'transfer', null),
+  ('INV-2406-0002', 'Toko Elektronik Jaya', '085234567890', 550000, 'bank_transfer', null),
   ('INV-2406-0003', 'Warung Makan Sederhana', '087234567890', 475000, 'cash', null),
   ('INV-2406-0004', 'Perorangan', '081234567891', 147500, 'cash', null)
 on conflict (invoice_number) do nothing;
@@ -117,8 +105,7 @@ insert into sale_items (sale_id, product_id, quantity, unit_price, discount) val
   ((select id from sales where invoice_number = 'INV-2406-0003'),
    (select id from products where sku = 'PRD-001'), 15, 55000, 25000),
   ((select id from sales where invoice_number = 'INV-2406-0004'),
-   (select id from products where sku = 'PRD-002'), 5, 85000, 0)
-on conflict do nothing;
+   (select id from products where sku = 'PRD-002'), 5, 85000, 0);
 
 -- 9. Cash Transactions (Initial)
 insert into cash_transactions (type, category, amount, reference_type, reference_id, description, created_by) values
@@ -129,5 +116,4 @@ insert into cash_transactions (type, category, amount, reference_type, reference
   ('out', 'purchase', 3575000, 'purchase', (select id from purchases where po_number = 'PO-2406-0001'), 'Pembelian dari PT Sumber Makmur', null),
   ('out', 'purchase', 2550000, 'purchase', (select id from purchases where po_number = 'PO-2406-0002'), 'Pembelian dari CV Berkah Jaya', null),
   ('out', 'purchase', 575000, 'purchase', (select id from purchases where po_number = 'PO-2406-0003'), 'Pembelian dari Toko Elektronik Central', null),
-  ('out', 'purchase', 578000, 'purchase', (select id from purchases where po_number = 'PO-2406-0004'), 'Pembelian dari UD Karya Mandiri', null)
-on conflict do nothing;
+  ('out', 'purchase', 578000, 'purchase', (select id from purchases where po_number = 'PO-2406-0004'), 'Pembelian dari UD Karya Mandiri', null);
