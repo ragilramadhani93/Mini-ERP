@@ -37,6 +37,7 @@ export class DashboardPage {
     const products = this.data.products || []
     const sales = this.data.sales || []
     const cash = this.data.cash || []
+    
     const todaySales = sales.filter(s => new Date(s.created_at).toDateString() === new Date().toDateString())
     const todayCashIn = cash.filter(t => t.type === 'in' && new Date(t.created_at).toDateString() === new Date().toDateString())
     const todayCashOut = cash.filter(t => t.type === 'out' && new Date(t.created_at).toDateString() === new Date().toDateString())
@@ -46,33 +47,17 @@ export class DashboardPage {
     const todayExpense = todayCashOut.reduce((s, t) => s + t.amount, 0)
     const profit = todayIncome - todayExpense
 
-    // Sample data for chart
-    const chartData = [
-      { date: '18 Mei', sales: 3200000 },
-      { date: '19 Mei', sales: 3800000 },
-      { date: '20 Mei', sales: 2900000 },
-      { date: '21 Mei', sales: 4100000 },
-      { date: '22 Mei', sales: 3600000 },
-      { date: '23 Mei', sales: 4500000 },
-      { date: '24 Mei', sales: 4250000 },
-    ]
-
-    // Sample low stock products
-    const sampleLowStock = [
-      { name: 'Kaos Polos Premium L', sku: 'KPP-L-001', current: 5, min: 100 },
-      { name: 'Kemeja Flanel Blue M', sku: 'KFB-M-042', current: 12, min: 80 },
-      { name: 'Celana Chino Slim Fit 32', sku: 'CCS-32-099', current: 2, min: 50 },
-      { name: 'Jaket Hoodie Oversize XL', sku: 'JHO-XL-112', current: 8, min: 60 },
-    ]
+    // Data untuk chart 7 hari terakhir
+    const chartData = this.generateChartData(sales)
 
     return `
       <div class="space-y-6">
         <!-- Stat Cards -->
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          ${this.renderStatCard('Penjualan Hari Ini', 'Rp 4.250.000', 'camera', 'indigo', '+12%')}
-          ${this.renderStatCard('Profit', 'Rp 1.120.000', 'trending-up', 'cyan', '+5%')}
-          ${this.renderStatCard('Pemasukan', 'Rp 8.400.000', 'receipt', 'orange', 'Stabil')}
-          ${this.renderStatCard('Pengeluaran', 'Rp 3.150.000', 'cart', 'red', '-3%')}
+          ${this.renderStatCard('Penjualan Hari Ini', `Rp ${this.formatNumber(todaySalesAmount)}`, 'camera', 'indigo', '')}
+          ${this.renderStatCard('Profit', `Rp ${this.formatNumber(profit)}`, 'trending-up', 'cyan', profit >= 0 ? '+' : '')}
+          ${this.renderStatCard('Pemasukan', `Rp ${this.formatNumber(todayIncome)}`, 'receipt', 'orange', '')}
+          ${this.renderStatCard('Pengeluaran', `Rp ${this.formatNumber(todayExpense)}`, 'cart', 'red', '')}
         </div>
 
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -99,26 +84,11 @@ export class DashboardPage {
                   <h3 class="text-xl font-semibold text-gray-900">Tren Penjualan</h3>
                   <p class="text-sm text-gray-500">Performa penjualan 7 hari terakhir</p>
                 </div>
-                <div class="flex gap-2 bg-gray-50 p-1 rounded-xl">
-                  <button class="px-4 py-2 bg-white text-blue-700 font-medium rounded-lg shadow-sm">7 Hari</button>
-                  <button class="px-4 py-2 text-gray-500 font-medium rounded-lg">30 Hari</button>
-                </div>
               </div>
               
               <!-- Chart Placeholder -->
               <div class="relative h-64">
                 ${this.renderChart(chartData)}
-              </div>
-              
-              <div class="flex items-center gap-6 mt-4">
-                <div class="flex items-center gap-2">
-                  <div class="w-3 h-3 rounded-full bg-blue-800"></div>
-                  <span class="text-sm text-gray-600">Total Penjualan</span>
-                </div>
-                <div class="flex items-center gap-2">
-                  <div class="w-3 h-3 rounded-full bg-cyan-200"></div>
-                  <span class="text-sm text-gray-600">Target Harian</span>
-                </div>
               </div>
             </div>
           </div>
@@ -128,25 +98,27 @@ export class DashboardPage {
             <div class="flex items-center justify-between mb-6">
               <h3 class="text-xl font-semibold text-gray-900">Stok Menipis</h3>
               <span class="bg-red-100 text-red-700 px-3 py-1 rounded-full text-sm font-medium flex items-center gap-1">
-                <i data-lucide="alert-triangle" class="w-4 h-4"></i> 8 Item
+                <i data-lucide="alert-triangle" class="w-4 h-4"></i> ${lowStock.length} Item
               </span>
             </div>
             
             <div class="space-y-4">
-              ${sampleLowStock.map(item => `
+              ${lowStock.length === 0 ? `
+                <p class="text-center text-gray-500 py-4">Tidak ada stok yang menipis</p>
+              ` : lowStock.slice(0, 4).map(item => `
                 <div class="pb-4 border-b border-gray-100 last:border-0 last:pb-0">
                   <div class="flex items-start justify-between mb-2">
                     <div>
                       <p class="font-semibold text-gray-900">${item.name}</p>
                       <p class="text-xs text-gray-500">SKU: ${item.sku}</p>
                     </div>
-                    <span class="text-lg font-bold ${item.current < item.min * 0.2 ? 'text-red-600' : 'text-orange-600'}">
-                      ${item.current} / ${item.min}
+                    <span class="text-lg font-bold ${item.current_stock < item.min_stock * 0.2 ? 'text-red-600' : 'text-orange-600'}">
+                      ${item.current_stock} / ${item.min_stock}
                     </span>
                   </div>
                   <div class="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
-                    <div class="h-full rounded-full transition-all ${item.current < item.min * 0.2 ? 'bg-orange-700' : 'bg-orange-500'}" 
-                         style="width: ${(item.current / item.min) * 100}%"></div>
+                    <div class="h-full rounded-full transition-all ${item.current_stock < item.min_stock * 0.2 ? 'bg-orange-700' : 'bg-orange-500'}" 
+                         style="width: ${Math.min((item.current_stock / item.min_stock) * 100, 100)}%"></div>
                   </div>
                 </div>
               `).join('')}
@@ -161,6 +133,19 @@ export class DashboardPage {
     `
   }
 
+  generateChartData(sales) {
+    const data = []
+    for (let i = 6; i >= 0; i--) {
+      const date = new Date()
+      date.setDate(date.getDate() - i)
+      const dateStr = date.toLocaleDateString('id-ID', { day: '2-digit', month: 'short' })
+      const daySales = sales.filter(s => new Date(s.created_at).toDateString() === date.toDateString())
+      const total = daySales.reduce((sum, s) => sum + (s.total_amount || 0), 0)
+      data.push({ date: dateStr, sales: total })
+    }
+    return data
+  }
+
   renderStatCard(label, value, icon, color, change) {
     const colorClasses = {
       indigo: { bg: 'bg-indigo-100', text: 'text-blue-600', iconBg: 'bg-indigo-100', iconColor: 'text-blue-800' },
@@ -170,21 +155,12 @@ export class DashboardPage {
     }
     const c = colorClasses[color] || colorClasses.indigo
     
-    let changeBg = 'bg-gray-200 text-gray-600'
-    if (change.startsWith('+')) changeBg = 'bg-cyan-200 text-cyan-700'
-    if (change.startsWith('-')) changeBg = 'bg-red-200 text-red-700'
-    if (change === 'Stabil') changeBg = 'bg-gray-200 text-gray-600'
-
     return `
       <div class="card p-6 rounded-xl border-2 border-gray-200">
         <div class="flex items-start justify-between mb-4">
           <div class="p-3 rounded-xl ${c.iconBg}">
             <i data-lucide="${icon}" class="w-6 h-6 ${c.iconColor}"></i>
           </div>
-          <span class="${changeBg} px-3 py-1 rounded-full text-sm font-medium flex items-center gap-1">
-            ${change.startsWith('+') || change.startsWith('-') ? `<i data-lucide="${change.startsWith('+') ? 'trending-up' : 'trending-down'}" class="w-3 h-3"></i>` : ''}
-            ${change}
-          </span>
         </div>
         <p class="text-gray-600 mb-1">${label}</p>
         <p class="text-2xl font-bold ${c.text}">${value}</p>
@@ -205,7 +181,7 @@ export class DashboardPage {
   }
 
   renderChart(data) {
-    const maxValue = Math.max(...data.map(d => d.sales))
+    const maxValue = Math.max(...data.map(d => d.sales), 1000000)
     const chartHeight = 200
     const barWidth = 100 / data.length
     
@@ -258,16 +234,6 @@ export class DashboardPage {
     `
   }
 
-  getRoleLabel(role) {
-    const labels = {
-      owner: 'Pemilik',
-      admin: 'Admin',
-      staff_gudang: 'Staff Gudang',
-      staff_keuangan: 'Staff Keuangan'
-    }
-    return labels[role] || role
-  }
-
   getDateRange(days) {
     const date = new Date()
     date.setDate(date.getDate() - days)
@@ -277,11 +243,6 @@ export class DashboardPage {
 
   formatNumber(num) {
     return num ? num.toLocaleString('id-ID') : '0'
-  }
-
-  formatDate(date) {
-    if (!date) return '-'
-    return new Date(date).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })
   }
 
   async bindEvents() {
