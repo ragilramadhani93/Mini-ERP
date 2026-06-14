@@ -5,39 +5,49 @@ export class AIAssistantPage {
     this.loading = true
     this.insights = []
     this.lastUpdated = null
+    this.error = null
     this.useGroqAI = import.meta.env.VITE_USE_GROQ_AI === 'true'
     this.groqApiKey = import.meta.env.VITE_GROQ_API_KEY
     this.groqModel = import.meta.env.VITE_GROQ_MODEL || 'llama-3.3-70b-versatile'
+    console.log('🔧 AI Config:', { useGroqAI: this.useGroqAI, hasKey: !!this.groqApiKey, model: this.groqModel })
   }
 
   async loadData() {
     this.loading = true
+    this.error = null
     const days = 60
     const since = new Date()
     since.setDate(since.getDate() - days)
 
-    const [productsRes, salesRes, saleItemsRes, stocksRes, financeRes] = await Promise.all([
-      this.supabase.from('products').select('*'),
-      this.supabase.from('sales').select('total_amount, created_at').gte('created_at', since.toISOString()),
-      this.supabase.from('sale_items').select('quantity, unit_price, discount, product_id, sales!inner(created_at), products(name, sku, cost_price, sell_price, current_stock, min_stock)').gte('sales.created_at', since.toISOString()),
-      this.supabase.from('stock_movements').select('type, reason, created_at').gte('created_at', since.toISOString()),
-      this.supabase.from('cash_transactions').select('type, amount, category').gte('created_at', since.toISOString())
-    ])
+    try {
+      const [productsRes, salesRes, saleItemsRes, stocksRes, financeRes] = await Promise.all([
+        this.supabase.from('products').select('*'),
+        this.supabase.from('sales').select('total_amount, created_at').gte('created_at', since.toISOString()),
+        this.supabase.from('sale_items').select('quantity, unit_price, discount, product_id, sales!inner(created_at), products(name, sku, cost_price, sell_price, current_stock, min_stock)').gte('sales.created_at', since.toISOString()),
+        this.supabase.from('stock_movements').select('type, reason, created_at').gte('created_at', since.toISOString()),
+        this.supabase.from('cash_transactions').select('type, amount, category').gte('created_at', since.toISOString())
+      ])
 
-    const products = productsRes.data || []
-    const sales = salesRes.data || []
-    const saleItems = saleItemsRes.data || []
-    const stocks = stocksRes.data || []
-    const finances = financeRes.data || []
+      const products = productsRes.data || []
+      const sales = salesRes.data || []
+      const saleItems = saleItemsRes.data || []
+      const stocks = stocksRes.data || []
+      const finances = financeRes.data || []
 
-    this.lastUpdated = new Date()
+      this.lastUpdated = new Date()
 
-    if (this.useGroqAI && this.groqApiKey) {
-      // Gunakan Groq AI untuk analisis
-      this.insights = await this.getAIInsights(products, sales, saleItems, stocks, finances, days)
-    } else {
-      // Fallback ke rule-based (default)
-      this.insights = this.getRuleBasedInsights(products, sales, saleItems, stocks, finances, days)
+      console.log('📊 Data loaded:', { products: products.length, sales: sales.length })
+
+      if (this.useGroqAI && this.groqApiKey) {
+        console.log('🤖 Using Groq AI...')
+        this.insights = await this.getAIInsights(products, sales, saleItems, stocks, finances, days)
+      } else {
+        console.log('📋 Using rule-based insights...')
+        this.insights = this.getRuleBasedInsights(products, sales, saleItems, stocks, finances, days)
+      }
+    } catch (err) {
+      console.error('❌ Load data error:', err)
+      this.error = err.message
     }
 
     this.loading = false
@@ -249,24 +259,37 @@ Berikan 5-7 insight bisnis paling penting!`
   render() {
     return `
       <div class="space-y-6">
-        <div class="flex items-center justify-between">
+        <div class="flex items-center justify-between flex-wrap gap-4">
           <div>
             <h2 class="text-lg font-semibold text-gray-900 flex items-center gap-2">
               <i data-lucide="bot" class="w-6 h-6 text-primary-600"></i>
               AI Business Assistant
-              ${this.useGroqAI ? '<span class="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full">AI Active (Groq)</span>' : ''}
+              ${this.useGroqAI ? '<span class="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full">AI Active (Groq)</span>' : '<span class="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">Rule-Based</span>'}
             </h2>
             <p class="text-sm text-gray-500">Analisa cerdas untuk bisnis Anda ${this.lastUpdated ? `• Diperbarui ${this.lastUpdated.toLocaleTimeString('id-ID')}` : ''}</p>
+            <p class="text-xs text-gray-400 mt-1">
+              ${this.useGroqAI ? `✅ AI aktif (model: ${this.groqModel})` : '⚠️ Mode rule-based (tidak pakai AI)'}
+              ${this.groqApiKey ? '✅ API Key tersedia' : '❌ API Key tidak ditemukan'}
+            </p>
           </div>
           <div class="flex gap-2">
-            <button id="toggle-ai-mode" class="btn-outline text-sm">
-              <i data-lucide="settings" class="w-4 h-4"></i> ${this.useGroqAI ? 'Nonaktifkan AI' : 'Aktifkan AI'}
-            </button>
             <button id="refresh-ai" class="btn-primary text-sm">
               <i data-lucide="refresh-cw" class="w-4 h-4"></i> Refresh Analisa
             </button>
           </div>
         </div>
+
+        ${this.error ? `
+          <div class="card p-4 bg-red-50 border border-red-200">
+            <div class="flex items-start gap-3">
+              <i data-lucide="alert-circle" class="w-5 h-5 text-red-600 mt-0.5"></i>
+              <div>
+                <h4 class="font-semibold text-red-900">Error!</h4>
+                <p class="text-sm text-red-800 mt-1">${this.error}</p>
+              </div>
+            </div>
+          </div>
+        ` : ''}
 
         ${this.loading ? `
           <div class="card p-12 text-center">
@@ -281,7 +304,6 @@ Berikan 5-7 insight bisnis paling penting!`
             ${this.insights.map(insight => this.renderInsightCard(insight)).join('')}
           </div>
         `}
-        
 
       </div>
     `
