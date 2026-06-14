@@ -1,4 +1,5 @@
 import { Html5Qrcode } from 'html5-qrcode'
+import { Camera, CameraResultType, CameraSource } from '@capacitor/camera'
 
 export class BarcodePage {
   constructor({ supabase, auth, router }) {
@@ -12,6 +13,7 @@ export class BarcodePage {
     this.scannedProduct = null
     this.scanQuantity = 1
     this.cameraId = null
+    this.isCapacitor = typeof Capacitor !== 'undefined' && Capacitor.isNativePlatform()
   }
 
   async loadData() {
@@ -181,27 +183,44 @@ export class BarcodePage {
   }
 
   async initScanner() {
-    try {
-      const cameras = await Html5Qrcode.getCameras()
-      if (cameras.length === 0) { alert('Kamera tidak tersedia'); return }
-      this.cameraId = cameras[0].id
+    if (this.isCapacitor) {
+      try {
+        const image = await Camera.getPhoto({
+          quality: 90,
+          allowEditing: false,
+          resultType: CameraResultType.Uri,
+          source: CameraSource.Camera
+        })
+        
+        // For Capacitor, we need a library to scan barcodes from image.
+        // For now, let's show a message
+        alert('Untuk scanning di mobile, silakan gunakan fitur scan manual!')
+      } catch (err) {
+        alert('Gagal mengakses kamera: ' + err.message)
+      }
+    } else {
+      try {
+        const cameras = await Html5Qrcode.getCameras()
+        if (cameras.length === 0) { alert('Kamera tidak tersedia'); return }
+        this.cameraId = cameras[0].id
 
-      this.scanner = new Html5Qrcode('reader')
-      this.isScanning = true
-      this.renderAndBind()
+        this.scanner = new Html5Qrcode('reader')
+        this.isScanning = true
+        this.renderAndBind()
 
-      await this.scanner.start(
-        this.cameraId,
-        { fps: 10, qrbox: { width: 250, height: 150 } },
-        (code) => {
-          this.handleScan(code)
-        },
-        () => {}
-      )
-    } catch (err) {
-      alert('Gagal mengakses kamera: ' + err.message)
-      this.isScanning = false
-      this.renderAndBind()
+        await this.scanner.start(
+          this.cameraId,
+          { fps: 10, qrbox: { width: 250, height: 150 } },
+          (code) => {
+            this.handleScan(code)
+          },
+          () => {}
+        )
+      } catch (err) {
+        alert('Gagal mengakses kamera: ' + err.message)
+        this.isScanning = false
+        this.renderAndBind()
+      }
     }
   }
 

@@ -6,6 +6,8 @@ export class AuthService {
     this.idleTimeout = null
     this.idleTime = 15 * 60 * 1000 // 15 menit idle
     this.onLogoutCallback = null
+    // Check if running in Capacitor (Android/iOS app)
+    this.isCapacitor = typeof Capacitor !== 'undefined' && Capacitor.isNativePlatform()
   }
 
   async setUser(user) {
@@ -17,7 +19,9 @@ export class AuthService {
         .eq('id', user.id)
         .single()
       this.profile = data
-      this.startIdleTimer()
+      if (!this.isCapacitor) { // Only start idle timer in web browser
+        this.startIdleTimer()
+      }
     } else {
       this.stopIdleTimer()
     }

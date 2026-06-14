@@ -3,6 +3,7 @@ export class Layout {
     this.router = router
     this.auth = auth
     this.menuOpen = false
+    this.sidebarCollapsed = localStorage.getItem('sidebarCollapsed') === 'true'
   }
 
   render() {
@@ -57,24 +58,29 @@ export class Layout {
   }
 
   renderSidebar(items) {
+    const collapsed = this.sidebarCollapsed
     return `
-      <aside class="hidden md:flex w-64 bg-white border-r border-gray-200 flex-col">
+      <aside class="hidden md:flex ${collapsed ? 'w-20' : 'w-64'} bg-white border-r border-gray-200 flex-col transition-all duration-300" id="sidebar">
         <div class="p-4 border-b border-gray-200 flex justify-center">
           <img src="https://wpnejkrfjlblxkcakzrg.supabase.co/storage/v1/object/public/Logo/ChatGPT%20Image%20Jun%2014,%202026,%2002_58_56%20PM.png" 
                alt="StokCuan Logo" 
-               class="w-full max-w-xs object-contain">
+               class="${collapsed ? 'w-12' : 'w-full max-w-xs'} object-contain transition-all">
         </div>
         <nav class="flex-1 p-4 space-y-1 overflow-y-auto scrollbar-thin" id="sidebar-nav">
           ${items.map(item => `
-            <a href="#${item.path}" class="sidebar-link" data-path="${item.path}">
+            <a href="#${item.path}" class="sidebar-link ${collapsed ? 'justify-center' : ''}" data-path="${item.path}">
               <i data-lucide="${item.icon}" class="w-5 h-5"></i>
-              ${item.label}
+              ${collapsed ? '' : item.label}
             </a>
           `).join('')}
         </nav>
-        <div class="p-4 border-t border-gray-200">
-          <button id="logout-btn" class="w-full py-3 px-4 border-2 border-red-600 text-red-600 rounded-lg font-semibold hover:bg-red-50 flex items-center justify-center gap-2">
-            <i data-lucide="log-out" class="w-5 h-5"></i> Keluar
+        <div class="p-4 border-t border-gray-200 flex flex-col gap-2">
+          <button id="toggle-sidebar-btn" class="w-full py-2 px-4 border-2 border-gray-300 text-gray-600 rounded-lg font-semibold hover:bg-gray-50 flex items-center justify-center gap-2">
+            <i data-lucide="${collapsed ? 'chevron-right' : 'chevron-left'}" class="w-5 h-5"></i>
+          </button>
+          <button id="logout-btn" class="w-full py-2 px-4 border-2 border-red-600 text-red-600 rounded-lg font-semibold hover:bg-red-50 flex items-center justify-center gap-2">
+            <i data-lucide="log-out" class="w-5 h-5"></i>
+            ${collapsed ? '' : 'Keluar'}
           </button>
         </div>
       </aside>
@@ -196,6 +202,14 @@ export class Layout {
         if (link.classList.contains('mobile-link')) this.closeMobileMenu()
         this.router.navigate(path)
       })
+    })
+
+    document.getElementById('toggle-sidebar-btn')?.addEventListener('click', () => {
+      this.sidebarCollapsed = !this.sidebarCollapsed
+      localStorage.setItem('sidebarCollapsed', this.sidebarCollapsed)
+      const app = document.getElementById('app')
+      const page = window.location.hash.slice(1) || '/'
+      this.router.navigate(page) // Re-render
     })
 
     if (window.lucide) window.lucide.createIcons()

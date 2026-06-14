@@ -87,11 +87,14 @@ export async function initApp() {
     router.navigate('/login')
   }
 
-  // Setup idle event listeners
-  const events = ['mousedown', 'mousemove', 'keydown', 'scroll', 'touchstart', 'click']
-  events.forEach(event => {
-    document.addEventListener(event, () => auth.resetIdleTimer(), true)
-  })
+  // Only setup idle listeners if not in Capacitor (Android/iOS app)
+  const isCapacitor = typeof Capacitor !== 'undefined' && Capacitor.isNativePlatform()
+  if (!isCapacitor) {
+    const events = ['mousedown', 'mousemove', 'keydown', 'scroll', 'touchstart', 'click']
+    events.forEach(event => {
+      document.addEventListener(event, () => auth.resetIdleTimer(), true)
+    })
+  }
 
   renderApp()
 
