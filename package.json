@@ -1,0 +1,23 @@
+{
+  "name": "online-seller-erp",
+  "version": "1.0.0",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "turbo run dev",
+    "build": "turbo run build",
+    "lint": "turbo run lint",
+    "format": "prettier --write \"**/*.{js,json,html,css}\"",
+    "db:migrate": "cd supabase && npx supabase migration up",
+    "db:seed": "cd supabase && npx supabase db seed",
+    "db:reset": "cd supabase && npx supabase db reset"
+  },
+  "devDependencies": {
+    "turbo": "^2.0.0",
+    "prettier": "^3.3.0"
+  },
+  "packageManager": "npm@10.8.0"
+}
