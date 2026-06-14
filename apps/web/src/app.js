@@ -2,6 +2,7 @@ import { AuthService } from './services/auth.js'
 import { Router } from './utils/router.js'
 import { Layout } from './components/Layout.js'
 import { LoginPage } from './pages/LoginPage.js'
+import { RegisterPage } from './pages/RegisterPage.js'
 import { DashboardPage } from './pages/DashboardPage.js'
 import { ProductsPage } from './pages/ProductsPage.js'
 import { StockPage } from './pages/StockPage.js'
@@ -43,6 +44,7 @@ let router
 
 const routes = {
   '/login': { component: LoginPage, public: true },
+  '/register': { component: RegisterPage, public: true },
   '/': { component: DashboardPage, roles: ['owner', 'admin', 'staff_gudang', 'staff_keuangan'] },
   '/products': { component: ProductsPage, roles: ['owner', 'admin', 'staff_gudang'] },
   '/stock': { component: StockPage, roles: ['owner', 'admin', 'staff_gudang'] },
@@ -83,14 +85,22 @@ export async function initApp() {
   renderApp()
 
   router.onRouteChange = (route) => {
-    renderApp()
-    const outlet = document.getElementById('router-outlet')
-    if (outlet && route.component) {
-      const page = new route.component({ supabase, auth, router })
-      outlet.innerHTML = page.render()
+    if (route.public) {
+      // Untuk halaman public (login/register), render tanpa layout
+      const app = document.getElementById('app')
+      const page = new route.component({ auth, router, supabase })
+      app.innerHTML = page.render()
       page.bindEvents?.()
+    } else {
+      renderApp()
+      const outlet = document.getElementById('router-outlet')
+      if (outlet && route.component) {
+        const page = new route.component({ supabase, auth, router })
+        outlet.innerHTML = page.render()
+        page.bindEvents?.()
+      }
+      if (layout) layout.updateActiveLink(route.path)
     }
-    if (layout) layout.updateActiveLink(route.path)
   }
 
   if (auth.isAuthenticated()) {

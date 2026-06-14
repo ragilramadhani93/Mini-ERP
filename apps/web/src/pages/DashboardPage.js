@@ -295,5 +295,6 @@ export class DashboardPage {
     if (outlet) {
       outlet.innerHTML = this.render()
     }
+    if (window.lucide) window.lucide.createIcons()
   }
 }
