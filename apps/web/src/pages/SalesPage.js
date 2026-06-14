@@ -6,6 +6,8 @@ export class SalesPage {
     this.sales = []
     this.products = []
     this.showModal = false
+    this.showViewModal = false
+    this.selectedSale = null
     this.transactionItems = []
     this.loading = false
     this.searchCustomer = ''
@@ -98,6 +100,7 @@ export class SalesPage {
         </div>
 
         ${this.showModal ? this.renderModal() : ''}
+        ${this.showViewModal ? this.renderViewModal() : ''}
       </div>
     `
   }
@@ -203,6 +206,68 @@ export class SalesPage {
     `
   }
 
+  renderViewModal() {
+    const sale = this.selectedSale
+    const items = sale?.sale_items || []
+    return `
+      <div class="modal-overlay" id="view-modal-overlay">
+        <div class="modal-content p-6 max-w-3xl">
+          <div class="flex items-center justify-between mb-6">
+            <div>
+              <h3 class="text-lg font-semibold">Detil Penjualan</h3>
+              <p class="text-sm text-gray-500">Invoice: ${sale?.invoice_number}</p>
+            </div>
+            <button id="close-view-modal" class="text-gray-400 hover:text-gray-600">
+              <i data-lucide="x" class="w-6 h-6"></i>
+            </button>
+          </div>
+          
+          <div class="grid grid-cols-2 gap-4 mb-6">
+            <div>
+              <p class="text-xs text-gray-500 mb-1">Pelanggan</p>
+              <p class="font-medium">${sale?.customer_name || '-'}</p>
+            </div>
+            <div>
+              <p class="text-xs text-gray-500 mb-1">Tanggal</p>
+              <p class="font-medium">${this.formatDate(sale?.created_at)}</p>
+            </div>
+            <div>
+              <p class="text-xs text-gray-500 mb-1">Metode Pembayaran</p>
+              <p class="font-medium">${this.getPaymentLabel(sale?.payment_method)}</p>
+            </div>
+            <div>
+              <p class="text-xs text-gray-500 mb-1">Dibuat Oleh</p>
+              <p class="font-medium">${sale?.created_by_user?.full_name || '-'}</p>
+            </div>
+          </div>
+
+          <div class="border-t border-gray-100 pt-4 mb-4">
+            <h4 class="text-sm font-semibold text-gray-700 mb-3">Item Produk</h4>
+            <div class="space-y-3">
+              ${items.map(item => `
+                <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                  <div>
+                    <p class="font-medium">${item.products?.name}</p>
+                    <p class="text-sm text-gray-500">${item.quantity} x Rp ${this.formatNumber(item.unit_price)}</p>
+                  </div>
+                  <div class="text-right">
+                    ${item.discount > 0 ? `<p class="text-xs text-red-500">Diskon: Rp ${this.formatNumber(item.discount)}</p>` : ''}
+                    <p class="font-semibold">Rp ${this.formatNumber((item.quantity * item.unit_price) - item.discount)}</p>
+                  </div>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+
+          <div class="flex items-center justify-between pt-4 border-t border-gray-100">
+            <p class="text-gray-600">Total</p>
+            <p class="text-xl font-bold text-primary-600">Rp ${this.formatNumber(sale?.total_amount)}</p>
+          </div>
+        </div>
+      </div>
+    `
+  }
+
   getPaymentLabel(method) {
     const labels = { cash: 'Tunai', credit: 'Kredit', bank_transfer: 'Transfer' }
     return labels[method] || method
@@ -246,20 +311,9 @@ export class SalesPage {
 
     document.querySelectorAll('.view-sale').forEach(btn => {
       btn.addEventListener('click', () => {
-        const sale = this.sales.find(s => s.id === btn.dataset.id)
-        if (sale) {
-          const items = sale.sale_items?.map(i =>
-            `- ${i.products?.name}: ${i.quantity} x Rp ${this.formatNumber(i.unit_price)}${i.discount > 0 ? ` (diskon Rp ${this.formatNumber(i.discount)})` : ''}`
-          ).join('\n') || ''
-          alert(
-            `Invoice: ${sale.invoice_number}\n` +
-            `Pelanggan: ${sale.customer_name || '-'}\n` +
-            `Tanggal: ${this.formatDate(sale.created_at)}\n` +
-            `Pembayaran: ${this.getPaymentLabel(sale.payment_method)}\n\n` +
-            `Item:\n${items}\n\n` +
-            `Total: Rp ${this.formatNumber(sale.total_amount)}`
-          )
-        }
+        this.selectedSale = this.sales.find(s => s.id === btn.dataset.id)
+        this.showViewModal = true
+        this.renderAndBind()
       })
     })
 
@@ -278,6 +332,17 @@ export class SalesPage {
     document.getElementById('modal-overlay')?.addEventListener('click', (e) => {
       if (e.target === e.currentTarget) {
         this.showModal = false
+        this.renderAndBind()
+      }
+    })
+
+    document.getElementById('close-view-modal')?.addEventListener('click', () => {
+      this.showViewModal = false
+      this.renderAndBind()
+    })
+    document.getElementById('view-modal-overlay')?.addEventListener('click', (e) => {
+      if (e.target === e.currentTarget) {
+        this.showViewModal = false
         this.renderAndBind()
       }
     })
