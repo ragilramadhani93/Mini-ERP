@@ -248,7 +248,10 @@ export class StockOpnamePage {
       })
     })
 
-    if (window.lucide) window.lucide.createIcons()
+    this._bindModalEvents()
+  }
+
+  _bindModalEvents() {
   }
 
   renderAndBind() {
@@ -257,5 +260,6 @@ export class StockOpnamePage {
       outlet.innerHTML = this.render()
     }
     this._bindListeners()
+    if (window.lucide) window.lucide.createIcons()
   }
 }

@@ -1,0 +1,13 @@
+Catatan: File ini adalah contoh format Excel Shopee. 
+Silakan download file ekspor dari Shopee dan gunakan file asli untuk import.
+
+Format header yang didukung:
+No. Pesanan, Status Pesanan, Alasan Pembatalan, Status Pembatalan/ Pengembalian, No. Resi, Opsi Pengiriman, Antar ke counter/ pick-up, Pesanan Harus Dikirimkan Sebelum (Menghindari keterlambatan), Waktu Pengiriman Diatur, Waktu Pesanan Dibuat, Waktu Pembayaran Dilakukan, Metode Pembayaran, SKU Induk, Nama Produk, Nomor Referensi SKU, Nama Variasi, Harga Awal, Harga Setelah Diskon, Jumlah, Returned quantity, Subtotal Pesanan, Total Diskon, Diskon Dari Penjual, Diskon Dari Shopee, Berat Produk, Jumlah Produk di Pesan, Total Berat, Voucher Ditanggung Penjual, Cashback Koin, Voucher Ditanggung Shopee, Paket Diskon, Paket Diskon (Diskon dari Shopee), Paket Diskon (Diskon dari Penjual), Potongan Koin Shopee, Diskon Kartu Kredit, Ongkos Kirim Dibayar oleh Pembeli, Estimasi Potongan Biaya Pengiriman, Ongkos Kirim Pengembalian Barang, Total Pembayaran, Perkiraan Ongkos Kirim, Catatan dari Pembeli
+
+Untuk import:
+1. Download file ekspor dari Shopee (format XLS/XLSX)
+2. Buka halaman "Import Marketplace" di aplikasi
+3. Pilih "Excel (Format Shopee)" sebagai tipe file
+4. Upload file ekspor Shopee Anda
+5. Klik "Preview Data" untuk melihat data yang akan diimport
+6. Klik "Import ke Database" untuk menyimpan data

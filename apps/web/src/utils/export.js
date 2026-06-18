@@ -1,5 +1,6 @@
 import jsPDF from 'jspdf'
-import 'jspdf-autotable'
+import { applyPlugin } from 'jspdf-autotable'
+applyPlugin(jsPDF)
 
 export class Exporter {
   static formatNumber(num) {
@@ -54,14 +55,30 @@ export class Exporter {
   }
 
   static exportSales(sales) {
-    const headers = ['Invoice', 'Tanggal', 'Pelanggan', 'Total', 'Pembayaran']
-    const rows = sales.map(s => [
-      s.invoice_number,
-      new Date(s.created_at).toLocaleDateString('id-ID'),
-      s.customer_name || '-',
-      this.toRupiah(s.total_amount),
-      s.payment_method === 'cash' ? 'Tunai' : s.payment_method === 'credit' ? 'Kredit' : 'Transfer'
-    ])
+    const marketplaceNames = {
+      shopee: 'Shopee',
+      tiktok: 'TikTok Shop',
+      tokopedia: 'Tokopedia',
+      lazada: 'Lazada'
+    }
+    const paymentLabels = {
+      cash: 'Tunai', qris: 'QRIS', bank_transfer: 'Transfer Bank',
+      credit: 'Kredit', split_shopee: 'Split Shopee', split_other: 'Split Lain'
+    }
+    const headers = ['Invoice', 'Tanggal', 'Pelanggan', 'Marketplace', 'Total Penjualan', 'Potongan Platform', 'Diterima', 'Pembayaran']
+    const rows = sales.map(s => {
+      const totalReceived = s.total_received ?? (s.total_amount - (s.platform_fee || 0))
+      return [
+        s.invoice_number,
+        new Date(s.created_at).toLocaleDateString('id-ID'),
+        s.customer_name || '-',
+        s.marketplace ? marketplaceNames[s.marketplace] : '-',
+        this.toRupiah(s.total_amount),
+        s.platform_fee ? this.toRupiah(s.platform_fee) : '-',
+        this.toRupiah(totalReceived),
+        paymentLabels[s.payment_method] || s.payment_method || '-'
+      ]
+    })
     return { headers, rows, title: 'Data Penjualan', filename: 'penjualan' }
   }
 

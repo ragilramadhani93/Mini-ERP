@@ -61,17 +61,19 @@ export const mockData = {
     { id: 'pi4', purchase_id: 'po3', product_id: 'p6', quantity: 20, unit_price: 10000 }
   ],
   sales: [
-    { id: 'sa1', invoice_number: 'INV-2406-0001', customer_name: 'Rumah Tangga Bahagia', total_amount: 225000, payment_method: 'cash', created_at: daysAgo(5) },
-    { id: 'sa2', invoice_number: 'INV-2406-0002', customer_name: 'Toko Elektronik Jaya', total_amount: 550000, payment_method: 'bank_transfer', created_at: daysAgo(4) },
-    { id: 'sa3', invoice_number: 'INV-2406-0003', customer_name: 'Warung Makan Sederhana', total_amount: 475000, payment_method: 'cash', created_at: daysAgo(2) },
-    { id: 'sa4', invoice_number: 'INV-2406-0004', customer_name: 'Perorangan', total_amount: 147500, payment_method: 'cash', created_at: daysAgo(1) }
+    { id: 'sa1', invoice_number: 'INV-2406-0001', customer_name: 'Rumah Tangga Bahagia', total_amount: 225000, payment_method: 'cash', marketplace: null, platform_fee: 0, total_received: 225000, created_at: daysAgo(5), created_by: 'u1' },
+    { id: 'sa2', invoice_number: 'INV-2406-0002', customer_name: 'Toko Elektronik Jaya', total_amount: 550000, payment_method: 'bank_transfer', marketplace: null, platform_fee: 0, total_received: 550000, created_at: daysAgo(4), created_by: 'u1' },
+    { id: 'sa3', invoice_number: 'INV-2406-0003', customer_name: 'Warung Makan Sederhana', total_amount: 475000, payment_method: 'cash', marketplace: null, platform_fee: 0, total_received: 475000, created_at: daysAgo(2), created_by: 'u1' },
+    { id: 'sa4', invoice_number: 'INV-2406-0004', customer_name: 'Perorangan', total_amount: 147500, payment_method: 'cash', marketplace: null, platform_fee: 0, total_received: 147500, created_at: daysAgo(1), created_by: 'u1' },
+    { id: 'sa5', invoice_number: 'INV-2406-0005', customer_name: 'Shopee Customer', total_amount: 300000, payment_method: 'bank_transfer', marketplace: 'shopee', platform_fee: 30000, total_received: 270000, created_at: daysAgo(0), created_by: 'u1' }
   ],
   sale_items: [
     { id: 'si1', sale_id: 'sa1', product_id: 'p4', quantity: 10, unit_price: 25000, discount: 0 },
     { id: 'si2', sale_id: 'sa1', product_id: 'p5', quantity: 15, unit_price: 15000, discount: 0 },
     { id: 'si3', sale_id: 'sa2', product_id: 'p3', quantity: 10, unit_price: 55000, discount: 0 },
     { id: 'si4', sale_id: 'sa3', product_id: 'p1', quantity: 15, unit_price: 55000, discount: 25000 },
-    { id: 'si5', sale_id: 'sa4', product_id: 'p2', quantity: 5, unit_price: 85000, discount: 0 }
+    { id: 'si5', sale_id: 'sa4', product_id: 'p2', quantity: 5, unit_price: 85000, discount: 0 },
+    { id: 'si6', sale_id: 'sa5', product_id: 'p3', quantity: 6, unit_price: 50000, discount: 0 }
   ],
   cash_transactions: [
     { id: 'ct1', type: 'in', category: 'sales', amount: 285000, description: 'Penjualan ke Rumah Tangga Bahagia', created_at: daysAgo(5) },
@@ -83,7 +85,9 @@ export const mockData = {
     { id: 'ct7', type: 'out', category: 'operational', amount: 500000, description: 'Sewa tempat', created_at: daysAgo(15) },
     { id: 'ct8', type: 'out', category: 'salary', amount: 3000000, description: 'Gaji staff', created_at: daysAgo(10) },
     { id: 'ct9', type: 'out', category: 'advertising', amount: 200000, description: 'Iklan Shopee', created_at: daysAgo(7) },
-    { id: 'ct10', type: 'in', category: 'other_income', amount: 100000, description: 'Jasa titip', created_at: daysAgo(3) }
+    { id: 'ct10', type: 'in', category: 'other_income', amount: 100000, description: 'Jasa titip', created_at: daysAgo(3) },
+    { id: 'ct11', type: 'in', category: 'sales', amount: 270000, description: 'Penjualan Shopee Customer', created_at: daysAgo(0) },
+    { id: 'ct12', type: 'out', category: 'platform_fee', amount: 30000, description: 'Potongan platform Shopee - INV-2406-0005', created_at: daysAgo(0) }
   ],
   payables: [
     { id: 'pay1', due_type: 'supplier', due_id: 's1', reference_type: 'purchase', reference_id: 'po1', amount: 3575000, due_date: daysAgo(-15), status: 'paid', paid_amount: 3575000 },
@@ -215,6 +219,46 @@ class MockQuery {
     try {
       let result = this._applyFilters()
 
+      // Handle relations in select
+      if (this._selectStr.includes(',') || this._selectStr.includes('(')) {
+        result = result.map(item => {
+          const newItem = { ...item }
+          
+          // Handle relations like 'sale_items(*, products(...))'
+          // Look for relation patterns
+          const relations = [
+            { key: 'sale_items', table: 'sale_items', foreignKey: 'sale_id', includes: 'products' },
+            { key: 'created_by_user', table: 'users', foreignKey: 'created_by', alias: 'created_by_user' }
+          ]
+
+          for (const rel of relations) {
+            if (this._selectStr.includes(rel.key)) {
+              if (rel.key === 'sale_items') {
+                // Get related sale items
+                const items = this._db.data.sale_items.filter(si => si.sale_id === item.id)
+                // For each sale item, add product if needed
+                newItem.sale_items = items.map(si => {
+                  const siWithProduct = { ...si }
+                  if (this._selectStr.includes('products')) {
+                    const product = this._db.data.products.find(p => p.id === si.product_id)
+                    siWithProduct.products = product || null
+                  }
+                  return siWithProduct
+                })
+              } else if (rel.key === 'created_by_user') {
+                // Get user that created the sale
+                const user = this._db.data.users.find(u => u.id === item.created_by)
+                if (user) {
+                  newItem.created_by_user = { full_name: user.full_name }
+                }
+              }
+            }
+          }
+
+          return newItem
+        })
+      }
+
       for (const order of this._orders) {
         result.sort((a, b) => {
           const va = a[order.col], vb = b[order.col]
@@ -232,6 +276,7 @@ class MockQuery {
 
       resolve({ data: result, error: null, count: result.length })
     } catch (e) {
+      console.error('MockQuery error:', e)
       reject({ data: null, error: e })
     }
   }

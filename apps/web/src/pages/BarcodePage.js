@@ -196,7 +196,7 @@ export class BarcodePage {
         // For now, let's show a message
         alert('Untuk scanning di mobile, silakan gunakan fitur scan manual!')
       } catch (err) {
-        alert('Gagal mengakses kamera: ' + err.message)
+        alert('Gagal mengakses kamera: ' + (err.message || err))
       }
     } else {
       try {
@@ -204,10 +204,10 @@ export class BarcodePage {
         if (cameras.length === 0) { alert('Kamera tidak tersedia'); return }
         this.cameraId = cameras[0].id
 
-        this.scanner = new Html5Qrcode('reader')
         this.isScanning = true
         this.renderAndBind()
 
+        this.scanner = new Html5Qrcode('reader')
         await this.scanner.start(
           this.cameraId,
           { fps: 10, qrbox: { width: 250, height: 150 } },
@@ -217,7 +217,7 @@ export class BarcodePage {
           () => {}
         )
       } catch (err) {
-        alert('Gagal mengakses kamera: ' + err.message)
+        alert('Gagal mengakses kamera: ' + (err.message || err))
         this.isScanning = false
         this.renderAndBind()
       }

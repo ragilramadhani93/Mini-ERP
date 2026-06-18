@@ -67,6 +67,8 @@ export class PurchaseOrderPage {
 
   renderList() {
     const orders = this.filteredOrders
+    const role = this.auth.getRole()
+    const isOwner = role === 'owner'
     return `
       <div class="card">
         <div class="table-container">
@@ -99,7 +101,7 @@ export class PurchaseOrderPage {
                       <button class="btn-outline btn-sm view-po" data-id="${po.id}">
                         <i data-lucide="eye" class="w-4 h-4"></i>
                       </button>
-                      ${po.status === 'pending' ? `
+                      ${po.status === 'pending' && isOwner ? `
                         <button class="btn-success btn-sm approve-po" data-id="${po.id}">
                           <i data-lucide="check" class="w-4 h-4"></i>
                         </button>
@@ -297,6 +299,10 @@ export class PurchaseOrderPage {
 
     document.querySelectorAll('.approve-po').forEach(btn => {
       btn.addEventListener('click', async () => {
+        if (this.auth.getRole() !== 'owner') {
+          alert('Hanya owner yang bisa approve PO')
+          return
+        }
         await this.supabase.from('purchases').update({ status: 'approved' }).eq('id', btn.dataset.id)
         await this.loadData()
         this.renderAndBind()
@@ -305,6 +311,10 @@ export class PurchaseOrderPage {
 
     document.querySelectorAll('.cancel-po').forEach(btn => {
       btn.addEventListener('click', async () => {
+        if (this.auth.getRole() !== 'owner') {
+          alert('Hanya owner yang bisa cancel PO')
+          return
+        }
         if (confirm('Batalkan PO ini?')) {
           await this.supabase.from('purchases').update({ status: 'cancelled' }).eq('id', btn.dataset.id)
           await this.loadData()

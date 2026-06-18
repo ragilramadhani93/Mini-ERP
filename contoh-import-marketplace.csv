@@ -1,0 +1,5 @@
+No Invoice,Nama Pelanggan,Marketplace,Total,Potongan Platform,Metode Pembayaran
+INV-2406-0001,Rudi,shopee,500000,50000,bank_transfer
+INV-2406-0002,Siti,tiktokshop,300000,30000,bank_transfer
+INV-2406-0003,Andi,tokopedia,250000,25000,bank_transfer
+INV-2406-0004,Dedi,offline,100000,0,cash

@@ -20,6 +20,8 @@ import { CategoriesPage } from './pages/CategoriesPage.js'
 import { SuppliersPage } from './pages/SuppliersPage.js'
 import { UsersPage } from './pages/UsersPage.js'
 import { ProfilePage } from './pages/ProfilePage.js'
+import { ShopeePage } from './pages/ShopeePage.js'
+import { SettingsPage } from './pages/SettingsPage.js'
 
 const isDemo = import.meta.env.VITE_DEMO_MODE === 'true'
 
@@ -60,8 +62,10 @@ const routes = {
   '/ai-assistant': { component: AIAssistantPage, roles: ['owner', 'admin'] },
   '/categories': { component: CategoriesPage, roles: ['owner', 'admin'] },
   '/suppliers': { component: SuppliersPage, roles: ['owner', 'admin'] },
-  '/users': { component: UsersPage, roles: ['owner', 'admin'] },
-  '/profile': { component: ProfilePage, roles: ['owner', 'admin', 'staff_gudang', 'staff_keuangan'] }
+  '/users': { component: UsersPage, roles: ['owner'] },
+  '/profile': { component: ProfilePage, roles: ['owner', 'admin', 'staff_gudang', 'staff_keuangan'] },
+  '/shopee': { component: ShopeePage, roles: ['owner', 'admin'] },
+  '/settings': { component: SettingsPage, roles: ['owner', 'admin'] }
 }
 
 let layout

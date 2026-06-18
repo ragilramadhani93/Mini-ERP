@@ -7,22 +7,89 @@ export class FinancePage {
     this.showModal = false
     this.transactionType = 'in'
     this.loading = false
-    this.dateRange = '30'
+    this.dateFrom = ''
+    this.dateTo = ''
+    this.salesByMethod = []
   }
 
   async loadData() {
-    const days = parseInt(this.dateRange)
-    const since = new Date()
-    since.setDate(since.getDate() - days)
+    const now = new Date()
+    let dateFrom, dateTo
 
-    const { data } = await this.supabase
-      .from('cash_transactions')
+    if (this.dateFrom && this.dateTo) {
+      dateFrom = new Date(this.dateFrom)
+      dateTo = new Date(this.dateTo)
+      dateTo.setDate(dateTo.getDate() + 1)
+    } else {
+      dateTo = new Date(now)
+      dateFrom = new Date(now)
+      dateFrom.setDate(dateFrom.getDate() - 30)
+    }
+
+    let txQuery = this.supabase.from('cash_transactions')
       .select('*, created_by_user:users(full_name)')
-      .gte('created_at', since.toISOString())
+      .gte('created_at', dateFrom.toISOString())
+      .lte('created_at', dateTo.toISOString())
       .order('created_at', { ascending: false })
       .limit(100)
 
-    this.transactions = data || []
+    let salesQuery = this.supabase.from('sales')
+      .select('payment_method, total_amount, platform_fee, total_received, status, split_payments(*), payment_details')
+      .gte('created_at', dateFrom.toISOString())
+      .lte('created_at', dateTo.toISOString())
+      .eq('status', 'completed')
+
+    const [txRes, salesRes, methodsRes] = await Promise.all([
+      txQuery,
+      salesQuery,
+      this.supabase.from('payment_methods')
+        .select('*')
+        .order('sort_order')
+    ])
+
+    this.transactions = txRes.data || []
+    this.sales = salesRes.data || []
+    this.paymentMethods = methodsRes.data || []
+    this.calcSalesByMethod()
+  }
+
+  calcSalesByMethod() {
+    const grouped = {}
+    this.sales.forEach(s => {
+      const splits = s.split_payments?.length > 0
+        ? s.split_payments
+        : (s.payment_details?.splits?.length > 0 ? s.payment_details.splits : [])
+      const hasSplits = splits.length > 0 && splits.some(sp => sp.amount > 0)
+
+      if (hasSplits) {
+        const mainAmount = s.payment_details?.main_amount || 0
+        if (mainAmount > 0) {
+          const m = s.payment_method || 'unknown'
+          if (!grouped[m]) grouped[m] = { count: 0, total: 0, fee: 0, received: 0 }
+          grouped[m].count++
+          grouped[m].total += mainAmount
+          grouped[m].received += mainAmount
+        }
+        splits.filter(sp => sp.amount > 0).forEach(sp => {
+          const code = sp.method || 'unknown'
+          if (!grouped[code]) grouped[code] = { count: 0, total: 0, fee: 0, received: 0 }
+          grouped[code].count++
+          grouped[code].total += sp.amount
+          grouped[code].received += sp.amount
+        })
+      } else {
+        const method = s.payment_method || 'unknown'
+        if (!grouped[method]) grouped[method] = { count: 0, total: 0, fee: 0, received: 0 }
+        grouped[method].count++
+        grouped[method].total += s.total_amount
+        grouped[method].fee += s.platform_fee || 0
+        grouped[method].received += s.total_received || (s.total_amount - (s.platform_fee || 0))
+      }
+    })
+    this.salesByMethod = Object.entries(grouped).map(([code, data]) => {
+      const pm = this.paymentMethods.find(p => p.code === code)
+      return { code, name: pm?.name || code, color: pm?.color || '#64748b', ...data }
+    }).sort((a, b) => b.total - a.total)
   }
 
   render() {
@@ -46,60 +113,120 @@ export class FinancePage {
 
         <div class="flex items-center justify-between">
           <div class="flex gap-2">
-            ${['all', 'in', 'out'].map(tab => `
+            ${['all', 'in', 'out', 'methods'].map(tab => `
               <button class="tab-btn px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                 this.activeTab === tab ? 'bg-primary-50 text-primary-600' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
               }" data-tab="${tab}">
-                ${tab === 'all' ? 'Semua' : tab === 'in' ? 'Pemasukan' : 'Pengeluaran'}
+                ${tab === 'all' ? 'Semua' : tab === 'in' ? 'Pemasukan' : tab === 'out' ? 'Pengeluaran' : 'Metode'}
               </button>
             `).join('')}
           </div>
-          <select id="date-range" class="w-auto">
-            <option value="7" ${this.dateRange === '7' ? 'selected' : ''}>7 Hari</option>
-            <option value="30" ${this.dateRange === '30' ? 'selected' : ''}>30 Hari</option>
-            <option value="90" ${this.dateRange === '90' ? 'selected' : ''}>90 Hari</option>
-            <option value="365" ${this.dateRange === '365' ? 'selected' : ''}>1 Tahun</option>
-          </select>
-        </div>
-
-        <div class="card">
-          <div class="table-container">
-            <table class="table">
-              <thead>
-                <tr>
-                  <th>Tanggal</th>
-                  <th>Tipe</th>
-                  <th>Kategori</th>
-                  <th>Deskripsi</th>
-                  <th class="text-right">Jumlah</th>
-                  <th>Oleh</th>
-                </tr>
-              </thead>
-              <tbody>
-                ${this.getFiltered().length === 0 ? `
-                  <tr><td colspan="6" class="text-center text-gray-500 py-8">Belum ada transaksi</td></tr>
-                ` : this.getFiltered().map(t => `
-                  <tr>
-                    <td class="text-sm text-gray-500 whitespace-nowrap">${this.formatDate(t.created_at)}</td>
-                    <td>
-                      <span class="badge ${t.type === 'in' ? 'badge-success' : 'badge-danger'}">
-                        ${t.type === 'in' ? 'Masuk' : 'Keluar'}
-                      </span>
-                    </td>
-                    <td>${this.getCategoryLabel(t.category)}</td>
-                    <td class="max-w-xs truncate">${t.description}</td>
-                    <td class="text-right font-semibold ${t.type === 'in' ? 'text-success-600' : 'text-danger-600'}">
-                      ${t.type === 'in' ? '+' : '-'}Rp ${this.formatNumber(t.amount)}
-                    </td>
-                    <td class="text-sm text-gray-500">${t.created_by_user?.full_name || '-'}</td>
-                  </tr>
-                `).join('')}
-              </tbody>
-            </table>
+          <div class="flex gap-2 items-center">
+            <input type="date" id="date-from" value="${this.dateFrom}" style="padding:6px 8px;border:1px solid #e2e8f0;border-radius:6px;font-size:12px;color:#334155">
+            <span style="color:#94a3b8;font-size:12px">s/d</span>
+            <input type="date" id="date-to" value="${this.dateTo}" style="padding:6px 8px;border:1px solid #e2e8f0;border-radius:6px;font-size:12px;color:#334155">
           </div>
         </div>
 
+        ${this.activeTab === 'methods' ? this.renderMethodsTab() : this.renderTransactionsTab()}
+
         ${this.showModal ? this.renderModal() : ''}
+      </div>
+    `
+  }
+
+  renderTransactionsTab() {
+    return `
+      <div class="card">
+        <div class="table-container">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Tanggal</th>
+                <th>Tipe</th>
+                <th>Kategori</th>
+                <th>Deskripsi</th>
+                <th class="text-right">Jumlah</th>
+                <th>Oleh</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${this.getFiltered().length === 0 ? `
+                <tr><td colspan="6" class="text-center text-gray-500 py-8">Belum ada transaksi</td></tr>
+              ` : this.getFiltered().map(t => `
+                <tr>
+                  <td class="text-sm text-gray-500 whitespace-nowrap">${this.formatDate(t.created_at)}</td>
+                  <td>
+                    <span class="badge ${t.type === 'in' ? 'badge-success' : 'badge-danger'}">
+                      ${t.type === 'in' ? 'Masuk' : 'Keluar'}
+                    </span>
+                  </td>
+                  <td>${this.getCategoryLabel(t.category)}</td>
+                  <td class="max-w-xs truncate">${t.description}</td>
+                  <td class="text-right font-semibold ${t.type === 'in' ? 'text-success-600' : 'text-danger-600'}">
+                    ${t.type === 'in' ? '+' : '-'}Rp ${this.formatNumber(t.amount)}
+                  </td>
+                  <td class="text-sm text-gray-500">${t.created_by_user?.full_name || '-'}</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    `
+  }
+
+  renderMethodsTab() {
+    const total = this.salesByMethod.reduce((s, m) => s + m.total, 0)
+    const totalReceived = this.salesByMethod.reduce((s, m) => s + m.received, 0)
+
+    return `
+      <div class="card">
+        <div class="p-4" style="border-bottom:1px solid #f1f5f9">
+          <h3 class="font-semibold" style="font-size:14px;color:#0f172a">Penjualan per Metode Pembayaran</h3>
+          <p style="font-size:12px;color:#64748b;margin-top:2px">Total: Rp ${this.formatNumber(total)} (Diterima: Rp ${this.formatNumber(totalReceived)})</p>
+        </div>
+        <div class="table-container">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Metode Pembayaran</th>
+                <th style="text-align:right">Transaksi</th>
+                <th style="text-align:right">Total Penjualan</th>
+                <th style="text-align:right">Potongan</th>
+                <th style="text-align:right">Diterima</th>
+                <th style="text-align:right">%</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${this.salesByMethod.length === 0 ? `
+                <tr><td colspan="6" class="text-center text-gray-500 py-8">Belum ada penjualan lunas</td></tr>
+              ` : this.salesByMethod.map(m => {
+                const pct = total > 0 ? ((m.total / total) * 100).toFixed(1) : 0
+                return `
+                  <tr>
+                    <td>
+                      <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${m.color};margin-right:6px;vertical-align:middle"></span>
+                      <span style="font-weight:500">${m.name}</span>
+                    </td>
+                    <td style="text-align:right">${m.count}</td>
+                    <td style="text-align:right;font-weight:600">Rp ${this.formatNumber(m.total)}</td>
+                    <td style="text-align:right;color:#ef4444">${m.fee > 0 ? `Rp ${this.formatNumber(m.fee)}` : '-'}</td>
+                    <td style="text-align:right;color:#16a34a;font-weight:700">Rp ${this.formatNumber(m.received)}</td>
+                    <td style="text-align:right">
+                      <div style="display:flex;align-items:center;gap:6px;justify-content:flex-end">
+                        <span style="font-size:12px;color:#64748b">${pct}%</span>
+                        <div style="width:50px;height:6px;background:#f1f5f9;border-radius:3px;overflow:hidden">
+                          <div style="height:100%;width:${pct}%;background:${m.color};border-radius:3px"></div>
+                        </div>
+                      </div>
+                    </td>
+                  </tr>
+                `
+              }).join('')}
+            </tbody>
+          </table>
+        </div>
       </div>
     `
   }
@@ -160,6 +287,7 @@ export class FinancePage {
                      <option value="operational">Operasional</option>
                      <option value="salary">Gaji</option>
                      <option value="advertising">Biaya Iklan</option>
+                     <option value="platform_fee">Potongan Marketplace</option>
                      <option value="other_expense">Pengeluaran Lain</option>`
                 }
               </select>
@@ -208,6 +336,7 @@ export class FinancePage {
       operational: 'Operasional',
       salary: 'Gaji',
       advertising: 'Iklan',
+      platform_fee: 'Potongan Marketplace',
       other_income: 'Pendapatan Lain',
       other_expense: 'Pengeluaran Lain',
       refund: 'Refund',
@@ -238,8 +367,12 @@ export class FinancePage {
       })
     })
 
-    document.getElementById('date-range')?.addEventListener('change', (e) => {
-      this.dateRange = e.target.value
+    document.getElementById('date-from')?.addEventListener('change', (e) => {
+      this.dateFrom = e.target.value
+      this.loadData().then(() => this.renderAndBind())
+    })
+    document.getElementById('date-to')?.addEventListener('change', (e) => {
+      this.dateTo = e.target.value
       this.loadData().then(() => this.renderAndBind())
     })
 

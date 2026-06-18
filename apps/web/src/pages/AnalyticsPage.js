@@ -10,6 +10,7 @@ export class AnalyticsPage {
     this.categories = []
     this.charts = {}
     this.period = '30'
+    this.tipsDismissed = false
   }
 
   async loadData() {
@@ -36,6 +37,8 @@ export class AnalyticsPage {
   }
 
   render() {
+    const tips = this.generateTips()
+
     return `
       <div class="space-y-6">
         <div class="flex items-center justify-between">
@@ -51,6 +54,33 @@ export class AnalyticsPage {
             <option value="all" ${this.period === 'all' ? 'selected' : ''}>Semua</option>
           </select>
         </div>
+
+        ${tips.length > 0 ? `
+          <div class="card" style="border-left:4px solid #f59e0b;background:linear-gradient(135deg,#fffbeb,#fef3c7)">
+            <div class="p-4 flex items-start justify-between">
+              <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
+                <i data-lucide="lightbulb" style="width:18px;height:18px;color:#f59e0b"></i>
+                <h3 style="font-size:13px;font-weight:700;color:#92400e;text-transform:uppercase;letter-spacing:0.5px">Tips Hari Ini</h3>
+              </div>
+              <button id="close-tips" style="background:none;border:none;cursor:pointer;color:#94a3b8;padding:2px" title="Tutup">
+                <i data-lucide="x" style="width:16px;height:16px"></i>
+              </button>
+            </div>
+            <div class="px-4 pb-4" style="display:flex;flex-direction:column;gap:10px">
+              ${tips.map(tip => `
+                <div style="display:flex;align-items:flex-start;gap:10px;padding:10px;background:white;border-radius:10px;border:1px solid #fde68a">
+                  <div style="width:32px;height:32px;border-radius:8px;background:${tip.color}15;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+                    <i data-lucide="${tip.icon}" style="width:16px;height:16px;color:${tip.color}"></i>
+                  </div>
+                  <div>
+                    <p style="font-weight:600;color:#1e293b;font-size:13px">${tip.title}</p>
+                    <p style="font-size:12px;color:#64748b;margin-top:2px">${tip.desc}</p>
+                  </div>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+        ` : ''}
 
         <div class="grid grid-cols-1 xl:grid-cols-2 gap-6">
           <div class="card p-6">
@@ -324,6 +354,84 @@ export class AnalyticsPage {
 
   formatNumber(num) { return num ? num.toLocaleString('id-ID') : '0' }
 
+  generateTips() {
+    if (this.tipsDismissed) return []
+    const tips = []
+
+    const productSales = {}
+    this.sales.forEach(s => {
+      (s.sale_items || []).forEach(item => {
+        const pid = item.product_id
+        if (!productSales[pid]) {
+          productSales[pid] = { id: pid, name: item.products?.name || 'Unknown', qty: 0, stock: 0 }
+        }
+        productSales[pid].qty += item.quantity
+      })
+    })
+    this.products.forEach(p => {
+      if (productSales[p.id]) {
+        productSales[p.id].stock = p.current_stock || 0
+      }
+    })
+
+    const lowStock = Object.values(productSales)
+      .filter(p => p.stock > 0 && p.stock <= 5 && p.qty > 0)
+      .sort((a, b) => a.stock - b.stock)
+    if (lowStock.length > 0) {
+      const p = lowStock[0]
+      tips.push({
+        icon: 'alert-triangle',
+        color: '#f59e0b',
+        title: `${p.name} stok menipis`,
+        desc: `Sisa ${p.stock} item. Pertimbangkan restock segera.`
+      })
+    }
+
+    const bestSeller = Object.values(productSales).sort((a, b) => b.qty - a.qty)
+    if (bestSeller.length > 0 && bestSeller[0].qty > 2) {
+      const p = bestSeller[0]
+      const stock = this.products.find(pr => pr.id === p.id)?.current_stock || 0
+      if (stock > 0 && stock <= 10) {
+        tips.push({
+          icon: 'trending-up',
+          color: '#22c55e',
+          title: `${p.name} sering terjual`,
+          desc: `Terjual ${p.qty} item. Stok tersisa ${stock}. Pertimbangkan menambah stok.`
+        })
+      }
+    }
+
+    const noSales = this.products.filter(p => {
+      const sold = productSales[p.id]?.qty || 0
+      return sold === 0 && (p.current_stock || 0) > 0
+    }).slice(0, 3)
+    if (noSales.length > 0) {
+      tips.push({
+        icon: 'package-x',
+        color: '#ef4444',
+        title: `${noSales.length} produk belum terjual`,
+        desc: `${noSales.map(p => p.name).join(', ')}. Pertimbangkan promosi atau diskon.`
+      })
+    }
+
+    const today = new Date().toLocaleDateString('id-ID', { day: '2-digit', month: 'short' })
+    const todaySales = this.sales.filter(s => {
+      const d = new Date(s.created_at).toLocaleDateString('id-ID', { day: '2-digit', month: 'short' })
+      return d === today
+    })
+    const todayTotal = todaySales.reduce((sum, s) => sum + (s.total_amount || 0), 0)
+    if (todayTotal > 0) {
+      tips.push({
+        icon: 'calendar-check',
+        color: '#0ea5e9',
+        title: `Penjualan hari ini: Rp ${this.formatNumber(todayTotal)}`,
+        desc: `${todaySales.length} transaksi tercatat hari ini.`
+      })
+    }
+
+    return tips.slice(0, 3)
+  }
+
   async bindEvents() {
     await this.loadData()
     this.destroyCharts()
@@ -333,6 +441,11 @@ export class AnalyticsPage {
       this.period = e.target.value
       await this.loadData()
       this.destroyCharts()
+      this.renderAndBind()
+    })
+
+    document.getElementById('close-tips')?.addEventListener('click', () => {
+      this.tipsDismissed = true
       this.renderAndBind()
     })
 
