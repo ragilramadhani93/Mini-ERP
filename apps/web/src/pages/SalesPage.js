@@ -289,7 +289,7 @@ export class SalesPage {
                   </span>
                 ` : `<span class="customer-cell">${s.customer_name}</span>`
 
-                const marketplaceHtml = s.marketplace ? `<span class="badge" style="background:#eff6ff;color:#2563eb">${marketplaceNames[s.marketplace]}</span>` : '-'
+                const marketplaceHtml = s.marketplace ? `<span class="badge" style="background:#F4E5EC;color:#7A3B58">${marketplaceNames[s.marketplace]}</span>` : '-'
 
                 const platformFeeHtml = s.platform_fee > 0 ? `<span style="color:#ef4444;font-weight:600">- Rp ${this.formatNumber(s.platform_fee)}</span>` : '-'
 
@@ -314,7 +314,7 @@ export class SalesPage {
                     <td><div class="action-cell">
                       <button class="action-btn view-sale" data-id="${s.id}" title="Lihat Detail">👁️</button>
                       <button class="action-btn print-sale" data-id="${s.id}" title="Cetak Invoice">🖨️</button>
-                      ${s.status !== 'completed' ? `<button class="action-btn edit-sale" data-id="${s.id}" title="Edit Draft" style="border-color:#2563eb;color:#2563eb">✏️</button>` : ''}
+                      ${s.status !== 'completed' ? `<button class="action-btn edit-sale" data-id="${s.id}" title="Edit Draft" style="border-color:#7A3B58;color:#7A3B58">✏️</button>` : ''}
                       ${s.status !== 'completed' ? `<button class="action-btn close-sale" data-id="${s.id}" title="Tutup (Lunas)" style="border-color:#22c55e;color:#16a34a">✓</button>` : ''}
                       ${s.status !== 'completed' ? `<button class="action-btn delete-sale" data-id="${s.id}" title="Hapus Draft" style="border-color:#ef4444;color:#ef4444">🗑️</button>` : ''}
                     </div></td>
@@ -767,13 +767,13 @@ export class SalesPage {
         <title>Cetak Invoice - ${sale.invoice_number}</title>
         <style>
           body { font-family: 'Courier New', monospace; padding: 40px; color: #0f172a; }
-          .header { text-align: center; margin-bottom: 30px; padding-bottom: 20px; border-bottom: 2px solid #2563eb; }
-          .header h1 { font-size: 24px; margin: 0; color: #2563eb; }
+          .header { text-align: center; margin-bottom: 30px; padding-bottom: 20px; border-bottom: 2px solid #7A3B58; }
+          .header h1 { font-size: 24px; margin: 0; color: #7A3B58; }
           .header p { margin: 4px 0 0; color: #64748b; font-size: 12px; }
           .info { display: flex; justify-content: space-between; margin-bottom: 20px; font-size: 13px; }
           .info .label { color: #64748b; }
           table { width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 13px; }
-          th { background: #2563eb; color: white; padding: 10px 12px; text-align: left; font-size: 12px; }
+          th { background: #7A3B58; color: white; padding: 10px 12px; text-align: left; font-size: 12px; }
           td { padding: 8px 12px; border-bottom: 1px solid #e2e8f0; }
           .total-section { text-align: right; padding-top: 15px; border-top: 2px solid #0f172a; }
           .total-section .total { font-size: 20px; font-weight: bold; color: #16a34a; }
@@ -782,7 +782,7 @@ export class SalesPage {
         </style>
       </head>
       <body>
-        <div class="header"><h1>StokCuan</h1><p>Invoice Penjualan</p></div>
+        <div class="header"><h1>Jenna Shop</h1><p>Invoice Penjualan</p></div>
         <div class="info">
           <div>
             <p><span class="label">Invoice:</span> ${sale.invoice_number}</p>

@@ -160,21 +160,6 @@ export class Layout {
           `).join('')}
         </nav>
 
-        <div class="sidebar-tip" id="tipCard">
-          <button class="tip-close" id="close-tip" title="Tutup">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-          </button>
-          <div class="tip-label">
-            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a7 7 0 015.292 11.625A7 7 0 0115 17.93V19a1 1 0 01-1 1h-4a1 1 0 01-1-1v-1.07A7 7 0 016.708 13.625 7 7 0 0112 2zm2 16H10v1h4v-1zm-1-1v-.93a5 5 0 10-2 0V17h2z"/></svg>
-            Tips Hari Ini
-          </div>
-          <p class="tip-text"><strong>Mouse Wireless</strong> sering terjual. Pertimbangkan menambah stok segera.</p>
-          <a href="#/products" class="tip-link" data-path="/products">
-            Lihat Detail
-            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
-          </a>
-        </div>
-
         <div class="sidebar-divider"></div>
 
         <div class="sidebar-user" id="user-menu-btn">
@@ -207,10 +192,10 @@ export class Layout {
         <div class="w-72 h-full bg-white overflow-y-auto" id="mobile-menu-drawer">
           <div class="p-4 border-b border-gray-200 flex items-center justify-between">
             <div class="flex items-center gap-2">
-              <div class="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
+              <div class="w-8 h-8 bg-primary-600 rounded-lg flex items-center justify-center">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
               </div>
-              <span class="text-lg font-bold text-gray-900">StokCuan</span>
+              <span class="text-lg font-bold text-gray-900">Jenna <span style="color:#7A3B58">Shop</span></span>
             </div>
             <button id="close-mobile-menu" class="text-gray-400 hover:text-gray-600" style="border:none;background:none;cursor:pointer">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
@@ -222,7 +207,7 @@ export class Layout {
               ${section.items.map(item => {
                 const isActive = item.path === currentPath
                 return `
-                  <a href="#${item.path}" class="flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium transition-all ${isActive ? 'bg-blue-600 text-white' : 'text-gray-600 hover:bg-gray-100'}" data-path="${item.path}">
+                  <a href="#${item.path}" class="flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium transition-all ${isActive ? 'bg-primary-600 text-white' : 'text-gray-600 hover:bg-gray-100'}" data-path="${item.path}">
                     <span style="width:18px;height:18px;display:flex;align-items:center;justify-content:center;flex-shrink:0">${icons[item.icon] || ''}</span>
                     <span>${item.label}</span>
                   </a>
@@ -263,7 +248,7 @@ export class Layout {
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
             <span style="width:7px;height:7px;background:#ef4444;border-radius:50%;position:absolute;top:6px;right:6px;border:1.5px solid white"></span>
           </button>
-          <div style="width:34px;height:34px;background:linear-gradient(135deg,#2563eb,#7c3aed);border-radius:50%;display:flex;align-items:center;justify-content:center;color:white;font-size:12px;font-weight:700;cursor:pointer;flex-shrink:0">${initials}</div>
+          <div style="width:34px;height:34px;background:linear-gradient(135deg,#7A3B58,#54283D);border-radius:50%;display:flex;align-items:center;justify-content:center;color:white;font-size:12px;font-weight:700;cursor:pointer;flex-shrink:0">${initials}</div>
         </div>
       </header>
     `
@@ -338,7 +323,7 @@ export class Layout {
       if (e.target === e.currentTarget) this.closeMobileMenu()
     })
 
-    document.querySelectorAll('.sidebar .nav-item, .sidebar .nav-sub-item, #mobile-nav a, #tipCard .tip-link, .bottom-tab').forEach(link => {
+    document.querySelectorAll('.sidebar .nav-item, .sidebar .nav-sub-item, #mobile-nav a, .bottom-tab').forEach(link => {
       link.addEventListener('click', (e) => {
         const path = link.dataset.path
         if (!path) return

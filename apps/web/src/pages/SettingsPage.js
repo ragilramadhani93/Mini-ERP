@@ -70,7 +70,7 @@ export class SettingsPage {
                     </td>
                     ${isOwnerOrAdmin ? `
                       <td style="text-align:center">
-                        <button class="edit-payment-btn action-btn" data-id="${pm.id}" title="Edit" style="border:none;background:none;cursor:pointer;color:#2563eb;padding:4px">
+                        <button class="edit-payment-btn action-btn" data-id="${pm.id}" title="Edit" style="border:none;background:none;cursor:pointer;color:#7A3B58;padding:4px">
                           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
                         </button>
                       </td>
@@ -88,7 +88,7 @@ export class SettingsPage {
   }
 
   renderModal() {
-    const pm = this.editingPayment || { code: '', name: '', color: '#2563eb', sort_order: this.paymentMethods.length + 1, is_active: true }
+    const pm = this.editingPayment || { code: '', name: '', color: '#7A3B58', sort_order: this.paymentMethods.length + 1, is_active: true }
     const isEdit = !!this.editingPayment
 
     return `
@@ -112,8 +112,8 @@ export class SettingsPage {
             <div>
               <label for="pm-color" style="font-size:12px;font-weight:600;color:#334155">Warna Badge</label>
               <div style="display:flex;gap:8px;align-items:center;margin-top:4px">
-                <input type="color" id="pm-color" name="color" value="${pm.color || '#2563eb'}" style="width:40px;height:36px;border:1px solid #e2e8f0;border-radius:6px;padding:2px;cursor:pointer">
-                <span id="color-hex" style="font-size:12px;color:#64748b">${pm.color || '#2563eb'}</span>
+                <input type="color" id="pm-color" name="color" value="${pm.color || '#7A3B58'}" style="width:40px;height:36px;border:1px solid #e2e8f0;border-radius:6px;padding:2px;cursor:pointer">
+                <span id="color-hex" style="font-size:12px;color:#64748b">${pm.color || '#7A3B58'}</span>
               </div>
             </div>
             <div>
@@ -121,7 +121,7 @@ export class SettingsPage {
               <input type="number" id="pm-sort" name="sort_order" value="${pm.sort_order}" min="1" style="width:80px;padding:8px 10px;border:1px solid #e2e8f0;border-radius:8px;font-size:13px;margin-top:4px">
             </div>
             <div style="display:flex;align-items:center;gap:8px">
-              <input type="checkbox" id="pm-active" name="is_active" ${pm.is_active ? 'checked' : ''} style="width:16px;height:16px;accent-color:#2563eb">
+              <input type="checkbox" id="pm-active" name="is_active" ${pm.is_active ? 'checked' : ''} style="width:16px;height:16px;accent-color:#7A3B58">
               <label for="pm-active" style="font-size:13px;color:#334155">Aktif</label>
             </div>
             <div class="flex justify-end gap-3 pt-4" style="border-top:1px solid #f1f5f9">

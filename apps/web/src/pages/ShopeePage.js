@@ -267,11 +267,11 @@ export class ShopeePage {
             <label class="block text-sm font-medium text-gray-700 mb-2">Tipe File</label>
             <div class="flex gap-4">
               <label class="inline-flex items-center">
-                <input type="radio" name="fileType" value="csv" checked class="form-radio text-blue-600">
+                <input type="radio" name="fileType" value="csv" checked class="form-radio text-primary-600">
                 <span class="ml-2">CSV (Format Sederhana)</span>
               </label>
               <label class="inline-flex items-center">
-                <input type="radio" name="fileType" value="excel" class="form-radio text-blue-600">
+                <input type="radio" name="fileType" value="excel" class="form-radio text-primary-600">
                 <span class="ml-2">Excel (Format Shopee)</span>
               </label>
             </div>
@@ -295,7 +295,7 @@ export class ShopeePage {
 
           <div class="mb-4">
             <label class="block text-sm font-medium text-gray-700 mb-2">Pilih File</label>
-            <input type="file" id="fileInput" accept=".csv,.xls,.xlsx" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
+            <input type="file" id="fileInput" accept=".csv,.xls,.xlsx" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary-50 file:text-primary-700 hover:file:bg-primary-100">
           </div>
 
           <div class="flex gap-4">
@@ -309,9 +309,9 @@ export class ShopeePage {
             <h3 class="text-lg font-semibold mb-4">Preview Data Import (${this.importedData.length} baris)</h3>
             
             ${this.fileType === 'excel' ? `
-              <div class="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                <h4 class="font-medium text-blue-800 mb-1">Mapping Kolom Shopee</h4>
-                <p class="text-sm text-blue-700">
+              <div class="mb-4 p-3 bg-primary-50 border border-primary-200 rounded-lg">
+                <h4 class="font-medium text-primary-800 mb-1">Mapping Kolom Shopee</h4>
+                <p class="text-sm text-primary-700">
                   Kolom dari file Shopee akan dipetakan otomatis ke format database.
                   Contoh mapping: "No. Pesanan" → invoice_number, "Total Pembayaran" → total_amount
                 </p>

@@ -184,7 +184,7 @@ export class ProductsPage {
                           <div>
                             <strong>${p.name}</strong>
                             <small>SKU : ${p.sku}</small>
-                            ${hasVariants ? `<div style="margin-top:2px">${variants.map(v => `<span style="display:inline-block;font-size:10px;padding:1px 6px;background:#eff6ff;color:#2563eb;border-radius:4px;margin-right:4px">${v.name}: ${(v.values || []).length} opsi</span>`).join('')}<span style="font-size:10px;color:#64748b">${skus.length} SKU</span></div>` : ''}
+                            ${hasVariants ? `<div style="margin-top:2px">${variants.map(v => `<span style="display:inline-block;font-size:10px;padding:1px 6px;background:#F4E5EC;color:#7A3B58;border-radius:4px;margin-right:4px">${v.name}: ${(v.values || []).length} opsi</span>`).join('')}<span style="font-size:10px;color:#64748b">${skus.length} SKU</span></div>` : ''}
                           </div>
                         </div>
                       </td>
@@ -333,7 +333,7 @@ export class ProductsPage {
                     </div>
                   `).join('')}
                 </div>
-                <button type="button" id="add-variant" style="display: inline-flex; align-items: center; gap: 4px; padding: 6px 12px; border: 1px dashed #93c5fd; background: #eff6ff; color: #2563eb; border-radius: 8px; cursor: pointer; font-size: 12px; font-weight: 500;">
+                <button type="button" id="add-variant" style="display: inline-flex; align-items: center; gap: 4px; padding: 6px 12px; border: 1px dashed #D7B1C1; background: #F4E5EC; color: #7A3B58; border-radius: 8px; cursor: pointer; font-size: 12px; font-weight: 500;">
                   + Tambah Variasi
                 </button>
 

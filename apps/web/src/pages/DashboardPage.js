@@ -130,9 +130,9 @@ export class DashboardPage {
                   ${this.chartPeriod} Hari <i data-lucide="chevron-down" class="w-3 h-3"></i>
                 </button>
                 <div id="chart-filter-dropdown" class="absolute right-0 top-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-10 hidden min-w-[100px]">
-                  <button data-days="7" class="chart-filter-option w-full text-left px-3 py-2 text-xs hover:bg-gray-50 ${this.chartPeriod === 7 ? 'bg-blue-50 text-blue-600 font-medium' : 'text-gray-700'}">7 Hari</button>
-                  <button data-days="14" class="chart-filter-option w-full text-left px-3 py-2 text-xs hover:bg-gray-50 ${this.chartPeriod === 14 ? 'bg-blue-50 text-blue-600 font-medium' : 'text-gray-700'}">14 Hari</button>
-                  <button data-days="30" class="chart-filter-option w-full text-left px-3 py-2 text-xs hover:bg-gray-50 ${this.chartPeriod === 30 ? 'bg-blue-50 text-blue-600 font-medium' : 'text-gray-700'}">30 Hari</button>
+                  <button data-days="7" class="chart-filter-option w-full text-left px-3 py-2 text-xs hover:bg-gray-50 ${this.chartPeriod === 7 ? 'bg-primary-50 text-primary-600 font-medium' : 'text-gray-700'}">7 Hari</button>
+                  <button data-days="14" class="chart-filter-option w-full text-left px-3 py-2 text-xs hover:bg-gray-50 ${this.chartPeriod === 14 ? 'bg-primary-50 text-primary-600 font-medium' : 'text-gray-700'}">14 Hari</button>
+                  <button data-days="30" class="chart-filter-option w-full text-left px-3 py-2 text-xs hover:bg-gray-50 ${this.chartPeriod === 30 ? 'bg-primary-50 text-primary-600 font-medium' : 'text-gray-700'}">30 Hari</button>
                 </div>
               </div>
             </div>
@@ -273,8 +273,8 @@ export class DashboardPage {
   renderStatCard(label, value, icon) {
     return `
       <div class="bg-white rounded-xl border border-gray-200 p-4">
-        <div class="w-9 h-9 rounded-xl bg-blue-50 flex items-center justify-center mb-3">
-          <i data-lucide="${icon}" class="w-4.5 h-4.5 text-blue-600"></i>
+        <div class="w-9 h-9 rounded-xl bg-primary-50 flex items-center justify-center mb-3">
+          <i data-lucide="${icon}" class="w-4.5 h-4.5 text-primary-600"></i>
         </div>
         <p class="text-[11px] text-gray-500 mb-0.5">${label}</p>
         <p class="text-sm font-bold text-gray-900">${value}</p>
@@ -295,7 +295,7 @@ export class DashboardPage {
             <span class="text-xs font-semibold text-gray-700">Rp ${this.formatNumber(amount)}</span>
           </div>
           <div class="w-full h-1.5 bg-gray-100 rounded-full overflow-hidden">
-            <div class="h-full bg-blue-500 rounded-full" style="width:${pct}%"></div>
+            <div class="h-full bg-primary-500 rounded-full" style="width:${pct}%"></div>
           </div>
         </div>
       </div>
@@ -406,8 +406,8 @@ export class DashboardPage {
       <svg viewBox="0 0 ${w} ${h}" class="w-full h-full" preserveAspectRatio="xMidYMid meet">
         <defs>
           <linearGradient id="areaFill" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0" stop-color="#2563eb" stop-opacity="0.12"/>
-            <stop offset="1" stop-color="#2563eb" stop-opacity="0.01"/>
+            <stop offset="0" stop-color="#7A3B58" stop-opacity="0.12"/>
+            <stop offset="1" stop-color="#7A3B58" stop-opacity="0.01"/>
           </linearGradient>
         </defs>
 
@@ -429,7 +429,7 @@ export class DashboardPage {
 
         <path d="${areaPath}" fill="url(#areaFill)"/>
 
-        <path d="${smoothPath}" fill="none" stroke="#2563eb" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="${smoothPath}" fill="none" stroke="#7A3B58" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
 
         ${points.map((p, i) => {
           const dateStr = new Date(data[i].dateRaw || Date.now() - (data.length - 1 - i) * 86400000).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })
@@ -441,8 +441,8 @@ export class DashboardPage {
           const tipY = p.y - tipH - 10
           return `
             <g class="chart-point-group">
-              <circle class="point-ring" cx="${p.x}" cy="${p.y}" r="9" fill="white" stroke="#2563eb" stroke-width="2" opacity="0"/>
-              <circle class="point-dot" cx="${p.x}" cy="${p.y}" r="4" fill="white" stroke="#2563eb" stroke-width="2.5"/>
+              <circle class="point-ring" cx="${p.x}" cy="${p.y}" r="9" fill="white" stroke="#7A3B58" stroke-width="2" opacity="0"/>
+              <circle class="point-dot" cx="${p.x}" cy="${p.y}" r="4" fill="white" stroke="#7A3B58" stroke-width="2.5"/>
               <g class="hover-tooltip">
                 <rect x="${tipX}" y="${tipY}" width="${tipW}" height="${tipH}" rx="8" fill="white" stroke="#e5e7eb" stroke-width="1" filter="drop-shadow(0 2px 6px rgba(0,0,0,0.1))"/>
                 <text x="${tipX + tipW / 2}" y="${tipY + 16}" text-anchor="middle" class="text-[10px] fill-gray-500">${dateStr}</text>

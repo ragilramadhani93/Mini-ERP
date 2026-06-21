@@ -76,7 +76,7 @@
     @apply bg-emerald-50 text-emerald-700;
   }
   .badge-qris {
-    @apply bg-blue-50 text-blue-700;
+    @apply bg-primary-50 text-primary-700;
   }
   .badge-transfer {
     @apply bg-violet-50 text-violet-700;
@@ -160,18 +160,18 @@
   align-items: center;
   gap: 8px;
   padding: 12px 24px;
-  background: #2563eb;
+  background: #7A3B58;
   border: none;
   border-radius: 10px;
   font-size: 14px;
   font-weight: 600;
   color: white;
   cursor: pointer;
-  box-shadow: 0 1px 4px rgba(37,99,235,0.3);
+  box-shadow: 0 1px 4px rgba(122,59,88,0.3);
   height: 48px;
 }
 .sales-page .header-actions .btn-primary:hover {
-  background: #1d4ed8;
+  background: #54283D;
 }
 .sales-page .header-actions .btn-primary svg {
   width: 18px;
@@ -216,11 +216,11 @@
   color: #16a34a;
 }
 .sales-page .action-btn.view-sale:hover {
-  background: #eff6ff;
-  border-color: #2563eb;
+  background: #F4E5EC;
+  border-color: #7A3B58;
 }
 .sales-page .action-btn.view-sale:hover svg {
-  color: #2563eb;
+  color: #7A3B58;
 }
 .sales-page td:last-child {
   white-space: nowrap;
@@ -261,7 +261,7 @@
   position: absolute;
   top: 0; left: 0; right: 0;
   height: 3px;
-  background: var(--card-accent, #3b82f6);
+  background: var(--card-accent, #7A3B58);
   border-radius: 14px 14px 0 0;
 }
 .sales-page .stat-card.green  { --card-accent: #22c55e; }
@@ -288,7 +288,7 @@
   align-items: center;
   justify-content: center;
 }
-.sales-page .stat-icon.blue   { background: #eff6ff; color: #2563eb; }
+.sales-page .stat-icon.blue   { background: #F4E5EC; color: #7A3B58; }
 .sales-page .stat-icon.green  { background: #f0fdf4; color: #22c55e; }
 .sales-page .stat-icon.amber  { background: #fff7ed; color: #f59e0b; }
 .sales-page .stat-icon.purple { background: #faf5ff; color: #a855f7; }
@@ -339,8 +339,8 @@
 .sales-page .table-count {
   display: inline-flex;
   align-items: center;
-  background: #eff6ff;
-  color: #2563eb;
+  background: #F4E5EC;
+  color: #7A3B58;
   font-size: 11px;
   font-weight: 700;
   padding: 2px 8px;
@@ -399,8 +399,8 @@
   font-family: 'Inter', monospace;
   font-size: 12px;
   font-weight: 600;
-  color: #2563eb;
-  background: #eff6ff;
+  color: #7A3B58;
+  background: #F4E5EC;
   padding: 3px 8px;
   border-radius: 4px;
   letter-spacing: 0.03em;
@@ -445,8 +445,8 @@
   font-weight: 600;
 }
 .sales-page .badge-tunai    { background: #f0fdf4; color: #15803d; }
-.sales-page .badge-transfer { background: #eff6ff; color: #2563eb; }
-.sales-page .badge-qris     { background: #faf5ff; color: #7c3aed; }
+.sales-page .badge-transfer { background: #F4E5EC; color: #7A3B58; }
+.sales-page .badge-qris     { background: #faf5ff; color: #54283D; }
 .sales-page .badge-belum    { background: #fef3c7; color: #92400e; }
 .sales-page .badge svg { width: 10px; height: 10px; }
 .sales-page .amount-received { color: #16a34a; font-weight: 700; }
@@ -455,7 +455,7 @@
 .sales-page .by-cell { font-size: 12px; color: #64748b; }
 .sales-page .by-avatar {
   width: 24px; height: 24px;
-  background: #2563eb;
+  background: #7A3B58;
   border-radius: 50%;
   display: inline-flex;
   align-items: center;
@@ -479,9 +479,9 @@
   color: #64748b;
 }
 .sales-page .action-btn:hover {
-  background: #eff6ff;
-  border-color: #3b82f6;
-  color: #2563eb;
+  background: #F4E5EC;
+  border-color: #7A3B58;
+  color: #7A3B58;
 }
 .sales-page .action-btn.print-sale:hover {
   background: #f0fdf4;
@@ -531,7 +531,7 @@
   justify-content: center;
 }
 .sales-page .page-btn:hover { background: #f8fafc; }
-.sales-page .page-btn.active { background: #2563eb; border-color: #2563eb; color: white; }
+.sales-page .page-btn.active { background: #7A3B58; border-color: #7A3B58; color: white; }
 
 .sales-page .payment-cell {
   display: flex;
@@ -601,14 +601,14 @@
 }
 .logo-icon {
   width: 34px; height: 34px;
-  background: #2563eb;
+  background: #7A3B58;
   border-radius: 9px;
   display: flex; align-items: center; justify-content: center;
   flex-shrink: 0;
 }
 .logo-icon svg { width: 18px; height: 18px; color: white; }
 .logo-text { font-size: 16px; font-weight: 700; color: #0f172a; white-space: nowrap; }
-.logo-text span { color: #2563eb; }
+.logo-text span { color: #7A3B58; }
 .logo-toggle {
   margin-left: auto;
   width: 26px; height: 26px;
@@ -665,8 +665,8 @@
 }
 .nav-item:hover { background: #f8fafc; color: #1e293b; }
 .nav-item.active {
-  background: #eff6ff;
-  color: #2563eb;
+  background: #F4E5EC;
+  color: #7A3B58;
   font-weight: 600;
 }
 .nav-item.active::before {
@@ -674,7 +674,7 @@
   position: absolute;
   left: 0; top: 6px; bottom: 6px;
   width: 3px;
-  background: #2563eb;
+  background: #7A3B58;
   border-radius: 0 3px 3px 0;
 }
 .nav-item svg { width: 16px; height: 16px; flex-shrink: 0; opacity: .75; }
@@ -682,7 +682,7 @@
 
 .nav-badge {
   margin-left: auto;
-  background: #2563eb;
+  background: #7A3B58;
   color: white;
   font-size: 10px;
   font-weight: 700;
@@ -718,7 +718,7 @@
   transition: background .12s, color .12s;
 }
 .nav-sub-item:hover { background: #f8fafc; color: #334155; }
-.nav-sub-item.active { color: #2563eb; font-weight: 600; }
+.nav-sub-item.active { color: #7A3B58; font-weight: 600; }
 .nav-sub-dot { width: 5px; height: 5px; border-radius: 50%; background: currentColor; flex-shrink: 0; opacity: .5; }
 .nav-sub-item.active .nav-sub-dot { opacity: 1; }
 
@@ -749,7 +749,7 @@
   gap: 3px;
   font-size: 11px;
   font-weight: 600;
-  color: #2563eb;
+  color: #7A3B58;
   margin-top: 7px;
   text-decoration: none;
 }
@@ -781,7 +781,7 @@
 .sidebar-user:hover { background: #f8fafc; }
 .user-avatar {
   width: 34px; height: 34px;
-  background: linear-gradient(135deg, #2563eb 0%, #7c3aed 100%);
+  background: linear-gradient(135deg, #7A3B58 0%, #54283D 100%);
   border-radius: 50%;
   display: flex; align-items: center; justify-content: center;
   color: white;
@@ -926,13 +926,13 @@
 }
 
 .action-btn.primary {
-  background: #2563eb;
+  background: #7A3B58;
   color: white;
   border: none;
 }
 
 .action-btn.primary:hover {
-  background: #1d4ed8;
+  background: #54283D;
 }
 
 .action-btn:not(.primary) {
@@ -954,7 +954,7 @@
 }
 
 .hero-kpi {
-  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+  background: linear-gradient(135deg, #7A3B58 0%, #54283D 100%);
   border-radius: 16px;
   padding: 24px;
   color: white;
@@ -1088,7 +1088,7 @@
   margin-left: auto;
   font-size: 14px;
   font-weight: 700;
-  color: #2563eb;
+  color: #7A3B58;
 }
 
 .market-row {
@@ -1125,7 +1125,7 @@
 
 .progress > div {
   height: 100%;
-  background: #2563eb;
+  background: #7A3B58;
   border-radius: 999px;
   transition: width 0.3s ease;
 }
@@ -1179,7 +1179,7 @@
 .activity-item strong {
   font-size: 14px;
   font-weight: 700;
-  color: #2563eb;
+  color: #7A3B58;
 }
 
 @media (max-width: 1024px) {
@@ -1523,7 +1523,7 @@
     border-radius: 18px;
     transition: .2s;
 }
-.sales-modal .cart-item:hover { border-color: #2563eb; }
+.sales-modal .cart-item:hover { border-color: #7A3B58; }
 .sales-modal .product-image {
     width: 70px;
     height: 70px;
@@ -1617,7 +1617,7 @@
     cursor: pointer;
     margin-top: 15px;
 }
-.sales-modal .add-item-btn:hover { border-color: #2563eb; color: #2563eb; }
+.sales-modal .add-item-btn:hover { border-color: #7A3B58; color: #7A3B58; }
 .sales-modal .summary-panel {
     padding: 25px;
     background: #fbfcfe;
@@ -1671,9 +1671,9 @@
 .sales-modal .add-split {
     width: 100%;
     height: 48px;
-    border: 1px dashed #2563eb;
-    background: #eff6ff;
-    color: #2563eb;
+    border: 1px dashed #7A3B58;
+    background: #F4E5EC;
+    color: #7A3B58;
     font-weight: 600;
     border-radius: 12px;
     cursor: pointer;
@@ -1699,7 +1699,7 @@
     border-top: 1px solid #e5e7eb;
     font-size: 20px;
     font-weight: 700;
-    color: #2563eb;
+    color: #7A3B58;
 }
 .sales-modal .action-buttons {
     margin-top: 20px;
@@ -1725,7 +1725,7 @@
     color: #64748b;
 }
 .sales-modal .btn-save {
-    background: #2563eb;
+    background: #7A3B58;
     color: white;
     border: none;
 }

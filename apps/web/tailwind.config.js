@@ -8,17 +8,17 @@ export default {
     extend: {
       colors: {
         primary: {
-          50: '#eef4ff',
-          100: '#d9e6ff',
-          200: '#b3ccff',
-          300: '#80adff',
-          400: '#4d8aff',
-          500: '#1a66ff',
-          600: '#0052cc',
-          700: '#003d99',
-          800: '#002966',
-          900: '#001433',
-          DEFAULT: '#0052cc'
+          50: '#F4E5EC',
+          100: '#EBD8E0',
+          200: '#D7B1C1',
+          300: '#C38AA2',
+          400: '#AF6383',
+          500: '#9B3C64',
+          600: '#7A3B58',
+          700: '#54283D',
+          800: '#3A1B2A',
+          900: '#2B1F26',
+          DEFAULT: '#7A3B58'
         },
         surface: '#f8f9fb',
         'surface-container': '#ffffff',
@@ -42,7 +42,7 @@ export default {
         custom: '8px'
       },
       fontFamily: {
-        sans: ['Poppins', 'system-ui', 'sans-serif']
+        sans: ['Inter', 'system-ui', 'sans-serif']
       }
     }
   },

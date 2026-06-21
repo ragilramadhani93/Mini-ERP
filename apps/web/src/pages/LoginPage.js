@@ -9,99 +9,84 @@ export class LoginPage {
   render() {
     return `
       <style>
-        .lp *{margin:0;padding:0;box-sizing:border-box;font-family:'Poppins',sans-serif}
-        .lp{min-height:100vh;display:flex;justify-content:center;align-items:center;background:linear-gradient(135deg,#f5f7ff,#eef7ff);padding:15px}
-        .lpw{width:100%;max-width:1200px;min-height:600px;background:#fff;border-radius:30px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.08);display:flex}
-        .lpl{width:42%;padding:35px 50px;display:flex;flex-direction:column;justify-content:center}
-        .lplogo{width:140px;margin-bottom:25px}
-        .lpl h1{font-size:30px;color:#0f172a;line-height:1.2;margin-bottom:6px;font-weight:700}
-        .lpsub{color:#64748b;font-size:14px;line-height:1.5;margin-bottom:20px}
-        .lpfg{margin-bottom:14px}
-        .lpfg label{display:block;margin-bottom:6px;font-weight:600;color:#334155;font-size:14px}
-        .lpin{position:relative}
-        .lpin input{width:100%;height:48px;border:1px solid #dbe1ea;border-radius:12px;padding:0 16px;font-size:14px;outline:none;transition:.3s;font-family:'Poppins',sans-serif}
-        .lpin input:focus{border-color:#2563eb;box-shadow:0 0 0 4px rgba(37,99,235,.1)}
-        .lptog{position:absolute;right:16px;top:50%;transform:translateY(-50%);cursor:pointer;color:#94a3b8;font-size:14px}
-        .lpopt{display:flex;justify-content:space-between;align-items:center;margin:8px 0 16px;font-size:13px}
-        .lpopt a{color:#2563eb;text-decoration:none;font-weight:500}
-        .lpbtn{width:100%;height:48px;border:none;border-radius:12px;background:#f59e0b;color:white;font-size:16px;font-weight:700;cursor:pointer;transition:.3s;font-family:'Poppins',sans-serif}
-        .lpbtn:hover{background:#d97706;transform:translateY(-2px)}
-        .lpreg{margin-top:30px;text-align:center;color:#64748b;font-size:14px}
-        .lpreg a{color:#2563eb;text-decoration:none;font-weight:600}
-        .lpr{width:58%;background:linear-gradient(135deg,#dbeafe,#dcfce7);display:flex;justify-content:center;align-items:center;position:relative;overflow:hidden}
-        .lpr::before{content:'';position:absolute;width:700px;height:700px;border-radius:50%;background:rgba(255,255,255,.15);right:-200px;top:-150px}
-        .lph{width:100%;height:100%;position:relative;z-index:2;display:flex;align-items:center;justify-content:center}
-        .lph img{width:100%;height:auto;transform:scale(1.05)}
+        .lp{font-family:'Inter',sans-serif;min-height:100vh;display:flex;align-items:center;justify-content:center;background:#F4F7FB;padding:16px;transform:scale(0.85);transform-origin:center center;margin-top:-7vh}
+        .lpw{background:#fff;border-radius:24px;box-shadow:0 20px 60px rgba(0,0,0,.08);width:100%;max-width:1100px;display:flex;flex-direction:row;gap:8px;padding:12px;overflow:hidden}
+        .lp-left{width:50%;display:flex;flex-direction:column;justify-content:center;padding:48px 32px 48px 64px}
+        .lp-logo-wrap{display:flex;justify-content:center;margin-bottom:32px;margin-top:-16px}
+        .lp-logo{height:199px;object-fit:contain}
+        .lp-left h1{font-size:30px;font-weight:700;color:#111827;margin-bottom:12px}
+        .lp-sub{font-size:14px;color:#6B7280;line-height:1.6;margin-bottom:32px}
+        .lp-field{margin-bottom:20px}
+        .lp-field label{display:block;font-size:13px;font-weight:600;color:#374151;margin-bottom:6px}
+        .lp-field input{width:100%;padding:12px 16px;border-radius:8px;border:1px solid #E5E7EB;font-size:14px;outline:none;transition:all .2s}
+        .lp-field input:focus{border-color:#9D5B7A;box-shadow:0 0 0 3px rgba(157,91,122,.15)}
+        .lp-field input::placeholder{color:#9CA3AF}
+        .lp-pw-wrap{position:relative}
+        .lp-pw-toggle{position:absolute;right:16px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#9CA3AF;padding:0}
+        .lp-pw-toggle:hover{color:#6B7280}
+        .lp-check{display:flex;align-items:center;gap:8px;margin-top:16px;margin-bottom:24px}
+        .lp-check input{width:16px;height:16px;accent-color:#9D5B7A;border-radius:4px}
+        .lp-check label{font-size:13px;color:#4B5563;font-weight:500}
+        .lp-btn{width:100%;background:#E58C96;color:#fff;font-weight:600;padding:14px 16px;border-radius:12px;border:none;font-size:15px;cursor:pointer;transition:all .2s;box-shadow:0 4px 14px rgba(229,140,150,.3)}
+        .lp-btn:hover{background:#D47A84}
+        .lp-btn:disabled{opacity:.6;cursor:not-allowed}
+        .lp-right{width:50%;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden}
         @media(max-width:992px){
           .lpw{flex-direction:column}
-          .lpl,.lpr{width:100%}
-          .lpr{order:-1;min-height:250px;padding:20px}
-          .lpl h1{font-size:26px}
-          .lpl{padding:25px}
-          .lplogo{width:120px}
-          .lpsub{font-size:14px}
+          .lp-left,.lp-right{width:100%}
+          .lp-left{padding:32px 24px}
+          .lp-right{min-height:280px;border-radius:16px}
+          .lp-logo{height:60px}
         }
       </style>
 
       <div class="lp">
         <div class="lpw">
-
-          <div class="lpl">
-            <img class="lplogo"
-              src="https://wpnejkrfjlblxkcakzrg.supabase.co/storage/v1/object/public/Logo/ChatGPT%20Image%20Jun%2014,%202026,%2002_58_56%20PM.png"
-              alt="StokCuan">
+          <div class="lp-left">
+            <div class="lp-logo-wrap">
+              <img class="lp-logo"
+                src="https://wpnejkrfjlblxkcakzrg.supabase.co/storage/v1/object/public/Logo/ChatGPT%20Image%20Jun%2021,%202026,%2010_58_16%20PM.png"
+                alt="Jenna Shop Logo">
+            </div>
 
             <h1>Masuk ke Akun Anda</h1>
+            <p class="lp-sub">Kelola stok, penjualan, dan keuntungan toko Anda dalam satu dashboard.</p>
 
-            <p class="lpsub">
-              Kelola stok, penjualan, dan keuntungan toko Anda dalam satu dashboard.
-            </p>
-
-            ${this.error ? `
-              <div style="margin-bottom:22px;padding:14px 18px;background:#fef2f2;color:#dc2626;border-radius:14px;font-size:14px;border:1px solid #fecaca">
-                ${this.error}
-              </div>
-            ` : ''}
+            ${this.error ? `<div class="lp-error">${this.error}</div>` : ''}
 
             <form id="lp-form">
-              <div class="lpfg">
+              <div class="lp-field">
                 <label>Email</label>
-                <div class="lpin">
-                  <input type="email" id="lp-email" required placeholder="nama@email.com">
-                </div>
+                <input type="email" id="lp-email" required placeholder="nama@email.com">
               </div>
 
-              <div class="lpfg">
+              <div class="lp-field">
                 <label>Password</label>
-                <div class="lpin">
-                  <input type="password" id="lp-pass" required placeholder="Masukkan password" value="password123">
-                  <i class="fa-solid fa-eye lptog" id="lp-tog"></i>
+                <div class="lp-pw-wrap">
+                  <input type="password" id="lp-pass" required placeholder="••••••••••••" value="password123" style="padding-right:48px">
+                  <button type="button" class="lp-pw-toggle" id="lp-tog">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" />
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                  </button>
                 </div>
               </div>
 
-              <div class="lpopt">
-                <label style="display:flex;align-items:center;gap:6px;color:#334155">
-                  <input type="checkbox" style="width:auto;height:auto">
-                  Ingat Saya
-                </label>
+              <div class="lp-check">
+                <input type="checkbox" id="lp-remember">
+                <label for="lp-remember">Ingat Saya</label>
               </div>
 
-              <button class="lpbtn" type="submit">
+              <button class="lp-btn" type="submit" ${this.loading ? 'disabled' : ''}>
                 ${this.loading ? 'Memproses...' : 'Masuk ke Dashboard'}
               </button>
             </form>
-
-
           </div>
 
-          <div class="lpr">
-            <div class="lph">
-              <img
-                src="https://wpnejkrfjlblxkcakzrg.supabase.co/storage/v1/object/public/Logo/74661e31-4de1-4bbe-b153-5def29639fa7.png"
-                alt="StokCuan Illustration">
-            </div>
+          <div class="lp-right">
+            <img src="https://wpnejkrfjlblxkcakzrg.supabase.co/storage/v1/object/public/Logo/ChatGPT%20Image%20Jun%2021,%202026,%2011_32_20%20PM.png" alt="Jenna Shop" style="width:100%;height:100%;object-fit:cover;border-radius:20px">
           </div>
-
         </div>
       </div>
     `
@@ -134,14 +119,13 @@ export class LoginPage {
     const toggle = document.getElementById('lp-tog')
     const pw = document.getElementById('lp-pass')
     toggle?.addEventListener('click', () => {
+      const svg = toggle.querySelector('svg')
       if (pw.type === 'password') {
         pw.type = 'text'
-        toggle.classList.remove('fa-eye')
-        toggle.classList.add('fa-eye-slash')
+        svg.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" d="M3.98 8.223A10.477 10.477 0 001.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.45 10.45 0 0112 4.5c4.756 0 8.773 3.162 10.065 7.498a10.523 10.523 0 01-4.293 5.774M6.228 6.228L3 3m3.228 3.228l3.65 3.65m7.894 7.894L21 21m-3.228-3.228l-3.65-3.65m0 0a3 3 0 10-4.243-4.243m4.242 4.242L9.88 9.88" /><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />'
       } else {
         pw.type = 'password'
-        toggle.classList.remove('fa-eye-slash')
-        toggle.classList.add('fa-eye')
+        svg.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" /><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />'
       }
     })
   }
