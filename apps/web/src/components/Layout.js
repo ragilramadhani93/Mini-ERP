@@ -125,7 +125,7 @@ export class Layout {
           <div class="logo-icon">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
           </div>
-          <span class="logo-text">Stok<span>Cuan</span></span>
+          <span class="logo-text">Jenna<span>Shop</span></span>
           <button class="logo-toggle" id="toggle-sidebar" title="Ciutkan sidebar">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"></polyline></svg>
           </button>
