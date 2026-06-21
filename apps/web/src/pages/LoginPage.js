@@ -13,7 +13,7 @@ export class LoginPage {
         .lpw{background:#fff;border-radius:24px;box-shadow:0 20px 60px rgba(0,0,0,.08);width:100%;max-width:1100px;display:flex;flex-direction:row;gap:8px;padding:12px;overflow:hidden}
         .lp-left{width:50%;display:flex;flex-direction:column;justify-content:center;padding:48px 32px 48px 64px}
         .lp-logo-wrap{display:flex;justify-content:center;margin-bottom:32px;margin-top:-16px}
-        .lp-logo{height:199px;object-fit:contain}
+        .lp-logo{height:169px;object-fit:contain}
         .lp-left h1{font-size:30px;font-weight:700;color:#111827;margin-bottom:12px}
         .lp-sub{font-size:14px;color:#6B7280;line-height:1.6;margin-bottom:32px}
         .lp-field{margin-bottom:20px}
