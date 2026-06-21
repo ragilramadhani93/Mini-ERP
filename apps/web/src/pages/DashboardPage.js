@@ -183,32 +183,7 @@ export class DashboardPage {
               </div>
             `).join('')}
           </div>
-          <div class="card">
-            <div class="card-header">
-              <h3>Marketplace Performance</h3>
-            </div>
-            <div class="market-row">
-              <span>Shopee</span>
-              <strong>45%</strong>
-            </div>
-            <div class="progress">
-              <div style="width:45%"></div>
-            </div>
-            <div class="market-row">
-              <span>TikTok Shop</span>
-              <strong>25%</strong>
-            </div>
-            <div class="progress">
-              <div style="width:25%"></div>
-            </div>
-            <div class="market-row">
-              <span>Tokopedia</span>
-              <strong>18%</strong>
-            </div>
-            <div class="progress">
-              <div style="width:18%"></div>
-            </div>
-          </div>
+
         </section>
 
         <!-- AI FORECAST -->
@@ -278,26 +253,6 @@ export class DashboardPage {
         </div>
         <p class="text-[11px] text-gray-500 mb-0.5">${label}</p>
         <p class="text-sm font-bold text-gray-900">${value}</p>
-      </div>
-    `
-  }
-
-  renderMarketplace(name, amount, pct) {
-    const icons = { 'Shopee': 'shopping-bag', 'TikTok Shop': 'video', 'Tokopedia': 'shopping-cart', 'Lazada': 'package' }
-    return `
-      <div class="flex items-center gap-3">
-        <div class="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center text-xs font-bold text-gray-600 flex-shrink-0">
-          ${name.charAt(0)}
-        </div>
-        <div class="flex-1 min-w-0">
-          <div class="flex items-center justify-between mb-1">
-            <p class="text-sm font-medium text-gray-900">${name}</p>
-            <span class="text-xs font-semibold text-gray-700">Rp ${this.formatNumber(amount)}</span>
-          </div>
-          <div class="w-full h-1.5 bg-gray-100 rounded-full overflow-hidden">
-            <div class="h-full bg-primary-500 rounded-full" style="width:${pct}%"></div>
-          </div>
-        </div>
       </div>
     `
   }
