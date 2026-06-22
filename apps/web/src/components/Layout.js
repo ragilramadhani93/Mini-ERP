@@ -164,7 +164,7 @@ export class Layout {
 
         <div class="sidebar-divider"></div>
 
-        <div class="sidebar-user" id="user-menu-btn">
+        <div class="sidebar-user" id="user-menu-btn" style="cursor:pointer" onclick="window.location.hash='/profile'">
           <div class="user-avatar">${initials}</div>
           <div class="user-info">
             <div class="user-name">${userName}</div>
@@ -218,7 +218,11 @@ export class Layout {
             `).join('')}
           </nav>
           <div class="p-4 border-t border-gray-200 mt-4">
-            <button id="mobile-logout-btn" class="w-full py-2.5 px-4 text-red-600 font-medium hover:bg-red-50 rounded-xl flex items-center justify-center gap-2 text-sm" style="border:none;cursor:pointer">
+            <a href="#/profile" class="w-full py-2.5 px-4 text-gray-700 font-medium hover:bg-gray-100 rounded-xl flex items-center justify-center gap-2 text-sm" style="border:none;cursor:pointer;text-decoration:none">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+              Profil
+            </a>
+            <button id="mobile-logout-btn" class="w-full py-2.5 px-4 text-red-600 font-medium hover:bg-red-50 rounded-xl flex items-center justify-center gap-2 text-sm mt-2" style="border:none;cursor:pointer">
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
               Keluar
             </button>
