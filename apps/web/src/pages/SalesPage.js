@@ -1081,8 +1081,16 @@ export class SalesPage {
     document.getElementById('marketplace')?.addEventListener('change', (e) => {
       this.formMarketplace = e.target.value
       const section = document.getElementById('platformFeeSection')
+      const input = document.getElementById('platform_fee')
       if (section) {
         section.classList.toggle('hidden', e.target.value === '')
+      }
+      if (e.target.value === 'shopee') {
+        const total = this.transactionItems.reduce((sum, item) => sum + item.subtotal, 0)
+        this.formPlatformFee = Math.round(total * 0.3)
+        if (input) { input.value = this.formPlatformFee; input.readOnly = true; input.style.background = '#f1f5f9' }
+      } else {
+        if (input) { input.readOnly = false; input.style.background = '' }
       }
     })
 
@@ -1331,6 +1339,14 @@ export class SalesPage {
     const mainAmount = this.mainPaymentAmount || total
     const totalPaid = mainAmount + splitTotal
     const remaining = total - totalPaid
+
+    if (this.formMarketplace === 'shopee') {
+      const feeInput = document.getElementById('platform_fee')
+      if (feeInput) {
+        this.formPlatformFee = Math.round(total * 0.3)
+        feeInput.value = this.formPlatformFee
+      }
+    }
 
     const el = (id) => document.getElementById(id)
     if (el('totalQty')) el('totalQty').textContent = totalQty
