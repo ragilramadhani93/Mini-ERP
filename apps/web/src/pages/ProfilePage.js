@@ -4,13 +4,15 @@ export class ProfilePage {
     this.auth = auth
     this.saving = false
     this.uploading = false
+    this.ownerEmail = ''
+    this.ownerMsg = ''
+    this.ownerLoading = false
   }
 
   render() {
     const p = this.auth.profile
-    console.log('Profile data:', p)
-    console.log('Avatar URL:', p?.avatar_url)
     const avatarUrl = p?.avatar_url || 'https://coresg-normal.trae.ai/api/ide/v1/text-to-image?prompt=default%20user%20avatar%20placeholder&image_size=square'
+    const isOwner = p?.roles?.name === 'owner'
     
     return `
       <div class="max-w-2xl mx-auto space-y-6">
@@ -53,6 +55,22 @@ export class ProfilePage {
             </div>
           </form>
         </div>
+
+        ${isOwner ? `
+          <div class="card p-6">
+            <div class="card-header" style="padding:0;margin-bottom:16px">
+              <h3>Jadikan Owner</h3>
+              <p style="font-size:13px;color:#64748b;margin:4px 0 0">Beri akses owner ke pengguna lain</p>
+            </div>
+            ${this.ownerMsg ? `<div class="mb-3 p-3 rounded-lg text-sm ${this.ownerMsg.includes('sukses') || this.ownerMsg.includes('berhasil') ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-600'}">${this.ownerMsg}</div>` : ''}
+            <div class="flex gap-3">
+              <input type="email" id="owner-email" class="flex-1" placeholder="Email pengguna" value="${this.ownerEmail}">
+              <button id="btn-jadikan-owner" class="btn-primary whitespace-nowrap" ${this.ownerLoading ? 'disabled' : ''}>
+                ${this.ownerLoading ? 'Memproses...' : 'Jadikan Owner'}
+              </button>
+            </div>
+          </div>
+        ` : ''}
       </div>
     `
   }
@@ -145,6 +163,34 @@ export class ProfilePage {
         // Upload to Supabase
         await this.uploadAvatar(file)
       }
+    })
+
+    document.getElementById('btn-jadikan-owner')?.addEventListener('click', async () => {
+      const email = document.getElementById('owner-email')?.value.trim()
+      if (!email) { this.ownerMsg = 'Masukkan email pengguna'; this.renderAndBind(); return }
+      this.ownerEmail = email
+      this.ownerLoading = true
+      this.ownerMsg = ''
+      this.renderAndBind()
+
+      try {
+        const ownerRole = await this.supabase.from('roles').select('id').eq('name', 'owner').single()
+        if (!ownerRole.data) throw new Error('Role owner tidak ditemukan')
+
+        const { count } = await this.supabase.from('users').select('*', { count: 'exact', head: true }).eq('role_id', ownerRole.data.id)
+        if (count > 1) { this.ownerMsg = 'Sudah ada owner lain, hanya bisa 1 owner'; this.ownerLoading = false; this.renderAndBind(); return }
+
+        const { data: targetUser } = await this.supabase.from('users').select('id').eq('email', email).single()
+        if (!targetUser) { this.ownerMsg = `User dengan email ${email} tidak ditemukan`; this.ownerLoading = false; this.renderAndBind(); return }
+
+        await this.supabase.from('users').update({ role_id: ownerRole.data.id }).eq('id', targetUser.id)
+        this.ownerMsg = `✅ ${email} berhasil dijadikan Owner!`
+        this.ownerEmail = ''
+      } catch (err) {
+        this.ownerMsg = `Gagal: ${err.message}`
+      }
+      this.ownerLoading = false
+      this.renderAndBind()
     })
   }
 
