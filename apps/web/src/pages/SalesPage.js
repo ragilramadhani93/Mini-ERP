@@ -434,6 +434,13 @@ export class SalesPage {
                             `).join('')}
                           </select>
                         ` : `<small>SKU : ${product?.sku || '-'}</small>`}
+                        <select class="item-marketplace" data-index="${i}" style="border:1px solid #e2e8f0;border-radius:6px;padding:4px 6px;font-size:11px;color:#475569;margin-top:4px;width:100%">
+                          <option value="" ${!item.marketplace ? 'selected' : ''}>Offline</option>
+                          <option value="shopee" ${item.marketplace === 'shopee' ? 'selected' : ''}>Shopee</option>
+                          <option value="tokopedia" ${item.marketplace === 'tokopedia' ? 'selected' : ''}>Tokopedia</option>
+                          <option value="tiktok" ${item.marketplace === 'tiktok' ? 'selected' : ''}>TikTok Shop</option>
+                          <option value="lazada" ${item.marketplace === 'lazada' ? 'selected' : ''}>Lazada</option>
+                        </select>
                       </div>
                       <div class="qty-control">
                         <button type="button" class="qty-minus" data-index="${i}">−</button>
@@ -470,20 +477,9 @@ export class SalesPage {
                 </datalist>
               </div>
 
-              <div class="form-group">
-                <label>Marketplace</label>
-                <select id="marketplace" name="marketplace">
-                  <option value="" ${!this.formMarketplace ? 'selected' : ''}>Offline</option>
-                  <option value="shopee" ${this.formMarketplace === 'shopee' ? 'selected' : ''}>Shopee</option>
-                  <option value="tokopedia" ${this.formMarketplace === 'tokopedia' ? 'selected' : ''}>Tokopedia</option>
-                  <option value="tiktok" ${this.formMarketplace === 'tiktok' ? 'selected' : ''}>TikTok Shop</option>
-                  <option value="lazada" ${this.formMarketplace === 'lazada' ? 'selected' : ''}>Lazada</option>
-                </select>
-              </div>
-
-              <div class="form-group ${!this.formMarketplace ? 'hidden' : ''}" id="platformFeeSection">
+              <div class="form-group" id="platformFeeSection">
                 <label>Potongan Platform</label>
-                <input type="number" id="platform_fee" name="platform_fee" min="0" value="${this.formPlatformFee || 0}" placeholder="0">
+                <input type="number" id="platform_fee" name="platform_fee" min="0" value="${this.formPlatformFee || 0}" placeholder="0" readonly style="background:#f1f5f9">
               </div>
 
               <div class="form-group">
@@ -1040,7 +1036,7 @@ export class SalesPage {
     })
 
     document.getElementById('add-item')?.addEventListener('click', () => {
-      this.transactionItems.push({ productId: '', qty: 1, discount: 0, subtotal: 0 })
+      this.transactionItems.push({ productId: '', qty: 1, discount: 0, subtotal: 0, marketplace: '' })
       this.renderAndBind()
     })
 
@@ -1068,6 +1064,14 @@ export class SalesPage {
     document.querySelectorAll('.variant-select').forEach(sel => {
       sel.addEventListener('change', () => this.updateItemSubtotal(parseInt(sel.dataset.index)))
     })
+    document.querySelectorAll('.item-marketplace').forEach(sel => {
+      sel.addEventListener('change', () => {
+        const idx = parseInt(sel.dataset.index)
+        this.transactionItems[idx].marketplace = sel.value
+        this._updateTotals()
+        this.renderAndBind()
+      })
+    })
 
     document.getElementById('payment_method')?.addEventListener('change', (e) => {
       this.paymentMethod = e.target.value
@@ -1076,22 +1080,6 @@ export class SalesPage {
     document.getElementById('main_payment_amount')?.addEventListener('input', (e) => {
       this.mainPaymentAmount = parseInt(e.target.value) || 0
       this._updateTotals()
-    })
-
-    document.getElementById('marketplace')?.addEventListener('change', (e) => {
-      this.formMarketplace = e.target.value
-      const section = document.getElementById('platformFeeSection')
-      const input = document.getElementById('platform_fee')
-      if (section) {
-        section.classList.toggle('hidden', e.target.value === '')
-      }
-      if (e.target.value === 'shopee') {
-        const total = this.transactionItems.reduce((sum, item) => sum + item.subtotal, 0)
-        this.formPlatformFee = Math.round(total * 0.3)
-        if (input) { input.value = this.formPlatformFee; input.readOnly = true; input.style.background = '#f1f5f9' }
-      } else {
-        if (input) { input.readOnly = false; input.style.background = '' }
-      }
     })
 
     document.getElementById('add-split')?.addEventListener('click', () => {
@@ -1184,6 +1172,8 @@ export class SalesPage {
       this.loading = true
       this.renderAndBind()
 
+      const saleMarketplace = validItems.some(i => i.marketplace) ? validItems.filter(i => i.marketplace).map(i => i.marketplace).join('+') : null
+
       let sale, saleError
 
       if (isEdit) {
@@ -1191,7 +1181,7 @@ export class SalesPage {
           customer_name: formData.get('customer_name') || null,
           total_amount: totalAmount,
           payment_method: paymentMethod,
-          marketplace: formData.get('marketplace') || null,
+          marketplace: saleMarketplace,
           platform_fee: platformFee,
           total_received: totalReceived,
           status: status,
@@ -1212,7 +1202,7 @@ export class SalesPage {
           customer_name: formData.get('customer_name') || null,
           total_amount: totalAmount,
           payment_method: paymentMethod,
-          marketplace: formData.get('marketplace') || null,
+          marketplace: saleMarketplace,
           platform_fee: platformFee,
           total_received: totalReceived,
           status: status,
@@ -1239,7 +1229,7 @@ export class SalesPage {
       const saleItems = validItems.map(item => ({
         sale_id: sale.id, product_id: item.productId, quantity: item.qty,
         unit_price: item.price, discount: item.discount,
-        sku_id: item.skuId || null
+        sku_id: item.skuId || null, marketplace: item.marketplace || null
       }))
       const { error: itemsError } = await this.supabase.from('sale_items').insert(saleItems)
       if (itemsError) { alert('Gagal menyimpan item: ' + itemsError.message); this.loading = false; this.renderAndBind(); return }
@@ -1344,13 +1334,25 @@ export class SalesPage {
     const totalPaid = mainAmount + splitTotal
     const remaining = total - totalPaid
 
-    if (this.formMarketplace === 'shopee') {
-      const feeInput = document.getElementById('platform_fee')
-      if (feeInput) {
-        this.formPlatformFee = Math.round(total * 0.3)
-        feeInput.value = this.formPlatformFee
+    let totalFee = 0
+    this.transactionItems.forEach(item => {
+      if (item.marketplace && item.subtotal) {
+        if (item.marketplace === 'shopee') {
+          totalFee += Math.round(item.subtotal * 0.3)
+        } else if (item.marketplace === 'tokopedia') {
+          totalFee += Math.round(item.subtotal * 0.05)
+        } else if (item.marketplace === 'tiktok') {
+          totalFee += Math.round(item.subtotal * 0.05)
+        } else if (item.marketplace === 'lazada') {
+          totalFee += Math.round(item.subtotal * 0.05)
+        }
       }
-    }
+    })
+    this.formPlatformFee = totalFee
+    const feeInput = document.getElementById('platform_fee')
+    if (feeInput) feeInput.value = totalFee
+    const feeSection = document.getElementById('platformFeeSection')
+    if (feeSection) feeSection.classList.toggle('hidden', totalFee === 0)
 
     const el = (id) => document.getElementById(id)
     if (el('totalQty')) el('totalQty').textContent = totalQty
@@ -1376,12 +1378,10 @@ export class SalesPage {
   _readFormState() {
     if (!this.showModal) return
     const cn = document.getElementById('customer_name')
-    const mp = document.getElementById('marketplace')
     const pf = document.getElementById('platform_fee')
     const pm = document.getElementById('payment_method')
     const pa = document.getElementById('main_payment_amount')
     if (cn) this.formCustomerName = cn.value
-    if (mp) this.formMarketplace = mp.value
     if (pf) this.formPlatformFee = parseInt(pf.value) || 0
     if (pm) this.paymentMethod = pm.value
     if (pa) this.mainPaymentAmount = parseInt(pa.value) || 0
