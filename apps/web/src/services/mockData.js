@@ -370,13 +370,11 @@ class MockQuery {
   }
 
   delete() {
-    const items = this._applyFilters()
     const table = this._getTableName()
-    items.forEach(item => {
-      const idx = this._db.data[table].findIndex(i => i.id === item.id)
-      if (idx >= 0) this._db.data[table].splice(idx, 1)
-    })
-    return { then: (resolve) => resolve({ data: items, error: null }) }
+    const toRemove = new Set(this._applyFilters().map(i => i.id))
+    this._db.data[table] = this._db.data[table].filter(i => !toRemove.has(i.id))
+    this._data = this._data.filter(i => !toRemove.has(i.id))
+    return { then: (resolve) => resolve({ data: [...toRemove], error: null }) }
   }
 
   upsert(data, { onConflict } = {}) {
