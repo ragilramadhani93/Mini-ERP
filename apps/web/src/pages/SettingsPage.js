@@ -27,6 +27,11 @@ export class SettingsPage {
           <h2 class="text-lg font-semibold" style="color:#0f172a">Pengaturan</h2>
         </div>
 
+        <div class="flex items-center gap-2" style="border-bottom:1px solid #e2e8f0;padding-bottom:12px;margin-bottom:16px">
+          <a href="#/settings" class="tab-btn" style="padding:6px 16px;border-radius:6px;font-size:13px;font-weight:500;cursor:pointer;text-decoration:none;background:#7A3B58;color:#fff">Metode Pembayaran</a>
+          ${role === 'owner' ? '<a href="#/settings/roles" class="tab-btn" style="padding:6px 16px;border-radius:6px;font-size:13px;font-weight:500;cursor:pointer;text-decoration:none;color:#64748b;background:transparent">Atur Peran</a>' : ''}
+        </div>
+
         <div class="card">
           <div class="flex items-center justify-between p-4" style="border-bottom:1px solid #f1f5f9">
             <h3 class="font-semibold" style="color:#0f172a;font-size:14px">Metode Pembayaran</h3>
