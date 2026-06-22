@@ -177,27 +177,33 @@ export class SettingsRolePage {
       if (changes.length === 0) {
         this.saving = false
         this.renderAndBind()
+        this.showToast('Tidak ada perubahan yang perlu disimpan', 'info')
         return
       }
 
+      let hasError = false
       for (const ch of changes) {
-        if (ch.can_view) {
-          await this.supabase.from('role_permissions').upsert(
-            { role_id: ch.role_id, menu_path: ch.menu_path, can_view: true },
-            { onConflict: 'role_id,menu_path' }
-          )
-        } else {
-          await this.supabase.from('role_permissions').upsert(
-            { role_id: ch.role_id, menu_path: ch.menu_path, can_view: false },
-            { onConflict: 'role_id,menu_path' }
-          )
-        }
+        const { error: delErr } = await this.supabase
+          .from('role_permissions')
+          .delete()
+          .eq('role_id', ch.role_id)
+          .eq('menu_path', ch.menu_path)
+        if (delErr) { hasError = true; continue }
+        const { error: insErr } = await this.supabase
+          .from('role_permissions')
+          .insert({ role_id: ch.role_id, menu_path: ch.menu_path, can_view: ch.can_view })
+        if (insErr) hasError = true
       }
 
       await this.loadData()
       this.saving = false
       this.dirty = false
       this.renderAndBind()
+      if (hasError) {
+        this.showToast('Beberapa perubahan gagal disimpan', 'error')
+      } else {
+        this.showToast('Akses menu berhasil diperbarui', 'success')
+      }
     }
 
     document.getElementById('save-permissions-btn')?.addEventListener('click', save)
@@ -215,10 +221,26 @@ export class SettingsRolePage {
             <a href="#/settings/roles" class="tab-btn ${currentPath === '/settings/roles' ? 'active' : ''}" style="padding:6px 16px;border-radius:6px;font-size:13px;font-weight:500;cursor:pointer;text-decoration:none;${currentPath === '/settings/roles' ? 'background:#7A3B58;color:#fff' : 'color:#64748b;background:transparent'}">Atur Peran</a>
           </div>
           ${this.render()}
+          <div id="toast-container" style="position:fixed;bottom:24px;right:24px;z-index:9999"></div>
         </div>
       `
       this._bindListeners()
       if (window.lucide) window.lucide.createIcons()
     }
+  }
+
+  showToast(message, type = 'success') {
+    const container = document.getElementById('toast-container')
+    if (!container) return
+    const bg = type === 'success' ? '#065f46' : type === 'error' ? '#991b1b' : '#1e40af'
+    const toast = document.createElement('div')
+    toast.textContent = message
+    toast.style.cssText = `background:${bg};color:#fff;padding:10px 18px;border-radius:8px;font-size:13px;font-weight:500;box-shadow:0 4px 12px rgba(0,0,0,0.15);margin-top:8px;opacity:0;transition:opacity 0.3s`
+    container.appendChild(toast)
+    requestAnimationFrame(() => { toast.style.opacity = '1' })
+    setTimeout(() => {
+      toast.style.opacity = '0'
+      setTimeout(() => toast.remove(), 300)
+    }, 2500)
   }
 }

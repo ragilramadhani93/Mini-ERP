@@ -180,7 +180,7 @@ export class MockDatabase {
 
   from(table) {
     const data = this.data[table] || []
-    const query = new MockQuery(data, this)
+    const query = new MockQuery(data, this, table)
     return query
   }
 
@@ -228,9 +228,10 @@ export class MockDatabase {
 }
 
 class MockQuery {
-  constructor(data, db) {
+  constructor(data, db, tableName) {
     this._data = [...data]
     this._db = db
+    this._tableName = tableName
     this._selectStr = '*'
     this._filters = []
     this._orders = []
@@ -400,9 +401,6 @@ class MockQuery {
   }
 
   _getTableName() {
-    for (const [name, data] of Object.entries(this._db.data)) {
-      if (data === this._data || data === this._db.data[name]) return name
-    }
-    return 'unknown'
+    return this._tableName || 'unknown'
   }
 }
