@@ -3,15 +3,24 @@ export class StockPage {
     this.supabase = supabase
     this.auth = auth
     this.movements = []
+    this.products = []
     this.activeTab = 'in'
+    this.showModal = false
+    this.loading = false
   }
 
   async loadData() {
-    const { data: movements } = await this.supabase.from('stock_movements')
-      .select('*, products(name, sku), created_by_user:users(full_name)')
-      .order('created_at', { ascending: false })
-      .limit(50)
-    this.movements = movements || []
+    const [movementsRes, productsRes] = await Promise.all([
+      this.supabase.from('stock_movements')
+        .select('*, products(name, sku), created_by_user:users(full_name)')
+        .order('created_at', { ascending: false })
+        .limit(50),
+      this.supabase.from('products')
+        .select('id, sku, name, current_stock')
+        .order('name')
+    ])
+    this.movements = movementsRes.data || []
+    this.products = productsRes.data || []
   }
 
   render() {
@@ -25,6 +34,9 @@ export class StockPage {
       <div class="space-y-4">
         <div class="flex items-center justify-between">
           <h2 class="text-lg font-semibold text-gray-900">Riwayat Stok</h2>
+          <button id="add-stock-btn" class="btn-primary">
+            <i data-lucide="plus" class="w-5 h-5"></i> Tambah Stok Masuk
+          </button>
         </div>
 
         <div class="border-b border-gray-200">
@@ -83,6 +95,63 @@ export class StockPage {
             </table>
           </div>
         </div>
+
+        ${this.showModal ? this.renderModal() : ''}
+      </div>
+    `
+  }
+
+  renderModal() {
+    const reasonsIn = [
+      { value: 'purchase', label: 'Pembelian Barang' },
+      { value: 'return_in', label: 'Retur Customer Masuk' },
+      { value: 'adjustment', label: 'Penyesuaian Stok' }
+    ]
+
+    return `
+      <div class="modal-overlay" id="modal-overlay">
+        <div class="modal-content p-6">
+          <div class="flex items-center justify-between mb-6">
+            <h3 class="text-lg font-semibold">Tambah Stok Masuk</h3>
+            <button id="close-modal" class="text-gray-400 hover:text-gray-600">
+              <i data-lucide="x" class="w-6 h-6"></i>
+            </button>
+          </div>
+          <div class="p-3 bg-success-50 rounded-lg text-sm mb-6">
+            <span class="text-success-700">Stok akan bertambah sesuai jumlah yang dimasukkan.</span>
+          </div>
+          <form id="stock-form" class="space-y-4">
+            <div>
+              <label for="product_id">Produk</label>
+              <select id="product_id" name="product_id" required>
+                <option value="">Pilih produk</option>
+                ${this.products.map(p => `
+                  <option value="${p.id}">${p.sku} - ${p.name} (Stok: ${p.current_stock})</option>
+                `).join('')}
+              </select>
+            </div>
+            <div>
+              <label for="reason">Alasan</label>
+              <select id="reason" name="reason" required>
+                ${reasonsIn.map(r => `<option value="${r.value}">${r.label}</option>`).join('')}
+              </select>
+            </div>
+            <div>
+              <label for="quantity">Jumlah</label>
+              <input type="number" id="quantity" name="quantity" required min="1" placeholder="0">
+            </div>
+            <div>
+              <label for="notes">Catatan</label>
+              <textarea id="notes" name="notes" rows="2" placeholder="Catatan (opsional)"></textarea>
+            </div>
+            <div class="flex justify-end gap-3 pt-4 border-t border-gray-100">
+              <button type="button" id="cancel-modal" class="btn-secondary">Batal</button>
+              <button type="submit" class="btn-primary" ${this.loading ? 'disabled' : ''}>
+                ${this.loading ? 'Memproses...' : 'Simpan'}
+              </button>
+            </div>
+          </form>
+        </div>
       </div>
     `
   }
@@ -117,6 +186,59 @@ export class StockPage {
         this.activeTab = btn.dataset.tab
         this.renderAndBind()
       })
+    })
+
+    document.getElementById('add-stock-btn')?.addEventListener('click', () => {
+      this.showModal = true
+      this.renderAndBind()
+    })
+
+    this._bindModalEvents()
+  }
+
+  _bindModalEvents() {
+    document.getElementById('close-modal')?.addEventListener('click', () => {
+      this.showModal = false
+      this.renderAndBind()
+    })
+    document.getElementById('cancel-modal')?.addEventListener('click', () => {
+      this.showModal = false
+      this.renderAndBind()
+    })
+    document.getElementById('modal-overlay')?.addEventListener('click', (e) => {
+      if (e.target === e.currentTarget) {
+        this.showModal = false
+        this.renderAndBind()
+      }
+    })
+
+    const form = document.getElementById('stock-form')
+    form?.addEventListener('submit', async (e) => {
+      e.preventDefault()
+      this.loading = true
+      this.renderAndBind()
+      const formData = new FormData(form)
+
+      const { error } = await this.supabase.rpc('add_stock_movement', {
+        p_product_id: formData.get('product_id'),
+        p_quantity: parseInt(formData.get('quantity')),
+        p_type: 'in',
+        p_reason: formData.get('reason'),
+        p_notes: formData.get('notes') || null,
+        p_created_by: this.auth.user.id
+      })
+
+      if (error) {
+        alert('Gagal menyimpan: ' + error.message)
+        this.loading = false
+        this.renderAndBind()
+        return
+      }
+
+      this.showModal = false
+      this.loading = false
+      await this.loadData()
+      this.renderAndBind()
     })
   }
 
