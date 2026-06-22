@@ -3,26 +3,15 @@ export class StockPage {
     this.supabase = supabase
     this.auth = auth
     this.movements = []
-    this.products = []
     this.activeTab = 'in'
-    this.showModal = false
-    this.movementType = 'in'
-    this.movementReason = 'purchase'
-    this.loading = false
   }
 
   async loadData() {
-    const [movementsRes, productsRes] = await Promise.all([
-      this.supabase.from('stock_movements')
-        .select('*, products(name, sku), created_by_user:users(full_name)')
-        .order('created_at', { ascending: false })
-        .limit(50),
-      this.supabase.from('products')
-        .select('id, sku, name, current_stock')
-        .order('name')
-    ])
-    this.movements = movementsRes.data || []
-    this.products = productsRes.data || []
+    const { data: movements } = await this.supabase.from('stock_movements')
+      .select('*, products(name, sku), created_by_user:users(full_name)')
+      .order('created_at', { ascending: false })
+      .limit(50)
+    this.movements = movements || []
   }
 
   render() {
@@ -35,10 +24,7 @@ export class StockPage {
     return `
       <div class="space-y-4">
         <div class="flex items-center justify-between">
-          <h2 class="text-lg font-semibold text-gray-900">Manajemen Stok</h2>
-          <button id="add-movement-btn" class="btn-primary">
-            <i data-lucide="plus" class="w-5 h-5"></i> Tambah Pergerakan
-          </button>
+          <h2 class="text-lg font-semibold text-gray-900">Riwayat Stok</h2>
         </div>
 
         <div class="border-b border-gray-200">
@@ -97,87 +83,6 @@ export class StockPage {
             </table>
           </div>
         </div>
-
-        ${this.showModal ? this.renderModal() : ''}
-      </div>
-    `
-  }
-
-  renderModal() {
-    const isIn = this.movementType === 'in'
-    const reasonsIn = [
-      { value: 'purchase', label: 'Pembelian Barang' },
-      { value: 'return_in', label: 'Retur Customer Masuk' },
-      { value: 'adjustment', label: 'Penyesuaian Stok' }
-    ]
-    const reasonsOut = [
-      { value: 'sale', label: 'Penjualan' },
-      { value: 'damage', label: 'Barang Rusak' },
-      { value: 'return_out', label: 'Retur ke Supplier' },
-      { value: 'adjustment', label: 'Penyesuaian Stok' }
-    ]
-    const reasons = isIn ? reasonsIn : reasonsOut
-
-    return `
-      <div class="modal-overlay" id="modal-overlay">
-        <div class="modal-content p-6">
-          <div class="flex items-center justify-between mb-6">
-            <h3 class="text-lg font-semibold">${isIn ? 'Stok Masuk' : 'Stok Keluar'}</h3>
-            <button id="close-modal" class="text-gray-400 hover:text-gray-600">
-              <i data-lucide="x" class="w-6 h-6"></i>
-            </button>
-          </div>
-          <div class="flex items-center gap-2 mb-6">
-            <button class="type-toggle px-4 py-2 rounded-lg text-sm font-medium ${
-              this.movementType === 'in' ? 'bg-success-50 text-success-600' : 'bg-gray-100 text-gray-500'
-            }" data-type="in">
-              <i data-lucide="arrow-down-left" class="w-4 h-4 inline"></i> Stok Masuk
-            </button>
-            <button class="type-toggle px-4 py-2 rounded-lg text-sm font-medium ${
-              this.movementType === 'out' ? 'bg-danger-50 text-danger-600' : 'bg-gray-100 text-gray-500'
-            }" data-type="out">
-              <i data-lucide="arrow-up-right" class="w-4 h-4 inline"></i> Stok Keluar
-            </button>
-          </div>
-          <form id="movement-form" class="space-y-4">
-            <div>
-              <label for="product_id">Produk</label>
-              <select id="product_id" name="product_id" required>
-                <option value="">Pilih produk</option>
-                ${this.products.map(p => `
-                  <option value="${p.id}">${p.sku} - ${p.name} (Stok: ${p.current_stock})</option>
-                `).join('')}
-              </select>
-            </div>
-            ${isIn ? '' : `
-              <div class="p-3 bg-primary-50 rounded-lg text-sm">
-                <span class="text-primary-700">Stok saat ini akan berkurang sesuai jumlah yang dimasukkan.</span>
-              </div>
-            `}
-            <div>
-              <label for="reason">Alasan</label>
-              <select id="reason" name="reason" required>
-                ${reasons.map(r => `
-                  <option value="${r.value}" ${this.movementReason === r.value ? 'selected' : ''}>${r.label}</option>
-                `).join('')}
-              </select>
-            </div>
-            <div>
-              <label for="quantity">Jumlah</label>
-              <input type="number" id="quantity" name="quantity" required min="1" placeholder="0">
-            </div>
-            <div>
-              <label for="notes">Catatan</label>
-              <textarea id="notes" name="notes" rows="2" placeholder="Catatan (opsional)"></textarea>
-            </div>
-            <div class="flex justify-end gap-3 pt-4 border-t border-gray-100">
-              <button type="button" id="cancel-modal" class="btn-secondary">Batal</button>
-              <button type="submit" class="btn-primary" ${this.loading ? 'disabled' : ''}>
-                ${this.loading ? 'Memproses...' : 'Simpan'}
-              </button>
-            </div>
-          </form>
-        </div>
       </div>
     `
   }
@@ -212,73 +117,6 @@ export class StockPage {
         this.activeTab = btn.dataset.tab
         this.renderAndBind()
       })
-    })
-
-    document.getElementById('add-movement-btn')?.addEventListener('click', () => {
-      this.showModal = true
-      this.movementType = 'in'
-      this.movementReason = 'purchase'
-      this.renderAndBind()
-    })
-
-    this._bindModalEvents()
-  }
-
-  _bindModalEvents() {
-    document.querySelectorAll('.type-toggle').forEach(btn => {
-      btn.addEventListener('click', () => {
-        this.movementType = btn.dataset.type
-        this.renderAndBind()
-      })
-    })
-
-    document.getElementById('close-modal')?.addEventListener('click', () => {
-      this.showModal = false
-      this.renderAndBind()
-    })
-    document.getElementById('cancel-modal')?.addEventListener('click', () => {
-      this.showModal = false
-      this.renderAndBind()
-    })
-    document.getElementById('modal-overlay')?.addEventListener('click', (e) => {
-      if (e.target === e.currentTarget) {
-        this.showModal = false
-        this.renderAndBind()
-      }
-    })
-
-    const form = document.getElementById('movement-form')
-    form?.addEventListener('submit', async (e) => {
-      e.preventDefault()
-      this.loading = true
-      this.renderAndBind()
-      const formData = new FormData(form)
-
-      const productId = formData.get('product_id')
-      const quantity = parseInt(formData.get('quantity'))
-      const reason = formData.get('reason')
-      const notes = formData.get('notes')
-
-      const { error } = await this.supabase.rpc('add_stock_movement', {
-        p_product_id: productId,
-        p_quantity: quantity,
-        p_type: this.movementType,
-        p_reason: reason,
-        p_notes: notes || null,
-        p_created_by: this.auth.user.id
-      })
-
-      if (error) {
-        alert('Gagal menyimpan: ' + error.message)
-        this.loading = false
-        this.renderAndBind()
-        return
-      }
-
-      this.showModal = false
-      this.loading = false
-      await this.loadData()
-      this.renderAndBind()
     })
   }
 
