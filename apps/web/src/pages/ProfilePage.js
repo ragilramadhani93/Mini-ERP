@@ -7,12 +7,19 @@ export class ProfilePage {
     this.ownerEmail = ''
     this.ownerMsg = ''
     this.ownerLoading = false
+    this.roles = []
+  }
+
+  async loadRoles() {
+    const { data } = await this.supabase.from('roles').select('*').order('name')
+    this.roles = data || []
   }
 
   render() {
     const p = this.auth.profile
     const avatarUrl = p?.avatar_url || 'https://coresg-normal.trae.ai/api/ide/v1/text-to-image?prompt=default%20user%20avatar%20placeholder&image_size=square'
     const isOwner = p?.roles?.name === 'owner'
+    const canChangeRole = isOwner || p?.roles?.name === 'admin'
     
     return `
       <div class="max-w-2xl mx-auto space-y-6">
@@ -41,7 +48,13 @@ export class ProfilePage {
               </div>
               <div>
                 <label>Role</label>
-                <input type="text" class="bg-gray-50" value="${this.getRoleLabel(p?.roles?.name)}" readonly disabled>
+                ${canChangeRole ? `
+                  <select id="role-select" name="role_id" style="width:100%;padding:8px 10px;border:1px solid #e2e8f0;border-radius:8px;font-size:13px;margin-top:4px;background:#fff">
+                    ${this.roles.map(r => `<option value="${r.id}" ${r.id === p?.role_id ? 'selected' : ''}>${this.getRoleLabel(r.name)}</option>`).join('')}
+                  </select>
+                ` : `
+                  <input type="text" class="bg-gray-50" value="${this.getRoleLabel(p?.roles?.name)}" readonly disabled>
+                `}
               </div>
             </div>
             <div>
@@ -126,6 +139,7 @@ export class ProfilePage {
   }
 
   async bindEvents() {
+    await this.loadRoles()
     this.renderAndBind()
   }
 
@@ -140,6 +154,9 @@ export class ProfilePage {
       const data = {
         full_name: formData.get('full_name'),
         phone: formData.get('phone')
+      }
+      if (formData.get('role_id')) {
+        data.role_id = formData.get('role_id')
       }
 
       await this.supabase.from('users').update(data).eq('id', this.auth.user.id)
