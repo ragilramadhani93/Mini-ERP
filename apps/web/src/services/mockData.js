@@ -93,6 +93,13 @@ export const mockData = {
     { id: 'pay1', due_type: 'supplier', due_id: 's1', reference_type: 'purchase', reference_id: 'po1', amount: 3575000, due_date: daysAgo(-15), status: 'paid', paid_amount: 3575000 },
     { id: 'pay2', due_type: 'supplier', due_id: 's2', reference_type: 'purchase', reference_id: 'po2', amount: 2550000, due_date: daysAgo(-10), status: 'paid', paid_amount: 2550000 },
     { id: 'pay3', due_type: 'supplier', due_id: 's4', reference_type: 'purchase', reference_id: 'po3', amount: 575000, due_date: daysAgo(14), status: 'pending', paid_amount: 0 }
+  ],
+  assets: [
+    { id: 'a1', name: 'Laptop Lenovo ThinkPad', type: 'elektronik', acquisition_value: 12000000, acquisition_date: '2025-01-15', location: 'Kantor', status: 'active', description: 'Laptop untuk admin toko' },
+    { id: 'a2', name: 'Motor Honda Vario', type: 'kendaraan', acquisition_value: 18000000, acquisition_date: '2025-03-10', location: 'Parkiran', status: 'active', description: 'Motor operasional kirim barang' },
+    { id: 'a3', name: 'Etalase Kaca 2m', type: 'inventaris', acquisition_value: 2500000, acquisition_date: '2024-11-20', location: 'Toko', status: 'active', description: 'Etalase display produk' },
+    { id: 'a4', name: 'AC Daikin 1PK', type: 'peralatan', acquisition_value: 4500000, acquisition_date: '2024-08-05', location: 'Kantor', status: 'sold', description: 'Terjual saat renovasi' },
+    { id: 'a5', name: 'Domain tokoku.com', type: 'digital', acquisition_value: 350000, acquisition_date: '2026-01-01', location: '-', status: 'active', description: 'Domain website toko' }
   ]
 }
 
