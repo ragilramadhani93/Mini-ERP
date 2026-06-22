@@ -1127,6 +1127,8 @@ export class SalesPage {
         const idx = parseInt(btn.dataset.index)
         if (this.transactionItems[idx].qty > 1) {
           this.transactionItems[idx].qty--
+          const qtyInp = document.querySelector(`.item-qty[data-index="${idx}"]`)
+          if (qtyInp) qtyInp.value = this.transactionItems[idx].qty
           this.updateItemSubtotal(idx)
         }
       })
@@ -1136,6 +1138,8 @@ export class SalesPage {
       btn.addEventListener('click', () => {
         const idx = parseInt(btn.dataset.index)
         this.transactionItems[idx].qty++
+        const qtyInp = document.querySelector(`.item-qty[data-index="${idx}"]`)
+        if (qtyInp) qtyInp.value = this.transactionItems[idx].qty
         this.updateItemSubtotal(idx)
       })
     })
