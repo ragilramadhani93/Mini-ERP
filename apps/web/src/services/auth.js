@@ -5,6 +5,7 @@ export class AuthService {
     this.profile = null
     this.idleTimeout = null
     this.idleTime = 15 * 60 * 1000 // 15 menit idle
+    this.menuPermissions = null
     this.onLogoutCallback = null
     // Check if running in Capacitor (Android/iOS app)
     this.isCapacitor = typeof Capacitor !== 'undefined' && Capacitor.isNativePlatform()
@@ -19,6 +20,7 @@ export class AuthService {
         .eq('id', user.id)
         .single()
       this.profile = data
+      await this.loadMenuPermissions()
       if (!this.isCapacitor) { // Only start idle timer in web browser
         this.startIdleTimer()
       }
@@ -73,6 +75,7 @@ export class AuthService {
     if (error) throw error
     this.user = null
     this.profile = null
+    this.menuPermissions = null
     if (this.onLogoutCallback) {
       this.onLogoutCallback()
     }
@@ -80,6 +83,24 @@ export class AuthService {
 
   getRole() {
     return this.profile?.roles?.name || null
+  }
+
+  async loadMenuPermissions() {
+    if (!this.profile) return
+    const roleName = this.profile.roles?.name
+    if (!roleName) return
+    try {
+      const { data } = await this.supabase
+        .from('role_permissions')
+        .select('menu_path, can_view')
+        .eq('role_id', this.profile.role_id)
+      if (data) {
+        this.menuPermissions = {}
+        data.forEach(p => { this.menuPermissions[p.menu_path] = p.can_view })
+      }
+    } catch (e) {
+      console.warn('Failed to load menu permissions:', e)
+    }
   }
 
   hasRole(...roles) {

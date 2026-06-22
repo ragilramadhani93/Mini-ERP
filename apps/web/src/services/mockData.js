@@ -94,6 +94,62 @@ export const mockData = {
     { id: 'pay2', due_type: 'supplier', due_id: 's2', reference_type: 'purchase', reference_id: 'po2', amount: 2550000, due_date: daysAgo(-10), status: 'paid', paid_amount: 2550000 },
     { id: 'pay3', due_type: 'supplier', due_id: 's4', reference_type: 'purchase', reference_id: 'po3', amount: 575000, due_date: daysAgo(14), status: 'pending', paid_amount: 0 }
   ],
+  role_permissions: [
+    { id: 'rp1', role_id: 'r1', menu_path: '/', can_view: true },
+    { id: 'rp2', role_id: 'r1', menu_path: '/profile', can_view: true },
+    { id: 'rp3', role_id: 'r1', menu_path: '/products', can_view: true },
+    { id: 'rp4', role_id: 'r1', menu_path: '/categories', can_view: true },
+    { id: 'rp5', role_id: 'r1', menu_path: '/stock', can_view: true },
+    { id: 'rp6', role_id: 'r1', menu_path: '/stock/opname', can_view: true },
+    { id: 'rp7', role_id: 'r1', menu_path: '/barcode', can_view: true },
+    { id: 'rp8', role_id: 'r1', menu_path: '/sales', can_view: true },
+    { id: 'rp9', role_id: 'r1', menu_path: '/shopee', can_view: true },
+    { id: 'rp10', role_id: 'r1', menu_path: '/purchase-orders', can_view: true },
+    { id: 'rp11', role_id: 'r1', menu_path: '/suppliers', can_view: true },
+    { id: 'rp12', role_id: 'r1', menu_path: '/users', can_view: true },
+    { id: 'rp13', role_id: 'r1', menu_path: '/analytics', can_view: true },
+    { id: 'rp14', role_id: 'r1', menu_path: '/forecasting', can_view: true },
+    { id: 'rp15', role_id: 'r1', menu_path: '/ai-assistant', can_view: true },
+    { id: 'rp16', role_id: 'r1', menu_path: '/import-export', can_view: true },
+    { id: 'rp17', role_id: 'r1', menu_path: '/finance', can_view: true },
+    { id: 'rp18', role_id: 'r1', menu_path: '/finance/expenses', can_view: true },
+    { id: 'rp19', role_id: 'r1', menu_path: '/debts', can_view: true },
+    { id: 'rp20', role_id: 'r1', menu_path: '/assets', can_view: true },
+    { id: 'rp21', role_id: 'r1', menu_path: '/settings', can_view: true },
+    { id: 'rp22', role_id: 'r1', menu_path: '/settings/roles', can_view: true },
+    { id: 'rp23', role_id: 'r2', menu_path: '/', can_view: true },
+    { id: 'rp24', role_id: 'r2', menu_path: '/profile', can_view: true },
+    { id: 'rp25', role_id: 'r2', menu_path: '/products', can_view: true },
+    { id: 'rp26', role_id: 'r2', menu_path: '/categories', can_view: true },
+    { id: 'rp27', role_id: 'r2', menu_path: '/stock', can_view: true },
+    { id: 'rp28', role_id: 'r2', menu_path: '/stock/opname', can_view: true },
+    { id: 'rp29', role_id: 'r2', menu_path: '/barcode', can_view: true },
+    { id: 'rp30', role_id: 'r2', menu_path: '/sales', can_view: true },
+    { id: 'rp31', role_id: 'r2', menu_path: '/shopee', can_view: true },
+    { id: 'rp32', role_id: 'r2', menu_path: '/purchase-orders', can_view: true },
+    { id: 'rp33', role_id: 'r2', menu_path: '/suppliers', can_view: true },
+    { id: 'rp34', role_id: 'r2', menu_path: '/analytics', can_view: true },
+    { id: 'rp35', role_id: 'r2', menu_path: '/forecasting', can_view: true },
+    { id: 'rp36', role_id: 'r2', menu_path: '/ai-assistant', can_view: true },
+    { id: 'rp37', role_id: 'r2', menu_path: '/import-export', can_view: true },
+    { id: 'rp38', role_id: 'r2', menu_path: '/finance', can_view: true },
+    { id: 'rp39', role_id: 'r2', menu_path: '/finance/expenses', can_view: true },
+    { id: 'rp40', role_id: 'r2', menu_path: '/debts', can_view: true },
+    { id: 'rp41', role_id: 'r2', menu_path: '/assets', can_view: true },
+    { id: 'rp42', role_id: 'r2', menu_path: '/settings', can_view: true },
+    { id: 'rp43', role_id: 'r2', menu_path: '/settings/roles', can_view: false },
+    { id: 'rp44', role_id: 'r3', menu_path: '/', can_view: true },
+    { id: 'rp45', role_id: 'r3', menu_path: '/profile', can_view: true },
+    { id: 'rp46', role_id: 'r3', menu_path: '/products', can_view: true },
+    { id: 'rp47', role_id: 'r3', menu_path: '/stock', can_view: true },
+    { id: 'rp48', role_id: 'r3', menu_path: '/stock/opname', can_view: true },
+    { id: 'rp49', role_id: 'r3', menu_path: '/barcode', can_view: true },
+    { id: 'rp50', role_id: 'r4', menu_path: '/', can_view: true },
+    { id: 'rp51', role_id: 'r4', menu_path: '/profile', can_view: true },
+    { id: 'rp52', role_id: 'r4', menu_path: '/finance', can_view: true },
+    { id: 'rp53', role_id: 'r4', menu_path: '/finance/expenses', can_view: true },
+    { id: 'rp54', role_id: 'r4', menu_path: '/debts', can_view: true }
+  ],
   assets: [
     { id: 'a1', name: 'Laptop Lenovo ThinkPad', type: 'elektronik', acquisition_value: 12000000, acquisition_date: '2025-01-15', location: 'Kantor', status: 'active', description: 'Laptop untuk admin toko' },
     { id: 'a2', name: 'Motor Honda Vario', type: 'kendaraan', acquisition_value: 18000000, acquisition_date: '2025-03-10', location: 'Parkiran', status: 'active', description: 'Motor operasional kirim barang' },
@@ -317,6 +373,30 @@ class MockQuery {
       if (idx >= 0) this._db.data[table].splice(idx, 1)
     })
     return { then: (resolve) => resolve({ data: items, error: null }) }
+  }
+
+  upsert(data, { onConflict } = {}) {
+    const table = this._getTableName()
+    const existing = this._db.data[table].find(item => {
+      return Object.entries(data).every(([key, val]) => {
+        if (key === 'id' || key === 'created_at' || key === 'updated_at') return true
+        return item[key] === val
+      })
+    })
+    if (existing) {
+      Object.assign(existing, data, { updated_at: new Date().toISOString() })
+      return {
+        select: () => ({ single: () => Promise.resolve({ data: existing, error: null }) }),
+        then: (resolve) => resolve({ data: existing, error: null })
+      }
+    } else {
+      const newItem = { id: this._db.nextId(), ...data, created_at: new Date().toISOString() }
+      this._db.data[table].push(newItem)
+      return {
+        select: () => ({ single: () => Promise.resolve({ data: newItem, error: null }) }),
+        then: (resolve) => resolve({ data: newItem, error: null })
+      }
+    }
   }
 
   _getTableName() {

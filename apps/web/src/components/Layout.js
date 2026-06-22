@@ -8,6 +8,11 @@ export class Layout {
   }
 
   getSections(role) {
+    const menuPerms = this.auth.menuPermissions
+    const canView = (item) => {
+      if (!menuPerms) return item.roles.includes(role)
+      return menuPerms[item.path] === true
+    }
     const all = [
       {
         label: 'Utama',
@@ -60,13 +65,18 @@ export class Layout {
           },
           { path: '/debts', label: 'Hutang', icon: 'dollar-sign', roles: ['owner', 'admin', 'staff_keuangan'] },
           { path: '/assets', label: 'Aset', icon: 'package', roles: ['owner', 'admin'] },
-          { path: '/settings', label: 'Pengaturan', icon: 'settings', roles: ['owner', 'admin'] }
+          { path: '/settings', label: 'Pengaturan', icon: 'settings', roles: ['owner', 'admin'], hasSub: true,
+            subs: [
+              { path: '/settings', label: 'Metode Pembayaran' },
+              { path: '/settings/roles', label: 'Atur Peran' }
+            ]
+          }
         ]
       }
     ]
     return all.map(section => ({
       ...section,
-      items: section.items.filter(item => item.roles.includes(role))
+      items: section.items.filter(item => canView(item))
     })).filter(s => s.items.length > 0)
   }
 
@@ -364,8 +374,16 @@ export class Layout {
 
   updateActiveLink(path) {
     document.querySelectorAll('.nav-item').forEach(el => {
-      const isActive = el.dataset.path === path
-      el.classList.toggle('active', isActive && !el.hasAttribute('onclick'))
+      const hasSub = el.hasAttribute('onclick')
+      if (hasSub) {
+        const subItems = document.getElementById(el.getAttribute('data-path')?.replace(/\//g, '-')?.replace(/^-/, 'sub-'))
+        const hasActiveSub = subItems?.querySelector('.nav-sub-item.active')
+        el.classList.toggle('active', !!hasActiveSub)
+        el.classList.toggle('open', !!hasActiveSub)
+        if (subItems) subItems.classList.toggle('open', !!hasActiveSub)
+      } else {
+        el.classList.toggle('active', el.dataset.path === path)
+      }
     })
     document.querySelectorAll('.nav-sub-item').forEach(el => {
       el.classList.toggle('active', el.dataset.path === path)

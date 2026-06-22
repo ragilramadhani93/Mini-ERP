@@ -22,6 +22,7 @@ import { UsersPage } from './pages/UsersPage.js'
 import { ProfilePage } from './pages/ProfilePage.js'
 import { ShopeePage } from './pages/ShopeePage.js'
 import { SettingsPage } from './pages/SettingsPage.js'
+import { SettingsRolePage } from './pages/SettingsRolePage.js'
 import { AssetsPage } from './pages/AssetsPage.js'
 
 const isDemo = import.meta.env.VITE_DEMO_MODE === 'true'
@@ -67,6 +68,7 @@ const routes = {
   '/profile': { component: ProfilePage, roles: ['owner', 'admin', 'staff_gudang', 'staff_keuangan'] },
   '/shopee': { component: ShopeePage, roles: ['owner', 'admin'] },
   '/settings': { component: SettingsPage, roles: ['owner', 'admin'] },
+  '/settings/roles': { component: SettingsRolePage, roles: ['owner'] },
   '/assets': { component: AssetsPage, roles: ['owner', 'admin'] }
 }
 
