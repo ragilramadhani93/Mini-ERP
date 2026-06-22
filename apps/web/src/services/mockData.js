@@ -241,7 +241,7 @@ class MockQuery {
   }
 
   _applyFilters() {
-    let result = [...this._data]
+    let result = this._data
     for (const filter of this._filters) {
       if (filter.op === 'eq') result = result.filter(item => item[filter.col] == filter.val)
       else if (filter.op === 'neq') result = result.filter(item => item[filter.col] != filter.val)
@@ -323,13 +323,16 @@ class MockQuery {
         })
       }
 
-      for (const order of this._orders) {
-        result.sort((a, b) => {
-          const va = a[order.col], vb = b[order.col]
-          if (va == null) return 1
-          if (vb == null) return -1
-          return order.ascending ? va > vb ? 1 : -1 : va < vb ? 1 : -1
-        })
+      if (this._orders.length > 0) {
+        result = [...result]
+        for (const order of this._orders) {
+          result.sort((a, b) => {
+            const va = a[order.col], vb = b[order.col]
+            if (va == null) return 1
+            if (vb == null) return -1
+            return order.ascending ? va > vb ? 1 : -1 : va < vb ? 1 : -1
+          })
+        }
       }
 
       if (this._limit) result = result.slice(0, this._limit)
@@ -378,11 +381,9 @@ class MockQuery {
 
   upsert(data, { onConflict } = {}) {
     const table = this._getTableName()
+    const keys = onConflict ? onConflict.split(',').map(k => k.trim()) : Object.keys(data).filter(k => k !== 'id' && k !== 'created_at' && k !== 'updated_at')
     const existing = this._db.data[table].find(item => {
-      return Object.entries(data).every(([key, val]) => {
-        if (key === 'id' || key === 'created_at' || key === 'updated_at') return true
-        return item[key] === val
-      })
+      return keys.every(k => item[k] === data[k])
     })
     if (existing) {
       Object.assign(existing, data, { updated_at: new Date().toISOString() })

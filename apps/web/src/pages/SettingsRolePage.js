@@ -174,6 +174,9 @@ export class SettingsRolePage {
         }
       })
 
+      console.log('Changes detected:', changes.length, changes.slice(0, 5))
+      console.log('Current permissions sample:', Object.entries(this.permissions).slice(0, 5))
+
       if (changes.length === 0) {
         this.saving = false
         this.renderAndBind()
@@ -183,19 +186,22 @@ export class SettingsRolePage {
 
       let hasError = false
       for (const ch of changes) {
-        const { error: delErr } = await this.supabase
+        const { error: delErr, data: delData } = await this.supabase
           .from('role_permissions')
           .delete()
           .eq('role_id', ch.role_id)
           .eq('menu_path', ch.menu_path)
+        console.log('Delete:', ch.role_id, ch.menu_path, 'error:', delErr, 'deleted:', delData?.length)
         if (delErr) { hasError = true; continue }
         const { error: insErr } = await this.supabase
           .from('role_permissions')
           .insert({ role_id: ch.role_id, menu_path: ch.menu_path, can_view: ch.can_view })
+        console.log('Insert:', ch.role_id, ch.menu_path, ch.can_view, 'error:', insErr)
         if (insErr) hasError = true
       }
 
       await this.loadData()
+      console.log('After reload permissions sample:', Object.entries(this.permissions).slice(0, 5))
       this.saving = false
       this.dirty = false
       this.renderAndBind()
