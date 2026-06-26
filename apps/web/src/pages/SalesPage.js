@@ -884,6 +884,7 @@ export class SalesPage {
           qty: item.quantity,
           price: item.unit_price,
           discount: item.discount || 0,
+          marketplace: item.marketplace || null,
           subtotal: (item.quantity * item.unit_price) - (item.discount || 0)
         }))
         this.paymentMethod = sale.payment_method || 'cash'
@@ -1174,8 +1175,7 @@ export class SalesPage {
 
       const saleMarketplace = validItems.some(i => i.marketplace) ? validItems.filter(i => i.marketplace).map(i => i.marketplace).join('+') : null
 
-      let sale, saleError
-
+      let saleItemRecords
       if (isEdit) {
         const result = await this.supabase.from('sales').update({
           customer_name: formData.get('customer_name') || null,
@@ -1191,11 +1191,7 @@ export class SalesPage {
         }).eq('id', this.editingSale.id).select().single()
         sale = result.data
         saleError = result.error
-
-        if (!saleError) {
-          await this.supabase.from('sale_items').delete().eq('sale_id', this.editingSale.id)
-          await this.supabase.from('split_payments').delete().eq('sale_id', this.editingSale.id)
-        }
+        if (saleError) { alert('Gagal update penjualan: ' + saleError.message); this.loading = false; this.renderAndBind(); return }
       } else {
         const result = await this.supabase.from('sales').insert({
           invoice_number: 'INV-' + Date.now().toString(36).toUpperCase(),
@@ -1213,25 +1209,34 @@ export class SalesPage {
         }).select().single()
         sale = result.data
         saleError = result.error
+        if (saleError) { alert('Gagal simpan penjualan: ' + saleError.message); this.loading = false; this.renderAndBind(); return }
       }
 
-      if (saleError) { alert('Gagal: ' + saleError.message); this.loading = false; this.renderAndBind(); return }
-
-      if (isSplit && this.splitPayments.length > 0) {
-        const splitInserts = this.splitPayments.filter(sp => sp.amount > 0).map(sp => ({
-          sale_id: sale.id, method: sp.method, amount: sp.amount
-        }))
-        if (splitInserts.length > 0) {
-          await this.supabase.from('split_payments').insert(splitInserts)
-        }
-      }
-
+      // Save sale_items
       const saleItems = validItems.map(item => ({
         sale_id: sale.id, product_id: item.productId, quantity: item.qty,
         unit_price: item.price, discount: item.discount,
         sku_id: item.skuId || null, marketplace: item.marketplace || null
       }))
       const { error: itemsError } = await this.supabase.from('sale_items').insert(saleItems)
+      if (itemsError) { alert('Gagal menyimpan item: ' + itemsError.message); this.loading = false; this.renderAndBind(); return }
+
+      // Only delete old items after new items inserted successfully
+      if (isEdit) {
+        await this.supabase.from('sale_items').delete().eq('sale_id', this.editingSale.id)
+        await this.supabase.from('split_payments').delete().eq('sale_id', this.editingSale.id)
+      }
+
+      // Save split payments
+      if (isSplit && this.splitPayments.length > 0) {
+        const splitInserts = this.splitPayments.filter(sp => sp.amount > 0).map(sp => ({
+          sale_id: sale.id, method: sp.method, amount: sp.amount
+        }))
+        if (splitInserts.length > 0) {
+          const { error: splitError } = await this.supabase.from('split_payments').insert(splitInserts)
+          if (splitError) { alert('Gagal menyimpan split payment: ' + splitError.message) }
+        }
+      }
       if (itemsError) { alert('Gagal menyimpan item: ' + itemsError.message); this.loading = false; this.renderAndBind(); return }
 
       if (!isEdit) {

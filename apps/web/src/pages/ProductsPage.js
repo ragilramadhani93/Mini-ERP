@@ -16,12 +16,14 @@ export class ProductsPage {
     this.itemsPerPage = 10
     this.error = null
     this.modalVariants = []
+    this.showInactive = false
   }
 
   async loadData() {
     try {
+      const activeFilter = this.showInactive ? { eq: false } : { eq: true }
       const [productsRes, categoriesRes, suppliersRes, variantsRes, skusRes] = await Promise.all([
-        this.supabase.from('products').select('*, categories(name), suppliers(supplier_name)').order('created_at', { ascending: false }),
+        this.supabase.from('products').select('*, categories(name), suppliers(supplier_name)').eq('is_active', activeFilter.eq).order('created_at', { ascending: false }),
         this.supabase.from('categories').select('*').order('name'),
         this.supabase.from('suppliers').select('*').order('supplier_name'),
         this.supabase.from('product_variants').select('*').order('sort_order'),
@@ -107,6 +109,12 @@ export class ProductsPage {
               <span>Stok Menipis</span>
               <h2>${stats.lowStockCount} Produk</h2>
             </div>
+          </div>
+
+          <!-- TAB: Aktif / Nonaktif -->
+          <div class="flex items-center gap-2" style="border-bottom:1px solid #e2e8f0;padding-bottom:8px">
+            <button id="tab-active" class="tab-btn" data-show="false" style="padding:5px 14px;border-radius:6px;font-size:12px;font-weight:500;cursor:pointer;border:none;${!this.showInactive ? 'background:#7A3B58;color:#fff' : 'color:#64748b;background:transparent'}">Aktif</button>
+            <button id="tab-inactive" class="tab-btn" data-show="true" style="padding:5px 14px;border-radius:6px;font-size:12px;font-weight:500;cursor:pointer;border:none;${this.showInactive ? 'background:#7A3B58;color:#fff' : 'color:#64748b;background:transparent'}">Nonaktif</button>
           </div>
 
           <!-- FILTER -->
@@ -207,7 +215,7 @@ export class ProductsPage {
                       </td>
                       <td>
                         <button class="action-btn edit-product" data-id="${p.id}" title="Edit">✏️</button>
-                        <button class="action-btn delete-product" data-id="${p.id}" title="Delete">🗑️</button>
+                        ${this.showInactive ? `<button class="action-btn activate-product" data-id="${p.id}" title="Aktifkan" style="color:#065f46;border:none;background:none;cursor:pointer;padding:4px">↩ Aktifkan</button>` : `<button class="action-btn delete-product" data-id="${p.id}" title="Nonaktifkan" style="color:#dc2626;border:none;background:none;cursor:pointer;padding:4px">✕ Nonaktifkan</button>`}
                       </td>
                     </tr>
                   `
@@ -444,19 +452,41 @@ export class ProductsPage {
     document.querySelectorAll('.delete-product').forEach(btn => {
       btn.addEventListener('click', async () => {
         const id = btn.dataset.id
-        if (confirm('Hapus produk ini?')) {
+        if (confirm('Nonaktifkan produk ini? Produk tidak akan muncul di daftar aktif.')) {
           try {
-            await this.supabase.from('product_skus').delete().eq('product_id', id)
-            await this.supabase.from('product_variants').delete().eq('product_id', id)
-            await this.supabase.from('products').delete().eq('id', id)
+            await this.supabase.from('products').update({ is_active: false }).eq('id', id)
             await this.loadData()
             this.renderAndBind()
           } catch (err) {
-            console.error('❌ Delete product error:', err)
+            console.error('❌ Nonaktifkan product error:', err)
             this.error = err.message
             this.renderAndBind()
           }
         }
+      })
+    })
+
+    document.querySelectorAll('.activate-product').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const id = btn.dataset.id
+        try {
+          await this.supabase.from('products').update({ is_active: true }).eq('id', id)
+          await this.loadData()
+          this.renderAndBind()
+        } catch (err) {
+          console.error('❌ Aktifkan product error:', err)
+          this.error = err.message
+          this.renderAndBind()
+        }
+      })
+    })
+
+    document.querySelectorAll('.tab-btn[data-show]').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        this.showInactive = btn.dataset.show === 'true'
+        this.currentPage = 1
+        await this.loadData()
+        this.renderAndBind()
       })
     })
 
