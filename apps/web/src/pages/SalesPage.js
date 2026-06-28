@@ -888,7 +888,7 @@ export class SalesPage {
           subtotal: (item.quantity * item.unit_price) - (item.discount || 0)
         }))
         this.paymentMethod = sale.payment_method || 'cash'
-        this.mainPaymentAmount = sale.total_received || sale.total_amount || 0
+        this.mainPaymentAmount = sale.payment_details?.main_amount || sale.total_received || sale.total_amount || 0
         this.formCustomerName = sale.customer_name || ''
         this.formMarketplace = sale.marketplace || ''
         this.formPlatformFee = sale.platform_fee || 0
@@ -1157,7 +1157,7 @@ export class SalesPage {
       const totalReceived = totalAmount - platformFee
       const status = formData.get('status') || 'draft'
       const paymentMethod = formData.get('payment_method') || 'cash'
-      const mainAmount = parseInt(formData.get('main_payment_amount')) || totalAmount
+      const mainAmount = parseInt(formData.get('main_payment_amount')) || totalReceived
       const isSplit = this.splitPayments.length > 0
       const isEdit = !!this.editingSale
 
@@ -1167,7 +1167,8 @@ export class SalesPage {
         main_amount: mainAmount,
         splits: this.splitPayments.filter(sp => sp.amount > 0),
         total_split: splitTotal,
-        total_paid: mainAmount + splitTotal
+        total_paid: mainAmount + splitTotal,
+        total_received: totalReceived
       }
 
       this.loading = true
@@ -1290,6 +1291,11 @@ export class SalesPage {
         this.splitPayments = []
       } else {
         this.editingSale = sale
+        this.paymentMethod = paymentMethod
+        this.mainPaymentAmount = mainAmount
+        this.formCustomerName = formData.get('customer_name') || ''
+        this.formMarketplace = formData.get('marketplace') || ''
+        this.formPlatformFee = platformFee
       }
       await this.loadData()
       this.renderAndBind()
