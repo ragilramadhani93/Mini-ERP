@@ -154,7 +154,7 @@ export class Layout {
               const isOpen = this.openSubs[subKey]
               return `
                 <a class="nav-item ${isActive && !item.hasSub ? 'active' : ''} ${item.hasSub && isOpen ? 'open' : ''}"
-                   href="#${item.path}" data-path="${item.path}" data-label="${item.label}"
+                   href="#${item.path}" data-path="${item.path}" data-label="${item.label}" ${item.hasSub ? 'data-hassub="true"' : ''}
                    ${item.hasSub ? `onclick="event.preventDefault(); document.querySelector('#sidebar').__layoutInstance?.toggleSub('${subKey}', this)"` : ''}>
                   ${icons[item.icon] || icons.grid}
                   <span>${item.label}</span>
@@ -345,6 +345,7 @@ export class Layout {
       link.addEventListener('click', (e) => {
         const path = link.dataset.path
         if (!path) return
+        if (link.dataset.hassub) return
         e.preventDefault()
         if (link.closest('#mobile-menu-overlay')) this.closeMobileMenu()
         this.router.navigate(path)
