@@ -1227,6 +1227,11 @@ export class SalesPage {
       }
 
       // Save sale_items
+      if (isEdit) {
+        // Delete old items FIRST before inserting new ones
+        await this.supabase.from('sale_items').delete().eq('sale_id', this.editingSale.id)
+      }
+
       const saleItems = validItems.map(item => ({
         sale_id: sale.id, product_id: item.productId, quantity: item.qty,
         unit_price: item.price, discount: item.discount,
@@ -1235,22 +1240,17 @@ export class SalesPage {
       const { error: itemsError } = await this.supabase.from('sale_items').insert(saleItems)
       if (itemsError) { alert('Gagal menyimpan item: ' + itemsError.message); this.loading = false; this.renderAndBind(); return }
 
-      // Only delete old items after new items inserted successfully
-      if (isEdit) {
-        await Promise.all([
-          this.supabase.from('sale_items').delete().eq('sale_id', this.editingSale.id),
-          this.supabase.from('split_payments').delete().eq('sale_id', this.editingSale.id)
-        ])
-      }
-
       // Save split payments
-      if (isSplit && this.splitPayments.length > 0) {
-        const splitInserts = this.splitPayments.filter(sp => sp.amount > 0).map(sp => ({
-          sale_id: sale.id, method: sp.method, amount: sp.amount
-        }))
-        if (splitInserts.length > 0) {
-          const { error: splitError } = await this.supabase.from('split_payments').insert(splitInserts)
-          if (splitError) { alert('Gagal menyimpan split payment: ' + splitError.message) }
+      if (isSplit) {
+        await this.supabase.from('split_payments').delete().eq('sale_id', sale.id)
+        if (this.splitPayments.length > 0) {
+          const splitInserts = this.splitPayments.filter(sp => sp.amount > 0).map(sp => ({
+            sale_id: sale.id, method: sp.method, amount: sp.amount
+          }))
+          if (splitInserts.length > 0) {
+            const { error: splitError } = await this.supabase.from('split_payments').insert(splitInserts)
+            if (splitError) { alert('Gagal menyimpan split payment: ' + splitError.message) }
+          }
         }
       }
       if (itemsError) { alert('Gagal menyimpan item: ' + itemsError.message); this.loading = false; this.renderAndBind(); return }
