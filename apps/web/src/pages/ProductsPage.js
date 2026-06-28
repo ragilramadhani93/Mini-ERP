@@ -214,8 +214,12 @@ export class ProductsPage {
                         </div>
                       </td>
                       <td>
-                        <button class="action-btn edit-product" data-id="${p.id}" title="Edit">✏️</button>
-                        ${this.showInactive ? `<button class="action-btn activate-product" data-id="${p.id}" title="Aktifkan" style="color:#065f46;border:none;background:none;cursor:pointer;padding:4px">↩ Aktifkan</button>` : `<button class="action-btn delete-product" data-id="${p.id}" title="Nonaktifkan" style="color:#dc2626;border:none;background:none;cursor:pointer;padding:4px">✕ Nonaktifkan</button>`}
+                        <div style="display:flex;gap:6px;align-items:center">
+                          <button class="action-btn icon-btn edit-product" data-id="${p.id}" title="Edit">✏️</button>
+                          ${this.showInactive 
+                            ? `<button class="action-btn text-btn activate-product" data-id="${p.id}" title="Aktifkan">↩ Aktifkan</button>` 
+                            : `<button class="action-btn text-btn danger delete-product" data-id="${p.id}" title="Nonaktifkan">✕ Nonaktifkan</button>`}
+                        </div>
                       </td>
                     </tr>
                   `
