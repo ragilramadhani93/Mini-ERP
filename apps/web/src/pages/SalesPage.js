@@ -559,91 +559,160 @@ export class SalesPage {
     const items = sale?.sale_items || []
     const byName = sale?.created_by_user?.full_name || '-'
     const byInitials = byName.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()
+    const totalQty = items.reduce((sum, i) => sum + i.quantity, 0)
+    const totalReceived = sale?.total_received ?? (sale?.total_amount - (sale?.platform_fee || 0))
 
     const marketplaceNames = {
-      shopee: 'Shopee',
-      tiktok: 'TikTok Shop',
-      tokopedia: 'Tokopedia',
-      lazada: 'Lazada'
+      shopee: 'Shopee', tiktok: 'TikTok Shop', tokopedia: 'Tokopedia', lazada: 'Lazada'
+    }
+
+    const payIcons = {
+      cash: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2"/><path d="M6 12h.01M18 12h.01"/></svg>',
+      shopee: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 002 1.61h9.72a2 2 0 002-1.61L23 6H6"/></svg>',
+      dana: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M12 10a2 2 0 100 4 2 2 0 000-4z"/></svg>',
+      default: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M12 10a2 2 0 100 4 2 2 0 000-4z"/></svg>'
+    }
+
+    const getPayIcon = (method) => {
+      if (method === 'cash') return payIcons.cash
+      if (method?.includes('shopee')) return payIcons.shopee
+      if (method?.includes('dana')) return payIcons.dana
+      return payIcons.default
     }
 
     return `
-      <div class="modal-overlay" id="view-modal-overlay">
-        <div class="modal-content p-6 max-w-3xl" style="border-radius:14px">
-          <div class="flex items-center justify-between mb-6">
-            <div>
-              <h3 class="text-lg font-semibold" style="font-size:18px;font-weight:700;color:#0f172a">Detil Penjualan</h3>
-              <p class="text-sm" style="color:#64748b;margin-top:2px">Invoice: ${sale?.invoice_number}</p>
+      <div class="dv-overlay" id="view-modal-overlay">
+        <div class="dv-modal">
+          <div class="dv-header">
+            <div class="dv-header-left">
+              <div class="dv-inv-title">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="17" height="17"><path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1z"/><path d="M14 8H8"/><path d="M16 12H8"/></svg>
+                Detil penjualan
+              </div>
+              <div class="dv-inv-sub">${sale?.invoice_number || '-'}</div>
             </div>
-            <button id="close-view-modal" class="text-gray-400 hover:text-gray-600" style="border:none;background:none;cursor:pointer">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            <button id="close-view-modal" class="dv-btn-close" aria-label="Tutup">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
             </button>
           </div>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px">
-            <div>
-              <p style="font-size:12px;color:#64748b;margin-bottom:4px">Pelanggan</p>
-              <p style="font-weight:500;color:#1e293b">${sale?.customer_name || '-'}</p>
-            </div>
-            <div>
-              <p style="font-size:12px;color:#64748b;margin-bottom:4px">Tanggal</p>
-              <p style="font-weight:500;color:#1e293b">${this.formatDate(sale?.created_at)}</p>
-            </div>
-            <div>
-              <p style="font-size:12px;color:#64748b;margin-bottom:4px">Status</p>
-              <p style="font-weight:500;color:#1e293b">${sale?.status === 'completed' ? '✅ Lunas' : '⏳ Belum Lunas'}</p>
-            </div>
-            <div>
-              <p style="font-size:12px;color:#64748b;margin-bottom:4px">Marketplace</p>
-              <p style="font-weight:500;color:#1e293b">${sale?.marketplace ? marketplaceNames[sale.marketplace] : 'Offline / Lainnya'}</p>
-            </div>
-            <div>
-              <p style="font-size:12px;color:#64748b;margin-bottom:4px">Pembayaran</p>
-              ${this._renderPaymentBreakdown(sale)}
-            </div>
-            <div>
-              <p style="font-size:12px;color:#64748b;margin-bottom:4px">Potongan Platform</p>
-              <p style="font-weight:500;color:#1e293b">${sale?.platform_fee > 0 ? `Rp ${this.formatNumber(sale.platform_fee)}` : '-'}</p>
-            </div>
-            <div>
-              <p style="font-size:12px;color:#64748b;margin-bottom:4px">Kasir</p>
-              <p style="font-weight:500;color:#1e293b">${byName}</p>
-            </div>
-          </div>
-          <div style="border-top:1px solid #f1f5f9;padding-top:16px;margin-bottom:16px">
-            <h4 style="font-size:13px;font-weight:600;color:#334155;margin-bottom:12px">Item Produk</h4>
-            <div style="display:flex;flex-direction:column;gap:8px">
-              ${items.map(item => `
-                <div style="display:flex;align-items:center;justify-content:space-between;padding:12px;background:#f8fafc;border-radius:8px">
-                  <div>
-                    <p style="font-weight:500;color:#1e293b">${item.products?.name || '-'}</p>
-                    <p style="font-size:12px;color:#64748b">${item.quantity} x Rp ${this.formatNumber(item.unit_price)}</p>
-                  </div>
-                  <div style="text-align:right">
-                    ${item.discount > 0 ? `<p style="font-size:11px;color:#ef4444">Diskon: Rp ${this.formatNumber(item.discount)}</p>` : ''}
-                    <p style="font-weight:600;color:#0f172a">Rp ${this.formatNumber((item.quantity * item.unit_price) - item.discount)}</p>
-                  </div>
+
+          <div class="dv-body">
+            <div class="dv-info-grid">
+              <div class="dv-info-cell">
+                <div class="dv-ic-label">Pelanggan</div>
+                <div class="dv-ic-value">${sale?.customer_name || '-'}</div>
+              </div>
+              <div class="dv-info-cell">
+                <div class="dv-ic-label">Tanggal</div>
+                <div class="dv-ic-value">${this.formatDate(sale?.created_at)}</div>
+              </div>
+              <div class="dv-info-cell">
+                <div class="dv-ic-label">Status</div>
+                <div>${sale?.status === 'completed'
+                  ? '<span class="dv-badge dv-lunas"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="13" height="13"><polyline points="20 6 9 17 4 12"/></svg> Lunas</span>'
+                  : '<span class="dv-badge dv-pending"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> Belum lunas</span>'
+                }</div>
+              </div>
+              <div class="dv-info-cell">
+                <div class="dv-ic-label">Marketplace</div>
+                <div class="dv-ic-value">${sale?.marketplace ? (marketplaceNames[sale.marketplace] || sale.marketplace) : 'Offline'}</div>
+              </div>
+              <div class="dv-info-cell">
+                <div class="dv-ic-label">Kasir</div>
+                <div class="dv-kasir-row">
+                  <div class="dv-kasir-avatar">${byInitials}</div>
+                  <span class="dv-kasir-name">${byName}</span>
                 </div>
-              `).join('')}
+              </div>
+              <div class="dv-info-cell">
+                <div class="dv-ic-label">Potongan platform</div>
+                <div class="dv-ic-value" style="color:#3b6d11">${sale?.platform_fee > 0 ? '- Rp ' + this.formatNumber(sale.platform_fee) : '-'}</div>
+              </div>
+            </div>
+
+            <div class="dv-divider"></div>
+
+            <div>
+              <div class="dv-section-title">Pembayaran</div>
+              <table class="dv-pay-table">
+                <tbody>
+                  <tr>
+                    <td>
+                      <div class="dv-pay-icon">${getPayIcon(sale?.payment_method)}</div>
+                      ${this.getPaymentLabel(sale?.payment_method)}
+                    </td>
+                    <td>Rp ${this.formatNumber(sale?.payment_details?.main_amount || sale?.total_amount)}</td>
+                  </tr>
+                  ${(sale?.split_payments || sale?.payment_details?.splits || []).filter(sp => sp.amount > 0).map(sp => `
+                    <tr>
+                      <td>
+                        <div class="dv-pay-icon">${getPayIcon(sp.method)}</div>
+                        ${this.getPaymentLabel(sp.method)}
+                      </td>
+                      <td>Rp ${this.formatNumber(sp.amount)}</td>
+                    </tr>
+                  `).join('')}
+                </tbody>
+              </table>
+            </div>
+
+            <div class="dv-divider"></div>
+
+            <div>
+              <div class="dv-section-title">Item produk</div>
+              <div class="dv-item-list">
+                ${items.map(item => {
+                  const mktName = item.marketplace ? (marketplaceNames[item.marketplace] || item.marketplace) : 'Offline'
+                  return `
+                    <div class="dv-item-row">
+                      <div class="dv-item-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="17" height="17"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+                      </div>
+                      <div class="dv-item-info">
+                        <div class="dv-item-name">${item.products?.name || '-'}</div>
+                        <div class="dv-item-meta">SKU: ${item.products?.sku || '-'} · ${mktName}</div>
+                      </div>
+                      <div class="dv-item-total">
+                        <div class="dv-item-total-val">Rp ${this.formatNumber((item.quantity * item.unit_price) - (item.discount || 0))}</div>
+                        <div class="dv-item-unit">${item.quantity} × Rp ${this.formatNumber(item.unit_price)}</div>
+                      </div>
+                    </div>
+                  `
+                }).join('')}
+              </div>
+            </div>
+
+            <div class="dv-summary-box">
+              <div class="dv-sum-row">
+                <span class="dv-sum-label">Subtotal (${totalQty} item)</span>
+                <span class="dv-sum-val">Rp ${this.formatNumber(sale?.total_amount + (sale?.platform_fee || 0))}</span>
+              </div>
+              ${sale?.platform_fee > 0 ? `
+              <div class="dv-sum-row">
+                <span class="dv-sum-label">Potongan platform</span>
+                <span class="dv-sum-val dv-discount">- Rp ${this.formatNumber(sale.platform_fee)}</span>
+              </div>
+              ` : ''}
+              <div class="dv-sum-divider"></div>
+              <div class="dv-sum-row">
+                <span class="dv-sum-total-label">Diterima</span>
+                <span class="dv-sum-total-val">Rp ${this.formatNumber(totalReceived)}</span>
+              </div>
             </div>
           </div>
-          <div style="display:flex;align-items:center;justify-content:space-between;padding-top:16px;border-top:1px solid #f1f5f9">
-            <div style="display:flex;gap:8px">
-              ${sale?.status !== 'completed' ? `
-                <button id="view-close-sale-btn" class="btn-secondary" data-id="${sale.id}" style="display:inline-flex;align-items:center;gap:6px;padding:9px 14px;border:1px solid #22c55e;border-radius:6px;background:#f0fdf4;font-size:13px;font-weight:500;color:#16a34a;cursor:pointer">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-                  Tutup (Lunas)
-                </button>
-              ` : ''}
-              <button id="print-detail-btn" class="btn-secondary" style="display:inline-flex;align-items:center;gap:6px;padding:9px 14px;border:1px solid #cbd5e1;border-radius:6px;background:#fff;font-size:13px;font-weight:500;color:#334155;cursor:pointer">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
-                Cetak
+
+          <div class="dv-footer">
+            ${sale?.status !== 'completed' ? `
+              <button id="view-close-sale-btn" class="dv-btn-lunas" data-id="${sale.id}">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="14" height="14"><polyline points="20 6 9 17 4 12"/></svg>
+                Tandai lunas
               </button>
-            </div>
-            <div style="text-align:right">
-              <p style="font-size:14px;color:#64748b">Total: Rp ${this.formatNumber(sale?.total_amount)}</p>
-              ${sale?.platform_fee > 0 ? `<p style="font-size:14px;color:#ef4444;margin:4px 0">Potongan platform: - Rp ${this.formatNumber(sale.platform_fee)}</p>` : ''}
-              <p style="font-size:16px;font-weight:700;color:#16a34a">Diterima: Rp ${this.formatNumber(sale?.total_received ?? (sale?.total_amount - (sale?.platform_fee || 0)))}</p>
-            </div>
+            ` : ''}
+            <button id="print-detail-btn" class="dv-btn-print">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+              Cetak
+            </button>
+            <button id="close-view-modal-bottom" class="dv-btn-close-modal">Tutup</button>
           </div>
         </div>
       </div>
@@ -992,6 +1061,10 @@ export class SalesPage {
     })
 
     document.getElementById('close-view-modal')?.addEventListener('click', () => {
+      this.showViewModal = false
+      this.renderAndBind()
+    })
+    document.getElementById('close-view-modal-bottom')?.addEventListener('click', () => {
       this.showViewModal = false
       this.renderAndBind()
     })
