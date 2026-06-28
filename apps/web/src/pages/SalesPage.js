@@ -1146,6 +1146,12 @@ export class SalesPage {
       e.preventDefault()
 
       try {
+      if (!this.auth?.user?.id) {
+        alert('Sesi habis. Silakan login kembali.')
+        this.showModal = false
+        this.renderAndBind()
+        return
+      }
       const formData = new FormData(e.target)
       const validItems = this.transactionItems.filter(item => item.productId && item.qty > 0)
       if (validItems.length === 0) {
