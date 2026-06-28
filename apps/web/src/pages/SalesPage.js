@@ -1224,8 +1224,10 @@ export class SalesPage {
 
       // Only delete old items after new items inserted successfully
       if (isEdit) {
-        await this.supabase.from('sale_items').delete().eq('sale_id', this.editingSale.id)
-        await this.supabase.from('split_payments').delete().eq('sale_id', this.editingSale.id)
+        await Promise.all([
+          this.supabase.from('sale_items').delete().eq('sale_id', this.editingSale.id),
+          this.supabase.from('split_payments').delete().eq('sale_id', this.editingSale.id)
+        ])
       }
 
       // Save split payments
@@ -1240,43 +1242,51 @@ export class SalesPage {
       }
       if (itemsError) { alert('Gagal menyimpan item: ' + itemsError.message); this.loading = false; this.renderAndBind(); return }
 
-      if (!isEdit) {
-        for (const item of validItems) {
+      // Only deduct stock when status is completed (not draft)
+      if (status === 'completed' && !isEdit) {
+        const stockPromises = validItems.map(item => {
           if (item.skuId) {
             const sku = this.productSkus.find(s => s.id === item.skuId)
             const skuStock = sku?.current_stock || 0
             if (skuStock < item.qty) {
               alert(`Stok varian tidak mencukupi. Stok: ${skuStock}`)
-              this.loading = false; this.renderAndBind(); return
+              return null
             }
-            await this.supabase.from('product_skus').update({
+            return this.supabase.from('product_skus').update({
               current_stock: skuStock - item.qty
             }).eq('id', item.skuId)
           } else {
-            await this.supabase.rpc('add_stock_movement', {
+            return this.supabase.rpc('add_stock_movement', {
               p_product_id: item.productId, p_quantity: item.qty, p_type: 'out',
               p_reason: 'sale', p_notes: `Penjualan ${sale.invoice_number}`, p_created_by: this.auth.user.id
             })
           }
-        }
+        }).filter(Boolean)
+        const stockResults = await Promise.all(stockPromises)
+        const stockError = stockResults.find(r => r.error)
+        if (stockError) { alert('Gagal update stok: ' + stockError.error.message); this.loading = false; this.renderAndBind(); return }
       }
 
       if (status === 'completed' && paymentMethod !== 'credit') {
-        await this.supabase.from('cash_transactions').insert({
-          type: 'in', category: 'sales', amount: totalReceived,
-          reference_type: 'sales', reference_id: sale.id,
-          description: `Penjualan ${sale.invoice_number}${formData.get('customer_name') ? ` - ${formData.get('customer_name')}` : ''}${formData.get('marketplace') ? ` (${formData.get('marketplace')})` : ''}`,
-          created_by: this.auth.user.id
-        })
-
-        if (platformFee > 0) {
-          await this.supabase.from('cash_transactions').insert({
-            type: 'out', category: 'platform_fee', amount: platformFee,
+        const cashPromises = [
+          this.supabase.from('cash_transactions').insert({
+            type: 'in', category: 'sales', amount: totalReceived,
             reference_type: 'sales', reference_id: sale.id,
-            description: `Potongan platform ${formData.get('marketplace') || 'marketplace'} - ${sale.invoice_number}`,
+            description: `Penjualan ${sale.invoice_number}${formData.get('customer_name') ? ` - ${formData.get('customer_name')}` : ''}${formData.get('marketplace') ? ` (${formData.get('marketplace')})` : ''}`,
             created_by: this.auth.user.id
           })
+        ]
+        if (platformFee > 0) {
+          cashPromises.push(
+            this.supabase.from('cash_transactions').insert({
+              type: 'out', category: 'platform_fee', amount: platformFee,
+              reference_type: 'sales', reference_id: sale.id,
+              description: `Potongan platform ${formData.get('marketplace') || 'marketplace'} - ${sale.invoice_number}`,
+              created_by: this.auth.user.id
+            })
+          )
         }
+        await Promise.all(cashPromises)
       }
 
       this.loading = false
