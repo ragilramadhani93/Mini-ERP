@@ -363,206 +363,190 @@ export class SalesPage {
   renderModal() {
     const total = this.transactionItems.reduce((sum, item) => sum + item.subtotal, 0)
     const totalQty = this.transactionItems.reduce((sum, item) => sum + item.qty, 0)
+    const totalDisc = this.transactionItems.reduce((sum, item) => sum + (item.discount || 0), 0)
     const splitTotal = this.splitPayments.reduce((sum, sp) => sum + (sp.amount || 0), 0)
     const mainAmount = this.mainPaymentAmount || total
     const totalPaid = mainAmount + splitTotal
     const remaining = total - totalPaid
 
     return `
-      <div class="sm-overlay" id="modal-overlay">
-        <div class="sm-modal" role="dialog" aria-modal="true" aria-labelledby="smTitle">
-          <div class="sm-header">
-            <div class="sm-title">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 002 1.61h9.72a2 2 0 002-1.61L23 6H6"/></svg>
-              <span id="smTitle">${this.editingSale ? 'Edit Draft' : 'Input penjualan'}</span>
-            </div>
-            <button id="close-modal" class="sm-btn-close" aria-label="Tutup">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-            </button>
+      <div class="modal-overlay" id="modal-overlay" style="display:flex;align-items:center;justify-content:center;background:rgba(15,23,42,0.5);z-index:100;overflow-y:auto;padding:20px">
+        <div class="sales-modal">
+          <div class="modal-header">
+            <h2>🛒 ${this.editingSale ? 'Edit Draft' : 'Input Penjualan'}</h2>
+            <button id="close-modal" class="close-btn">✕</button>
           </div>
 
           <form id="sale-form">
-          <div class="sm-body">
-            <div class="sm-col-left">
-              <div class="sm-search">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-                <input type="text" id="product-search" placeholder="Cari produk atau scan barcode…" autocomplete="off" aria-label="Cari produk">
+          <div class="sales-layout">
+
+            <!-- KIRI -->
+            <div class="sales-content">
+
+              <div class="search-box">
+                <input type="text" id="product-search" placeholder="Cari produk atau scan barcode..." autocomplete="off">
               </div>
 
-              <div class="sm-section-label">Keranjang</div>
+              <div class="section-title">Keranjang Belanja</div>
 
-              <div class="sm-cart-list" id="items-container">
+              <div class="cart-list" id="items-container">
                 ${this.transactionItems.length === 0 ? `
-                  <div class="sm-cart-empty">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="30" height="30"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg>
-                    Keranjang masih kosong
+                  <div style="padding:40px;text-align:center;color:#94a3b8;font-size:13px;background:#f8fafc;border-radius:16px;border:2px dashed #e2e8f0">
+                    Belum ada produk. Klik "Tambah Produk" untuk memulai.
                   </div>
                 ` : this.transactionItems.map((item, i) => {
                   const product = this.products.find(p => p.id === item.productId)
                   const productVariants = this.productVariants.filter(v => v.product_id === item.productId)
                   const productSkuList = this.productSkus.filter(s => s.product_id === item.productId)
                   const hasVariants = productVariants.length > 0 && productSkuList.length > 0
+                  const selectedSku = item.skuId ? this.productSkus.find(s => s.id === item.skuId) : null
                   return `
-                    <div class="sm-cart-item" data-index="${i}">
-                      <div class="sm-item-row1">
-                        <div class="sm-item-thumb">
-                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="16" height="16"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
-                        </div>
-                        <div class="sm-item-select-wrap">
-                          <select class="sm-item-select cart-product-select" data-index="${i}" required>
-                            <option value="">Pilih produk…</option>
-                            ${this.products.map(p => {
-                              const pSkus = this.productSkus.filter(s => s.product_id === p.id)
-                              const pVariants = this.productVariants.filter(v => v.product_id === p.id)
-                              const hasPvars = pVariants.length > 0 && pSkus.length > 0
-                              return `<option value="${p.id}" ${item.productId === p.id ? 'selected' : ''} data-price="${p.sell_price}" data-stock="${p.current_stock}" data-has-variants="${hasPvars ? '1' : '0'}">${p.name} (${p.sku}) ${hasPvars ? `- ${pSkus.length} varian` : `- Stok: ${p.current_stock}`}</option>`
-                            }).join('')}
-                          </select>
-                          ${hasVariants ? `
-                            <select class="sm-channel-select variant-select" data-index="${i}" style="margin-top:4px">
-                              <option value="">Pilih varian</option>
-                              ${productSkuList.map(sku => `<option value="${sku.id}" ${item.skuId === sku.id ? 'selected' : ''} data-price="${sku.sell_price || product.sell_price}" data-stock="${sku.current_stock}">${Object.values(sku.variant_values || {}).join(' / ')} - Stok: ${sku.current_stock}</option>`).join('')}
-                            </select>
-                          ` : ''}
-                        </div>
-                        <button type="button" class="sm-btn-remove remove-item" data-index="${i}" aria-label="Hapus item">
-                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>
-                        </button>
+                    <div class="cart-item" data-index="${i}">
+                      <div class="product-image">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="1.5" width="24" height="24">
+                          <rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/>
+                        </svg>
                       </div>
-                      <div class="sm-item-row2">
-                        <span class="sm-item-sku">${product ? 'SKU: ' + product.sku : 'SKU: —'}</span>
-                        <select class="sm-channel-select item-marketplace" data-index="${i}">
+                      <div class="product-info">
+                        <select class="product-select cart-product-select" data-index="${i}" required style="border:none;background:none;font-weight:600;font-size:14px;color:#0f172a;cursor:pointer;padding:0;width:100%">
+                          <option value="">Pilih produk</option>
+                          ${this.products.map(p => {
+                            const pSkus = this.productSkus.filter(s => s.product_id === p.id)
+                            const pVariants = this.productVariants.filter(v => v.product_id === p.id)
+                            const hasPvars = pVariants.length > 0 && pSkus.length > 0
+                            return `
+                              <option value="${p.id}" ${item.productId === p.id ? 'selected' : ''}
+                                data-price="${p.sell_price}" data-stock="${p.current_stock}"
+                                data-has-variants="${hasPvars ? '1' : '0'}">
+                                ${p.name} (${p.sku}) ${hasPvars ? `- ${pSkus.length} varian` : `- Stok: ${p.current_stock}`}
+                              </option>
+                            `
+                          }).join('')}
+                        </select>
+                        ${hasVariants ? `
+                          <select class="variant-select" data-index="${i}" style="border:1px solid #e2e8f0;border-radius:6px;padding:4px 6px;font-size:12px;color:#475569;margin-top:4px;width:100%">
+                            <option value="">Pilih varian</option>
+                            ${productSkuList.map(sku => `
+                              <option value="${sku.id}" ${item.skuId === sku.id ? 'selected' : ''}
+                                data-price="${sku.sell_price || product.sell_price}" data-stock="${sku.current_stock}">
+                                ${Object.values(sku.variant_values || {}).join(' / ')} - Stok: ${sku.current_stock}
+                              </option>
+                            `).join('')}
+                          </select>
+                        ` : `<small>SKU : ${product?.sku || '-'}</small>`}
+                        <select class="item-marketplace" data-index="${i}" style="border:1px solid #e2e8f0;border-radius:6px;padding:4px 6px;font-size:11px;color:#475569;margin-top:4px;width:100%">
                           <option value="" ${!item.marketplace ? 'selected' : ''}>Offline</option>
                           <option value="shopee" ${item.marketplace === 'shopee' ? 'selected' : ''}>Shopee</option>
                           <option value="tokopedia" ${item.marketplace === 'tokopedia' ? 'selected' : ''}>Tokopedia</option>
                           <option value="tiktok" ${item.marketplace === 'tiktok' ? 'selected' : ''}>TikTok Shop</option>
                           <option value="lazada" ${item.marketplace === 'lazada' ? 'selected' : ''}>Lazada</option>
                         </select>
-                        <div class="sm-spacer"></div>
-                        <div class="sm-qty-control">
-                          <button type="button" class="sm-qty-btn qty-minus" data-index="${i}" aria-label="Kurangi">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="10" height="10"><line x1="5" y1="12" x2="19" y2="12"/></svg>
-                          </button>
-                          <span class="sm-qty-val">${item.qty}</span>
-                          <button type="button" class="sm-qty-btn qty-plus" data-index="${i}" aria-label="Tambah">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="10" height="10"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-                          </button>
-                        </div>
-                        <div class="sm-item-price">
-                          <div class="sm-price-total">Rp ${this.formatNumber(item.subtotal)}</div>
-                          <div class="sm-price-per">Rp ${this.formatNumber(item.price || 0)}/pc</div>
-                        </div>
                       </div>
+                      <div class="qty-control">
+                        <button type="button" class="qty-minus" data-index="${i}">−</button>
+                        <input type="number" class="item-qty" data-index="${i}" value="${item.qty}" min="1">
+                        <button type="button" class="qty-plus" data-index="${i}">+</button>
+                      </div>
+                      <div class="price">
+                        Rp ${this.formatNumber(item.subtotal)}
+                        <small>Rp ${this.formatNumber(item.price || 0)}/pc</small>
+                      </div>
+                      <button type="button" class="remove-btn remove-item" data-index="${i}">✕</button>
                     </div>
                   `
                 }).join('')}
               </div>
 
-              <button type="button" id="add-item" class="sm-btn-add">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-                Tambah produk
+              <button type="button" id="add-item" class="add-item-btn">
+                + Tambah Produk
               </button>
+
             </div>
 
-            <div class="sm-col-right">
-              <div class="sm-right-title">Ringkasan</div>
+            <!-- KANAN -->
+            <div class="summary-panel">
 
-              <div class="sm-field-group">
-                <div class="sm-field-label">Pelanggan</div>
-                <input class="sm-field-input" type="text" id="customer_name" name="customer_name" list="customer-list" placeholder="Nama pelanggan…" value="${this.formCustomerName || ''}">
+              <div class="summary-title">Ringkasan Transaksi</div>
+
+              <div class="form-group">
+                <label>Pelanggan</label>
+                <input type="text" id="customer_name" name="customer_name" list="customer-list" placeholder="Ketik nama pelanggan..." value="${this.formCustomerName || ''}">
                 <datalist id="customer-list">
                   <option value="Pelanggan Umum">
                   ${this.customers.map(c => `<option value="${c}">`).join('')}
                 </datalist>
               </div>
 
-              <div class="sm-field-group" id="platformFeeSection">
-                <div class="sm-field-label">Potongan platform</div>
-                <input class="sm-field-input" type="number" id="platform_fee" name="platform_fee" placeholder="0" value="${this.formPlatformFee || 0}" min="0">
+              <div class="form-group" id="platformFeeSection">
+                <label>Potongan Platform</label>
+                <input type="number" id="platform_fee" name="platform_fee" min="0" value="${this.formPlatformFee || 0}" placeholder="0" readonly style="background:#f1f5f9">
               </div>
 
-              <div class="sm-field-group">
-                <div class="sm-field-label">Metode pembayaran</div>
-                <div id="paymentMethods">
-                  <div class="sm-pay-block">
-                    <div class="sm-pay-block-row">
-                      <select class="sm-pay-method" id="payment_method" name="payment_method" required>
-                        ${this.paymentMethods.filter(pm => pm.is_active).map(pm => `
-                          <option value="${pm.code}" ${pm.code === this.paymentMethod ? 'selected' : ''}>${pm.name}</option>
-                        `).join('')}
-                      </select>
-                      <input class="sm-pay-amount" type="number" id="main_payment_amount" name="main_payment_amount" value="${this.mainPaymentAmount || total}" min="0" placeholder="Nominal">
-                    </div>
-                  </div>
-                  ${this.splitPayments.map((sp, i) => `
-                    <div class="sm-pay-block" data-index="${i}">
-                      <div class="sm-pay-block-row">
-                        <select class="sm-pay-method split-method" data-index="${i}">
-                          ${this.paymentMethods.filter(pm => pm.is_active).map(pm => `
-                            <option value="${pm.code}" ${sp.method === pm.code ? 'selected' : ''}>${pm.name}</option>
-                          `).join('')}
-                        </select>
-                        <input class="sm-pay-amount split-amount" type="number" data-index="${i}" value="${sp.amount || 0}" min="0" placeholder="Nominal">
-                        <button type="button" class="sm-btn-remove-split remove-split" data-index="${i}" aria-label="Hapus">
-                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-                        </button>
-                      </div>
-                    </div>
-                  `).join('')}
+              <div class="form-group">
+                <label>Metode Pembayaran</label>
+                <div class="split-row">
+                  <select id="payment_method" name="payment_method" required>
+                    ${this.paymentMethods.filter(pm => pm.is_active).map(pm => `
+                      <option value="${pm.code}" ${pm.code === this.paymentMethod ? 'selected' : ''}>${pm.name}</option>
+                    `).join('')}
+                  </select>
+                  <input type="number" id="main_payment_amount" name="main_payment_amount" value="${this.mainPaymentAmount || total}" min="0" placeholder="Nominal">
                 </div>
-                <button type="button" id="add-split" class="sm-btn-add-pay">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="11" height="11"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-                  Tambah metode
+              </div>
+
+              <div id="splitPaymentSection">
+                ${this.splitPayments.map((sp, i) => `
+                  <div class="split-row" data-index="${i}">
+                    <select class="split-method" data-index="${i}">
+                      ${this.paymentMethods.filter(pm => pm.is_active).map(pm => `
+                        <option value="${pm.code}" ${sp.method === pm.code ? 'selected' : ''}>${pm.name}</option>
+                      `).join('')}
+                    </select>
+                    <input type="number" class="split-amount" data-index="${i}" value="${sp.amount || 0}" min="0" placeholder="Nominal">
+                    <button type="button" class="remove-split" data-index="${i}" style="width:42px;height:42px;border:none;background:#fee2e2;color:#ef4444;border-radius:12px;cursor:pointer;flex-shrink:0">✕</button>
+                  </div>
+                `).join('')}
+                <button type="button" id="add-split" class="add-split">
+                  + Tambah Metode Pembayaran
                 </button>
               </div>
 
-              <div class="sm-divider"></div>
-
-              <div class="sm-summary-rows">
-                <div class="sm-summary-row">
-                  <span class="sm-summary-label">Total item</span>
-                  <span class="sm-summary-val" id="totalQty">${totalQty}</span>
+              <div class="total-section">
+                <div class="total-row">
+                  <span>Total Item</span>
+                  <strong id="totalQty">${totalQty}</strong>
                 </div>
-                <div class="sm-summary-row">
-                  <span class="sm-summary-label">Subtotal</span>
-                  <span class="sm-summary-val" id="totalSubtotal">Rp ${this.formatNumber(total)}</span>
+                <div class="total-row">
+                  <span>Subtotal</span>
+                  <strong id="totalSubtotal">Rp ${this.formatNumber(total)}</strong>
                 </div>
-                ${this.formPlatformFee > 0 ? `
-                <div class="sm-summary-row">
-                  <span class="sm-summary-label">Potongan</span>
-                  <span class="sm-summary-val sm-discount" id="totalFeeDisplay">- Rp ${this.formatNumber(this.formPlatformFee)}</span>
+                <div class="total-row" id="totalPaidRow" style="${this.splitPayments.length > 0 ? '' : 'display:none'}">
+                  <span>Pembayaran</span>
+                  <strong id="totalPaid" style="color:#16a34a">Rp ${this.formatNumber(totalPaid)}</strong>
                 </div>
-                ` : ''}
-                <div class="sm-summary-row" id="totalPaidRow" style="${this.splitPayments.length > 0 ? '' : 'display:none'}">
-                  <span class="sm-summary-label">Pembayaran</span>
-                  <span class="sm-summary-val" id="totalPaid" style="color:#16a34a">Rp ${this.formatNumber(totalPaid)}</span>
+                <div class="total-row" id="totalRemainingRow" style="${this.splitPayments.length > 0 ? '' : 'display:none'}">
+                  <span>Sisa</span>
+                  <strong id="totalRemaining" style="color:${remaining > 0 ? '#ef4444' : '#16a34a'}">Rp ${this.formatNumber(remaining)}</strong>
                 </div>
-                <div class="sm-summary-row" id="totalRemainingRow" style="${this.splitPayments.length > 0 ? '' : 'display:none'}">
-                  <span class="sm-summary-label">Sisa</span>
-                  <span class="sm-summary-val" id="totalRemaining" style="color:${remaining > 0 ? '#ef4444' : '#16a34a'}">Rp ${this.formatNumber(remaining)}</span>
+                <div class="total-row grand-total">
+                  <span>Total</span>
+                  <strong id="totalGrand">Rp ${this.formatNumber(total)}</strong>
                 </div>
               </div>
 
-              <div class="sm-divider"></div>
-
-              <div class="sm-summary-row sm-total-row">
-                <span class="sm-total-label">Total</span>
-                <span class="sm-total-val" id="totalGrand">Rp ${this.formatNumber(total)}</span>
+              <div class="action-buttons">
+                <button type="button" id="cancel-modal" class="btn-cancel">Batal</button>
+                <button type="submit" id="save-draft-btn" name="save_action" value="draft" class="btn-draft" ${this.loading ? 'disabled' : ''}>
+                  ${this.loading ? 'Memproses...' : 'Simpan Draft'}
+                </button>
+                <button type="submit" id="save-complete-btn" name="save_action" value="completed" class="btn-save" ${this.loading ? 'disabled' : ''}>
+                  ${this.loading ? 'Memproses...' : 'Simpan Transaksi'}
+                </button>
+                <input type="hidden" id="sale-status" name="status" value="draft">
               </div>
+
             </div>
-          </div>
 
-          <div class="sm-footer">
-            <button type="button" id="cancel-modal" class="sm-btn-cancel">Batal</button>
-            <button type="submit" id="save-draft-btn" name="save_action" value="draft" class="sm-btn-draft" ${this.loading ? 'disabled' : ''}>
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
-              ${this.loading ? 'Memproses...' : 'Simpan draft'}
-            </button>
-            <button type="submit" id="save-complete-btn" name="save_action" value="completed" class="sm-btn-process" ${this.loading ? 'disabled' : ''}>
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><polyline points="20 6 9 17 4 12"/></svg>
-              ${this.loading ? 'Memproses...' : 'Proses transaksi'}
-            </button>
-            <input type="hidden" id="sale-status" name="status" value="draft">
           </div>
           </form>
         </div>
