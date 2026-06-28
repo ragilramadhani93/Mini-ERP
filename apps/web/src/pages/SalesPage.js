@@ -1145,6 +1145,7 @@ export class SalesPage {
     form?.addEventListener('submit', async (e) => {
       e.preventDefault()
 
+      try {
       const formData = new FormData(e.target)
       const validItems = this.transactionItems.filter(item => item.productId && item.qty > 0)
       if (validItems.length === 0) {
@@ -1176,7 +1177,7 @@ export class SalesPage {
 
       const saleMarketplace = validItems.some(i => i.marketplace) ? validItems.filter(i => i.marketplace).map(i => i.marketplace).join('+') : null
 
-      let saleItemRecords
+      let sale, saleError
       if (isEdit) {
         const result = await this.supabase.from('sales').update({
           customer_name: formData.get('customer_name') || null,
@@ -1309,6 +1310,12 @@ export class SalesPage {
       }
       await this.loadData()
       this.renderAndBind()
+      } catch (err) {
+        console.error('Save error:', err)
+        alert('Terjadi kesalahan: ' + err.message)
+      } finally {
+        this.loading = false
+      }
     })
   }
 
