@@ -887,12 +887,18 @@ export class SalesPage {
           marketplace: item.marketplace || null,
           subtotal: (item.quantity * item.unit_price) - (item.discount || 0)
         }))
+        if (this.transactionItems.length === 0) {
+          this.transactionItems = [{ productId: '', qty: 1, discount: 0, subtotal: 0, marketplace: '' }]
+        }
         this.paymentMethod = sale.payment_method || 'cash'
         this.mainPaymentAmount = sale.payment_details?.main_amount || sale.total_received || sale.total_amount || 0
         this.formCustomerName = sale.customer_name || ''
         this.formMarketplace = sale.marketplace || ''
         this.formPlatformFee = sale.platform_fee || 0
-        this.splitPayments = []
+        this.splitPayments = (sale.split_payments || []).filter(sp => sp.amount > 0).map(sp => ({
+          method: sp.method,
+          amount: sp.amount
+        }))
         this.showModal = true
         this.renderAndBind()
       })
