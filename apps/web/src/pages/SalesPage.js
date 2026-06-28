@@ -1350,12 +1350,6 @@ export class SalesPage {
       if (item.marketplace && item.subtotal) {
         if (item.marketplace === 'shopee') {
           totalFee += Math.round(item.subtotal * 0.3)
-        } else if (item.marketplace === 'tokopedia') {
-          totalFee += Math.round(item.subtotal * 0.05)
-        } else if (item.marketplace === 'tiktok') {
-          totalFee += Math.round(item.subtotal * 0.05)
-        } else if (item.marketplace === 'lazada') {
-          totalFee += Math.round(item.subtotal * 0.05)
         }
       }
     })
