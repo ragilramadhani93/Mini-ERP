@@ -1002,14 +1002,6 @@ export class SalesPage {
           description: `Penjualan ${sale.invoice_number}${sale.customer_name ? ` - ${sale.customer_name}` : ''}`,
           created_by: this.auth.user.id
         })
-        if (sale.platform_fee > 0) {
-          await this.supabase.from('cash_transactions').insert({
-            type: 'out', category: 'platform_fee', amount: sale.platform_fee,
-            reference_type: 'sales', reference_id: sale.id,
-            description: `Potongan platform - ${sale.invoice_number}`,
-            created_by: this.auth.user.id
-          })
-        }
         await this.loadData()
         this.renderAndBind()
       })
@@ -1102,14 +1094,6 @@ export class SalesPage {
         description: `Penjualan ${sale.invoice_number}${sale.customer_name ? ` - ${sale.customer_name}` : ''}`,
         created_by: this.auth.user.id
       })
-      if (sale.platform_fee > 0) {
-        await this.supabase.from('cash_transactions').insert({
-          type: 'out', category: 'platform_fee', amount: sale.platform_fee,
-          reference_type: 'sales', reference_id: sale.id,
-          description: `Potongan platform - ${sale.invoice_number}`,
-          created_by: this.auth.user.id
-        })
-      }
       this.showViewModal = false
       await this.loadData()
       this.renderAndBind()
@@ -1354,25 +1338,12 @@ export class SalesPage {
       }
 
       if (status === 'completed' && paymentMethod !== 'credit') {
-        const cashPromises = [
-          this.supabase.from('cash_transactions').insert({
-            type: 'in', category: 'sales', amount: totalReceived,
-            reference_type: 'sales', reference_id: sale.id,
-            description: `Penjualan ${sale.invoice_number}${formData.get('customer_name') ? ` - ${formData.get('customer_name')}` : ''}${formData.get('marketplace') ? ` (${formData.get('marketplace')})` : ''}`,
-            created_by: this.auth.user.id
-          })
-        ]
-        if (platformFee > 0) {
-          cashPromises.push(
-            this.supabase.from('cash_transactions').insert({
-              type: 'out', category: 'platform_fee', amount: platformFee,
-              reference_type: 'sales', reference_id: sale.id,
-              description: `Potongan platform ${formData.get('marketplace') || 'marketplace'} - ${sale.invoice_number}`,
-              created_by: this.auth.user.id
-            })
-          )
-        }
-        await Promise.all(cashPromises)
+        await this.supabase.from('cash_transactions').insert({
+          type: 'in', category: 'sales', amount: totalReceived,
+          reference_type: 'sales', reference_id: sale.id,
+          description: `Penjualan ${sale.invoice_number}${formData.get('customer_name') ? ` - ${formData.get('customer_name')}` : ''}${formData.get('marketplace') ? ` (${formData.get('marketplace')})` : ''}`,
+          created_by: this.auth.user.id
+        })
       }
 
       this.loading = false

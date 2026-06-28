@@ -222,18 +222,7 @@ export class ShopeePage {
             created_by: this.auth.user?.id
           })
           
-          // Add platform fee as expense if applicable
-          if (mappedRow.platform_fee > 0) {
-            await this.supabase.from('cash_transactions').insert({
-              type: 'out',
-              category: 'platform_fee',
-              amount: mappedRow.platform_fee,
-              description: `Potongan platform ${mappedRow.marketplace} - ${sale.invoice_number}`,
-              reference_type: 'sales',
-              reference_id: sale.id,
-              created_by: this.auth.user?.id
-            })
-          }
+          // Platform fee already deducted from total_received, no separate expense needed
         }
         
         successCount++
