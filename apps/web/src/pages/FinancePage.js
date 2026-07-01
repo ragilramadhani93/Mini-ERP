@@ -8,8 +8,14 @@ export class FinancePage {
     this.showModal = false
     this.transactionType = 'in'
     this.loading = false
-    this.dateFrom = ''
-    this.dateTo = ''
+
+    // Set default tanggal: 30 hari terakhir
+    const now = new Date()
+    const dateFrom = new Date(now)
+    dateFrom.setDate(dateFrom.getDate() - 30)
+    this.dateFrom = dateFrom.toISOString().slice(0, 10)
+    this.dateTo = now.toISOString().slice(0, 10)
+
     this.salesByMethod = []
     this.transactionDate = new Date().toISOString().slice(0, 10)
   }
@@ -23,14 +29,17 @@ export class FinancePage {
       dateTo = new Date(this.dateTo)
       dateTo.setDate(dateTo.getDate() + 1)
     } else {
-      // Tampilkan semua data tanpa batas tanggal untuk debug
-      dateFrom = new Date('2020-01-01')
+      // Default: tampilkan 30 hari terakhir
+      dateFrom = new Date(now)
+      dateFrom.setDate(dateFrom.getDate() - 30)
       dateTo = new Date(now)
       dateTo.setDate(dateTo.getDate() + 1)
     }
 
     let txQuery = this.supabase.from('cash_transactions')
       .select('*, created_by:users(full_name)')
+      .gte('created_at', dateFrom.toISOString())
+      .lte('created_at', dateTo.toISOString())
       .order('created_at', { ascending: false })
 
     let salesQuery = this.supabase.from('sales')
@@ -106,12 +115,12 @@ export class FinancePage {
 
         <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
           ${this.renderStatCard('Saldo Kas', stats.balance, 'wallet', stats.balance >= 0 ? 'success' : 'danger')}
-          ${this.renderStatCard('Pemasukan (30hr)', stats.income, 'trending-up', 'success')}
-          ${this.renderStatCard('Pengeluaran (30hr)', stats.expense, 'trending-down', 'danger')}
-          ${this.renderStatCard('Profit (30hr)', stats.profit, 'bar-chart-3', stats.profit >= 0 ? 'primary' : 'danger')}
+          ${this.renderStatCard('Pemasukan', stats.income, 'trending-up', 'success')}
+          ${this.renderStatCard('Pengeluaran', stats.expense, 'trending-down', 'danger')}
+          ${this.renderStatCard('Profit', stats.profit, 'bar-chart-3', stats.profit >= 0 ? 'primary' : 'danger')}
         </div>
 
-        <div class="flex items-center justify-between">
+        <div class="flex items-center justify-between flex-wrap gap-2">
           <div class="flex gap-2">
             ${['all', 'in', 'out', 'methods'].map(tab => `
               <button class="tab-btn px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
@@ -121,10 +130,13 @@ export class FinancePage {
               </button>
             `).join('')}
           </div>
-          <div class="flex gap-2 items-center">
+          <div class="flex gap-2 items-center flex-wrap">
             <input type="date" id="date-from" value="${this.dateFrom}" style="padding:6px 8px;border:1px solid #e2e8f0;border-radius:6px;font-size:12px;color:#334155">
             <span style="color:#94a3b8;font-size:12px">s/d</span>
             <input type="date" id="date-to" value="${this.dateTo}" style="padding:6px 8px;border:1px solid #e2e8f0;border-radius:6px;font-size:12px;color:#334155">
+            <button id="reset-filter" class="btn-secondary text-xs px-3 py-1.5" style="font-size:11px">
+              Reset
+            </button>
           </div>
         </div>
 
@@ -377,6 +389,17 @@ export class FinancePage {
     })
     document.getElementById('date-to')?.addEventListener('change', (e) => {
       this.dateTo = e.target.value
+      this.loadData().then(() => this.renderAndBind())
+    })
+
+    document.getElementById('reset-filter')?.addEventListener('click', () => {
+      // Reset ke default (30 hari terakhir)
+      const now = new Date()
+      const dateFrom = new Date(now)
+      dateFrom.setDate(dateFrom.getDate() - 30)
+
+      this.dateFrom = dateFrom.toISOString().slice(0, 10)
+      this.dateTo = now.toISOString().slice(0, 10)
       this.loadData().then(() => this.renderAndBind())
     })
 
