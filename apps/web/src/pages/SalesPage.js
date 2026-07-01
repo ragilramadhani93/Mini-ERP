@@ -28,6 +28,7 @@ export class SalesPage {
     this.formCustomerName = ''
     this.formMarketplace = ''
     this.formPlatformFee = 0
+    this.saleDate = new Date().toISOString().slice(0, 10)
     this.customers = [
       'Rumah Tangga Bahagia',
       'Toko Elektronik Jaya',
@@ -477,6 +478,11 @@ export class SalesPage {
                 </datalist>
               </div>
 
+              <div class="form-group">
+                <label>Tanggal Transaksi</label>
+                <input type="date" id="sale_date" name="sale_date" value="${this.saleDate}">
+              </div>
+
               <div class="form-group" id="platformFeeSection">
                 <label>Potongan Platform</label>
                 <input type="number" id="platform_fee" name="platform_fee" min="0" value="${this.formPlatformFee || 0}" placeholder="0" readonly style="background:#f1f5f9">
@@ -890,6 +896,7 @@ export class SalesPage {
       this.formCustomerName = ''
       this.formMarketplace = ''
       this.formPlatformFee = 0
+      this.saleDate = new Date().toISOString().slice(0, 10)
       this.splitPayments = []
       this.showModal = true
       this.transactionItems = [{ productId: '', qty: 1, discount: 0, subtotal: 0 }]
@@ -964,6 +971,7 @@ export class SalesPage {
         this.formCustomerName = sale.customer_name || ''
         this.formMarketplace = sale.marketplace || ''
         this.formPlatformFee = sale.platform_fee || 0
+        this.saleDate = sale.created_at ? new Date(sale.created_at).toISOString().slice(0, 10) : new Date().toISOString().slice(0, 10)
         this.splitPayments = (sale.split_payments || []).filter(sp => sp.amount > 0).map(sp => ({
           method: sp.method,
           amount: sp.amount
@@ -1041,15 +1049,17 @@ export class SalesPage {
     document.getElementById('close-modal')?.addEventListener('click', () => {
       this.showModal = false; this.editingSale = null
       this.formCustomerName = ''; this.formMarketplace = ''; this.formPlatformFee = 0
+      this.saleDate = new Date().toISOString().slice(0, 10)
       this.renderAndBind()
     })
     document.getElementById('cancel-modal')?.addEventListener('click', () => {
       this.showModal = false; this.editingSale = null
       this.formCustomerName = ''; this.formMarketplace = ''; this.formPlatformFee = 0
+      this.saleDate = new Date().toISOString().slice(0, 10)
       this.renderAndBind()
     })
     document.getElementById('modal-overlay')?.addEventListener('click', (e) => {
-      if (e.target === e.currentTarget) { this.showModal = false; this.editingSale = null; this.formCustomerName = ''; this.formMarketplace = ''; this.formPlatformFee = 0; this.renderAndBind() }
+      if (e.target === e.currentTarget) { this.showModal = false; this.editingSale = null; this.formCustomerName = ''; this.formMarketplace = ''; this.formPlatformFee = 0; this.saleDate = new Date().toISOString().slice(0, 10); this.renderAndBind() }
     })
 
     document.getElementById('close-view-modal')?.addEventListener('click', () => {
@@ -1246,6 +1256,9 @@ export class SalesPage {
 
       const saleMarketplace = validItems.some(i => i.marketplace) ? validItems.filter(i => i.marketplace).map(i => i.marketplace).join('+') : null
 
+      const saleDateValue = formData.get('sale_date') || new Date().toISOString().slice(0, 10)
+      const saleCreatedAt = new Date(saleDateValue + 'T' + new Date().toTimeString().slice(0, 8)).toISOString()
+
       let sale, saleError
       if (isEdit) {
         const result = await this.supabase.from('sales').update({
@@ -1258,7 +1271,8 @@ export class SalesPage {
           status: status,
           payment_status: status === 'completed' ? 'paid' : 'unpaid',
           paid_amount: status === 'completed' ? totalReceived : 0,
-          payment_details: paymentDetails
+          payment_details: paymentDetails,
+          created_at: saleCreatedAt
         }).eq('id', this.editingSale.id).select().single()
         sale = result.data
         saleError = result.error
@@ -1276,6 +1290,7 @@ export class SalesPage {
           payment_status: status === 'completed' ? 'paid' : 'unpaid',
           paid_amount: status === 'completed' ? totalReceived : 0,
           payment_details: paymentDetails,
+          created_at: saleCreatedAt,
           created_by: this.auth.user.id
         }).select().single()
         sale = result.data
@@ -1342,7 +1357,8 @@ export class SalesPage {
           type: 'in', category: 'sales', amount: totalReceived,
           reference_type: 'sales', reference_id: sale.id,
           description: `Penjualan ${sale.invoice_number}${formData.get('customer_name') ? ` - ${formData.get('customer_name')}` : ''}${formData.get('marketplace') ? ` (${formData.get('marketplace')})` : ''}`,
-          created_by: this.auth.user.id
+          created_by: this.auth.user.id,
+          created_at: saleCreatedAt
         })
       }
 
@@ -1355,6 +1371,7 @@ export class SalesPage {
         this.formCustomerName = ''
         this.formMarketplace = ''
         this.formPlatformFee = 0
+        this.saleDate = new Date().toISOString().slice(0, 10)
         this.splitPayments = []
       } else {
         this.editingSale = sale
@@ -1363,6 +1380,7 @@ export class SalesPage {
         this.formCustomerName = formData.get('customer_name') || ''
         this.formMarketplace = formData.get('marketplace') || ''
         this.formPlatformFee = platformFee
+        this.saleDate = saleDateValue
       }
       await this.loadData()
       this.renderAndBind()
