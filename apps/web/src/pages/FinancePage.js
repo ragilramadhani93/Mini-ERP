@@ -1,9 +1,10 @@
 export class FinancePage {
-  constructor({ supabase, auth }) {
+  constructor({ supabase, auth, path }) {
     this.supabase = supabase
     this.auth = auth
+    this.path = path
     this.transactions = []
-    this.activeTab = 'all'
+    this.activeTab = path === '/finance/expenses' ? 'out' : 'all'
     this.showModal = false
     this.transactionType = 'in'
     this.loading = false
@@ -22,17 +23,15 @@ export class FinancePage {
       dateTo = new Date(this.dateTo)
       dateTo.setDate(dateTo.getDate() + 1)
     } else {
+      // Tampilkan semua data tanpa batas tanggal untuk debug
+      dateFrom = new Date('2020-01-01')
       dateTo = new Date(now)
-      dateFrom = new Date(now)
-      dateFrom.setDate(dateFrom.getDate() - 30)
+      dateTo.setDate(dateTo.getDate() + 1)
     }
 
     let txQuery = this.supabase.from('cash_transactions')
-      .select('*, created_by_user:users(full_name)')
-      .gte('created_at', dateFrom.toISOString())
-      .lte('created_at', dateTo.toISOString())
+      .select('*, created_by:users(full_name)')
       .order('created_at', { ascending: false })
-      .limit(100)
 
     let salesQuery = this.supabase.from('sales')
       .select('payment_method, total_amount, platform_fee, total_received, status, split_payments(*), payment_details')
@@ -167,7 +166,7 @@ export class FinancePage {
                   <td class="text-right font-semibold ${t.type === 'in' ? 'text-success-600' : 'text-danger-600'}">
                     ${t.type === 'in' ? '+' : '-'}Rp ${this.formatNumber(t.amount)}
                   </td>
-                  <td class="text-sm text-gray-500">${t.created_by_user?.full_name || '-'}</td>
+                  <td class="text-sm text-gray-500">${t.created_by?.full_name || '-'}</td>
                 </tr>
               `).join('')}
             </tbody>

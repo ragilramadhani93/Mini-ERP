@@ -875,6 +875,13 @@
   color: #64748b;
   margin: 0 auto 4px;
 }
+
+/* Sembunyikan sidebar di tampilan mobile */
+@media (max-width: 1023px) {
+  .sidebar {
+    display: none !important;
+  }
+}
 .sidebar.collapsed .sidebar-expand-btn {
   display: flex;
   align-items: center;

@@ -1,10 +1,12 @@
 export class Layout {
   constructor(router, auth) {
-    this.router = router
-    this.auth = auth
-    this.menuOpen = false
-    this.sidebarCollapsed = localStorage.getItem('sidebarCollapsed') === 'true'
-    this.openSubs = {}
+    this.router = router;
+    this.auth = auth;
+    this.menuOpen = false;
+    // Reset state sidebar untuk mengatasi bug setengah terbuka
+    localStorage.removeItem('sidebarCollapsed');
+    this.sidebarCollapsed = false;
+    this.openSubs = {};
   }
 
   getSections(role) {
@@ -308,13 +310,11 @@ export class Layout {
 
     document.getElementById('toggle-sidebar')?.addEventListener('click', () => {
       this.sidebarCollapsed = !this.sidebarCollapsed
-      localStorage.setItem('sidebarCollapsed', this.sidebarCollapsed)
       document.getElementById('sidebar')?.classList.toggle('collapsed', this.sidebarCollapsed)
     })
 
     document.getElementById('expand-sidebar')?.addEventListener('click', () => {
       this.sidebarCollapsed = false
-      localStorage.setItem('sidebarCollapsed', 'false')
       document.getElementById('sidebar')?.classList.remove('collapsed')
     })
 

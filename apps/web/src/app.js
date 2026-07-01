@@ -55,6 +55,7 @@ const routes = {
   '/stock/opname': { component: StockOpnamePage, roles: ['owner', 'admin', 'staff_gudang'] },
   '/sales': { component: SalesPage, roles: ['owner', 'admin'] },
   '/finance': { component: FinancePage, roles: ['owner', 'admin', 'staff_keuangan'] },
+  '/finance/expenses': { component: FinancePage, roles: ['owner', 'admin', 'staff_keuangan'] },
   '/purchase-orders': { component: PurchaseOrderPage, roles: ['owner', 'admin'] },
   '/debts': { component: DebtPage, roles: ['owner', 'admin', 'staff_keuangan'] },
   '/barcode': { component: BarcodePage, roles: ['owner', 'admin', 'staff_gudang'] },
@@ -76,6 +77,9 @@ let layout
 
 export async function initApp() {
   const app = document.getElementById('app')
+
+  // Bersihkan state sidebar yang rusak
+  localStorage.removeItem('sidebarCollapsed')
 
   supabase = await createSupabase()
   auth = new AuthService(supabase)
@@ -110,14 +114,14 @@ export async function initApp() {
     if (route.public) {
       // Untuk halaman public (login/register), render tanpa layout
       const app = document.getElementById('app')
-      const page = new route.component({ auth, router, supabase })
+      const page = new route.component({ auth, router, supabase, path: route.path })
       app.innerHTML = page.render()
       page.bindEvents?.()
     } else {
       renderApp()
       const outlet = document.getElementById('router-outlet')
       if (outlet && route.component) {
-        const page = new route.component({ supabase, auth, router })
+        const page = new route.component({ supabase, auth, router, path: route.path })
         outlet.innerHTML = page.render()
         page.bindEvents?.()
       }
@@ -126,7 +130,8 @@ export async function initApp() {
   }
 
   if (auth.isAuthenticated()) {
-    router.navigate(window.location.hash.slice(1) || '/')
+    const initialPath = window.location.hash.slice(1) || '/'
+    router.navigate(initialPath)
   } else {
     router.navigate('/login')
   }
