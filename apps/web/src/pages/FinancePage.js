@@ -120,21 +120,26 @@ export class FinancePage {
           ${this.renderStatCard('Profit', stats.profit, 'bar-chart-3', stats.profit >= 0 ? 'primary' : 'danger')}
         </div>
 
-        <div class="flex items-center justify-between flex-wrap gap-2">
-          <div class="flex gap-2">
+        <div class="flex flex-col lg:flex-row gap-4 items-start lg:items-center justify-between bg-white p-4 rounded-xl border border-gray-100">
+          <div class="flex flex-wrap gap-2 items-center">
+            <span class="text-xs font-semibold text-gray-400 uppercase tracking-wide">Filter</span>
             ${['all', 'in', 'out', 'methods'].map(tab => `
-              <button class="tab-btn px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                this.activeTab === tab ? 'bg-primary-50 text-primary-600' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
+              <button class="tab-btn px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                this.activeTab === tab ? 'bg-primary-50 text-primary-600 ring-2 ring-primary-100' : 'bg-gray-50 text-gray-600 hover:bg-gray-100'
               }" data-tab="${tab}">
                 ${tab === 'all' ? 'Semua' : tab === 'in' ? 'Pemasukan' : tab === 'out' ? 'Pengeluaran' : 'Metode'}
               </button>
             `).join('')}
           </div>
-          <div class="flex gap-2 items-center flex-wrap">
-            <input type="date" id="date-from" value="${this.dateFrom}" style="padding:6px 8px;border:1px solid #e2e8f0;border-radius:6px;font-size:12px;color:#334155">
-            <span style="color:#94a3b8;font-size:12px">s/d</span>
-            <input type="date" id="date-to" value="${this.dateTo}" style="padding:6px 8px;border:1px solid #e2e8f0;border-radius:6px;font-size:12px;color:#334155">
-            <button id="reset-filter" class="btn-secondary text-xs px-3 py-1.5" style="font-size:11px">
+          <div class="flex flex-wrap gap-2 items-center">
+            <div class="flex items-center gap-2 bg-gray-50 p-1.5 rounded-lg">
+              <i data-lucide="calendar" class="w-4 h-4 text-gray-400 ml-1"></i>
+              <input type="date" id="date-from" value="${this.dateFrom}" class="bg-transparent border-none text-sm focus:ring-0 text-gray-700 w-36">
+              <span class="text-gray-400 text-sm">-</span>
+              <input type="date" id="date-to" value="${this.dateTo}" class="bg-transparent border-none text-sm focus:ring-0 text-gray-700 w-36">
+            </div>
+            <button id="reset-filter" class="flex items-center gap-1.5 px-3 py-2 bg-gray-100 hover:bg-gray-200 text-gray-600 text-sm font-medium rounded-lg transition-colors">
+              <i data-lucide="rotate-ccw" class="w-4 h-4"></i>
               Reset
             </button>
           </div>
