@@ -10,6 +10,7 @@ export class FinancePage {
     this.dateFrom = ''
     this.dateTo = ''
     this.salesByMethod = []
+    this.transactionDate = new Date().toISOString().slice(0, 10)
   }
 
   async loadData() {
@@ -297,6 +298,10 @@ export class FinancePage {
               <input type="number" id="amount" name="amount" required min="1" placeholder="0">
             </div>
             <div>
+              <label for="tx-date">Tanggal Transaksi</label>
+              <input type="date" id="tx-date" name="tx_date" value="${this.transactionDate}">
+            </div>
+            <div>
               <label for="description">Deskripsi</label>
               <textarea id="description" name="description" required rows="2" placeholder="Deskripsi transaksi"></textarea>
             </div>
@@ -379,6 +384,7 @@ export class FinancePage {
     document.getElementById('add-transaction-btn')?.addEventListener('click', () => {
       this.showModal = true
       this.transactionType = 'in'
+      this.transactionDate = new Date().toISOString().slice(0, 10)
       this.renderAndBind()
     })
 
@@ -395,15 +401,18 @@ export class FinancePage {
 
     document.getElementById('close-modal')?.addEventListener('click', () => {
       this.showModal = false
+      this.transactionDate = new Date().toISOString().slice(0, 10)
       this.renderAndBind()
     })
     document.getElementById('cancel-modal')?.addEventListener('click', () => {
       this.showModal = false
+      this.transactionDate = new Date().toISOString().slice(0, 10)
       this.renderAndBind()
     })
     document.getElementById('modal-overlay')?.addEventListener('click', (e) => {
       if (e.target === e.currentTarget) {
         this.showModal = false
+        this.transactionDate = new Date().toISOString().slice(0, 10)
         this.renderAndBind()
       }
     })
@@ -415,12 +424,16 @@ export class FinancePage {
       this.renderAndBind()
       const formData = new FormData(form)
 
+      const txDate = formData.get('tx_date') || new Date().toISOString().slice(0, 10)
+      const txCreatedAt = new Date(txDate + 'T' + new Date().toTimeString().slice(0, 8)).toISOString()
+
       const { error } = await this.supabase.from('cash_transactions').insert({
         type: this.transactionType,
         category: formData.get('category'),
         amount: parseInt(formData.get('amount')),
         description: formData.get('description'),
-        created_by: this.auth.user.id
+        created_by: this.auth.user.id,
+        created_at: txCreatedAt
       })
 
       if (error) {
@@ -431,6 +444,7 @@ export class FinancePage {
       }
 
       this.showModal = false
+      this.transactionDate = new Date().toISOString().slice(0, 10)
       this.loading = false
       await this.loadData()
       this.renderAndBind()
