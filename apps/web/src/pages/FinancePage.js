@@ -37,7 +37,7 @@ export class FinancePage {
     }
 
     let txQuery = this.supabase.from('cash_transactions')
-      .select('*, created_by:users(full_name)')
+      .select('*, created_by:users(full_name), sale:sales(created_at)')
       .gte('created_at', dateFrom.toISOString())
       .lte('created_at', dateTo.toISOString())
       .order('created_at', { ascending: false })
@@ -172,7 +172,7 @@ export class FinancePage {
                 <tr><td colspan="6" class="text-center text-gray-500 py-8">Belum ada transaksi</td></tr>
               ` : this.getFiltered().map(t => `
                 <tr>
-                  <td class="text-sm text-gray-500 whitespace-nowrap">${this.formatDate(t.created_at)}</td>
+                  <td class="text-sm text-gray-500 whitespace-nowrap">${this.formatDate(t.sale?.created_at || t.created_at)}</td>
                   <td>
                     <span class="badge ${t.type === 'in' ? 'badge-success' : 'badge-danger'}">
                       ${t.type === 'in' ? 'Masuk' : 'Keluar'}
