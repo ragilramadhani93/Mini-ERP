@@ -38,6 +38,7 @@ export class SalesPage {
       'TikTok Shop Customer',
       'Tokopedia Customer'
     ]
+    this.showOnlyOverpaid = false
   }
 
   async loadData() {
@@ -85,6 +86,13 @@ export class SalesPage {
       const end = new Date(this.endDate)
       end.setHours(23, 59, 59, 999)
       filtered = filtered.filter(s => new Date(s.created_at) <= end)
+    }
+    if (this.showOnlyOverpaid) {
+      filtered = filtered.filter(s => {
+        const totalReceived = s.payment_details?.total_received || s.payment_details?.total_paid || s.total_received || (s.total_amount - (s.platform_fee || 0))
+        const isOverpaid = s.payment_details?.is_overpaid || (totalReceived > s.total_amount)
+        return isOverpaid
+      })
     }
     return filtered
   }
@@ -217,6 +225,9 @@ export class SalesPage {
               <button class="filter-btn" id="filter-table-btn">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
                 Filter
+              </button>
+              <button class="btn-secondary" id="filter-overpaid-btn" style="${this.showOnlyOverpaid ? 'background:#d97706;color:white;border-color:#d97706;' : ''}">
+                ➕ ${this.showOnlyOverpaid ? 'Hanya Lebih Bayar' : 'Lebih Bayar'}
               </button>
               <div class="date-filter" style="display:flex;align-items:center;gap:6px">
                 <input type="date" id="filter-start-date" value="${this.startDate}" style="border:1px solid #e2e8f0;border-radius:6px;font-size:12px;padding:6px 8px">
@@ -574,7 +585,9 @@ export class SalesPage {
     const byName = sale?.created_by_user?.full_name || '-'
     const byInitials = byName.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()
     const totalQty = items.reduce((sum, i) => sum + i.quantity, 0)
-    const totalReceived = sale?.total_received ?? (sale?.total_amount - (sale?.platform_fee || 0))
+    const totalReceived = sale?.payment_details?.total_received || sale?.payment_details?.total_paid || sale?.total_received || (sale?.total_amount - (sale?.platform_fee || 0))
+    const isOverpaid = sale?.payment_details?.is_overpaid || (totalReceived > sale?.total_amount)
+    const overpaidAmount = sale?.payment_details?.overpaid_amount || (isOverpaid ? totalReceived - sale?.total_amount : 0)
 
     const marketplaceNames = {
       shopee: 'Shopee', tiktok: 'TikTok Shop', tokopedia: 'Tokopedia', lazada: 'Lazada'
@@ -712,6 +725,12 @@ export class SalesPage {
                 <span class="dv-sum-total-label">Diterima</span>
                 <span class="dv-sum-total-val">Rp ${this.formatNumber(totalReceived)}</span>
               </div>
+              ${isOverpaid ? `
+              <div class="dv-sum-row" style="background:#fff7ed;padding:10px;border-radius:8px;margin-top:10px;">
+                <span class="dv-sum-label" style="color:#d97706;font-weight:600;">➕ Lebih bayar</span>
+                <span class="dv-sum-val" style="color:#d97706;font-weight:700;">Rp ${this.formatNumber(overpaidAmount)}</span>
+              </div>
+              ` : ''}
             </div>
           </div>
 
@@ -940,6 +959,12 @@ export class SalesPage {
     document.getElementById('filter-table-btn')?.addEventListener('click', () => {
       const search = document.getElementById('search-sale')
       if (search) { search.focus(); search.select() }
+    })
+
+    document.getElementById('filter-overpaid-btn')?.addEventListener('click', () => {
+      this.showOnlyOverpaid = !this.showOnlyOverpaid
+      this.currentPage = 1
+      this.renderAndBind()
     })
 
     document.querySelectorAll('.view-sale').forEach(btn => {
