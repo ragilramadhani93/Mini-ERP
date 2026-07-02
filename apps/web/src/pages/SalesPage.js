@@ -1382,11 +1382,12 @@ export class SalesPage {
 
       // Only deduct stock when status is completed (not draft)
       if (status === 'completed' && !isEdit) {
+        const isBackdated = saleDateValue < new Date().toISOString().slice(0, 10)
         const stockPromises = validItems.map(item => {
           if (item.skuId) {
             const sku = this.productSkus.find(s => s.id === item.skuId)
             const skuStock = sku?.current_stock || 0
-            if (skuStock < item.qty) {
+            if (!isBackdated && skuStock < item.qty) {
               alert(`Stok varian tidak mencukupi. Stok: ${skuStock}`)
               return null
             }
