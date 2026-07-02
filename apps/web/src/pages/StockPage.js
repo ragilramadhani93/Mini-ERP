@@ -32,11 +32,16 @@ export class StockPage {
 
     return `
       <div class="space-y-4">
-        <div class="flex items-center justify-between">
+        <div class="flex items-center justify-between gap-2 flex-wrap">
           <h2 class="text-lg font-semibold text-gray-900">Riwayat Stok</h2>
-          <button id="add-stock-btn" class="btn-primary">
-            <i data-lucide="plus" class="w-5 h-5"></i> Tambah Stok Masuk
-          </button>
+          <div class="flex gap-2">
+            <button id="bulk-stock-btn" class="btn-secondary flex items-center gap-1.5">
+              <i data-lucide="package-plus" class="w-4 h-4"></i> Bulk Input (100)
+            </button>
+            <button id="add-stock-btn" class="btn-primary flex items-center gap-1.5">
+              <i data-lucide="plus" class="w-4 h-4"></i> Tambah Stok Masuk
+            </button>
+          </div>
         </div>
 
         <div class="border-b border-gray-200">
@@ -191,6 +196,38 @@ export class StockPage {
     document.getElementById('add-stock-btn')?.addEventListener('click', () => {
       this.showModal = true
       this.renderAndBind()
+    })
+
+    document.getElementById('bulk-stock-btn')?.addEventListener('click', async () => {
+      if (!confirm(`Anda yakin ingin menambahkan stok masuk 100 untuk SEMUA produk?`)) {
+        return
+      }
+      
+      this.loading = true
+      this.renderAndBind()
+
+      try {
+        // Loop semua produk dan tambahkan stok masuk
+        for (const product of this.products) {
+          await this.supabase.rpc('add_stock_movement', {
+            p_product_id: product.id,
+            p_quantity: 100,
+            p_type: 'in',
+            p_reason: 'purchase',
+            p_notes: 'Bulk input stok awal',
+            p_created_by: this.auth.user.id
+          })
+        }
+        
+        alert(`Berhasil menambahkan stok masuk 100 untuk ${this.products.length} produk!`)
+        this.loading = false
+        await this.loadData()
+        this.renderAndBind()
+      } catch (error) {
+        alert('Gagal: ' + error.message)
+        this.loading = false
+        this.renderAndBind()
+      }
     })
 
     this._bindModalEvents()
