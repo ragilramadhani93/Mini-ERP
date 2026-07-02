@@ -276,11 +276,10 @@ export class SalesPage {
                   lazada: 'Lazada'
                 }
 
-                // Calculate total received
-                let totalReceived = s.total_received
-                if (totalReceived === null || totalReceived === undefined) {
-                  totalReceived = s.total_amount - (s.platform_fee || 0)
-                }
+                // Calculate total received and check for overpaid
+                const totalReceived = s.payment_details?.total_received || s.payment_details?.total_paid || s.total_received || (s.total_amount - (s.platform_fee || 0))
+                const isOverpaid = s.payment_details?.is_overpaid || (totalReceived > s.total_amount)
+                const overpaidAmount = s.payment_details?.overpaid_amount || (isOverpaid ? totalReceived - s.total_amount : 0)
 
                 // Prepare template variables
                 const customerHtml = isWalkIn ? `
@@ -293,6 +292,8 @@ export class SalesPage {
                 const marketplaceHtml = s.marketplace ? `<span class="badge" style="background:#F4E5EC;color:#7A3B58">${marketplaceNames[s.marketplace]}</span>` : '-'
 
                 const platformFeeHtml = s.platform_fee > 0 ? `<span style="color:#ef4444;font-weight:600">- Rp ${this.formatNumber(s.platform_fee)}</span>` : '-'
+
+                const overpaidHtml = isOverpaid ? `<span style="color:#d97706;font-weight:600;font-size:11px;display:block;margin-top:2px">➕ Lebih bayar Rp ${this.formatNumber(overpaidAmount)}</span>` : ''
 
                 const byNameHtml = byName.length > 10 ? byName.split(' ')[0] + ' ' + (byName.split(' ')[1]?.[0] || '') + '.' : byName
 
@@ -309,7 +310,7 @@ export class SalesPage {
                     <td><span class="items-badge">${totalQty} item</span></td>
                     <td class="text-right"><span class="amount-cell">Rp ${this.formatNumber(s.total_amount)}</span></td>
                     <td class="text-right">${platformFeeHtml}</td>
-                    <td class="text-right">${s.status === 'completed' ? `<span class="amount-received">Rp ${this.formatNumber(totalReceived)}</span>` : '<span class="amount-pending">-</span>'}</td>
+                    <td class="text-right">${s.status === 'completed' ? `<span class="amount-received">Rp ${this.formatNumber(totalReceived)}</span>${overpaidHtml}` : '<span class="amount-pending">-</span>'}</td>
                     <td><div class="payment-cell">${this.renderPaymentBadges(s)}</div></td>
                     <td class="by-cell"><span class="by-avatar">${byInitials}</span>${byNameHtml}</td>
                     <td><div class="action-cell">
