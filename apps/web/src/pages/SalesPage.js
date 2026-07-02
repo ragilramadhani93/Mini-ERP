@@ -993,7 +993,10 @@ export class SalesPage {
         const sale = this.sales.find(s => s.id === btn.dataset.id)
         if (!sale) return
         if (!confirm(`Tutup ${sale.invoice_number} sebagai LUNAS?`)) return
-        const totalReceived = sale.total_received || (sale.total_amount - (sale.platform_fee || 0))
+        const totalReceived = sale.payment_details?.total_received || sale.payment_details?.total_paid || sale.total_received || (sale.total_amount - (sale.platform_fee || 0))
+        const isOverpaid = sale.payment_details?.is_overpaid || (totalReceived > sale.total_amount)
+        const overpaidAmount = sale.payment_details?.overpaid_amount || (isOverpaid ? totalReceived - sale.total_amount : 0)
+        
         await this.supabase.from('sales').update({
           status: 'completed',
           payment_status: 'paid',
@@ -1014,7 +1017,7 @@ export class SalesPage {
         await this.supabase.from('cash_transactions').insert({
           type: 'in', category: 'sales', amount: totalReceived,
           reference_type: 'sales', reference_id: sale.id,
-          description: `Penjualan ${sale.invoice_number}${sale.customer_name ? ` - ${sale.customer_name}` : ''}`,
+          description: `Penjualan ${sale.invoice_number}${sale.customer_name ? ` - ${sale.customer_name}` : ''}${isOverpaid ? ` (Lebih bayar Rp ${this.formatNumber(overpaidAmount)})` : ''}`,
           created_by: this.auth.user.id
         })
         await this.loadData()
@@ -1089,7 +1092,10 @@ export class SalesPage {
       const sale = this.selectedSale
       if (!sale) return
       if (!confirm(`Tutup ${sale.invoice_number} sebagai LUNAS?`)) return
-      const totalReceived = sale.total_received || (sale.total_amount - (sale.platform_fee || 0))
+      const totalReceived = sale.payment_details?.total_received || sale.payment_details?.total_paid || sale.total_received || (sale.total_amount - (sale.platform_fee || 0))
+      const isOverpaid = sale.payment_details?.is_overpaid || (totalReceived > sale.total_amount)
+      const overpaidAmount = sale.payment_details?.overpaid_amount || (isOverpaid ? totalReceived - sale.total_amount : 0)
+      
       await this.supabase.from('sales').update({
         status: 'completed', payment_status: 'paid', paid_amount: totalReceived
       }).eq('id', sale.id)
@@ -1108,7 +1114,7 @@ export class SalesPage {
       await this.supabase.from('cash_transactions').insert({
         type: 'in', category: 'sales', amount: totalReceived,
         reference_type: 'sales', reference_id: sale.id,
-        description: `Penjualan ${sale.invoice_number}${sale.customer_name ? ` - ${sale.customer_name}` : ''}`,
+        description: `Penjualan ${sale.invoice_number}${sale.customer_name ? ` - ${sale.customer_name}` : ''}${isOverpaid ? ` (Lebih bayar Rp ${this.formatNumber(overpaidAmount)})` : ''}`,
         created_by: this.auth.user.id
       })
       this.showViewModal = false
@@ -1362,7 +1368,7 @@ export class SalesPage {
         if (stockError) { alert('Gagal update stok: ' + stockError.error.message); this.loading = false; this.renderAndBind(); return }
       }
 
-      if (status === 'completed' && paymentMethod !== 'credit') {
+      if (status === 'completed') {
         await this.supabase.from('cash_transactions').insert({
           type: 'in', category: 'sales', amount: totalReceived,
           reference_type: 'sales', reference_id: sale.id,
