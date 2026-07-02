@@ -37,13 +37,13 @@ export class FinancePage {
     }
 
     let txQuery = this.supabase.from('cash_transactions')
-      .select('*, created_by:users(full_name), sale:sales(created_at)')
+      .select('*, created_by:users(full_name)')
       .gte('created_at', dateFrom.toISOString())
       .lte('created_at', dateTo.toISOString())
       .order('created_at', { ascending: false })
 
     let salesQuery = this.supabase.from('sales')
-      .select('payment_method, total_amount, platform_fee, total_received, status, split_payments(*), payment_details')
+      .select('id, payment_method, total_amount, platform_fee, total_received, status, split_payments(*), payment_details, created_at')
       .gte('created_at', dateFrom.toISOString())
       .lte('created_at', dateTo.toISOString())
       .eq('status', 'completed')
@@ -59,6 +59,16 @@ export class FinancePage {
     this.transactions = txRes.data || []
     this.sales = salesRes.data || []
     this.paymentMethods = methodsRes.data || []
+
+    const saleIds = [...new Set(this.transactions.filter(t => t.reference_type === 'sales' && t.reference_id).map(t => t.reference_id))]
+    if (saleIds.length > 0) {
+      const { data: relatedSales } = await this.supabase.from('sales').select('id, created_at').in('id', saleIds)
+      this.saleDateMap = {}
+      ;(relatedSales || []).forEach(s => { this.saleDateMap[s.id] = s.created_at })
+    } else {
+      this.saleDateMap = {}
+    }
+
     this.calcSalesByMethod()
   }
 
@@ -172,7 +182,7 @@ export class FinancePage {
                 <tr><td colspan="6" class="text-center text-gray-500 py-8">Belum ada transaksi</td></tr>
               ` : this.getFiltered().map(t => `
                 <tr>
-                  <td class="text-sm text-gray-500 whitespace-nowrap">${this.formatDate(t.sale?.created_at || t.created_at)}</td>
+                  <td class="text-sm text-gray-500 whitespace-nowrap">${this.formatDate((t.reference_type === 'sales' && t.reference_id && this.saleDateMap?.[t.reference_id]) || t.created_at)}</td>
                   <td>
                     <span class="badge ${t.type === 'in' ? 'badge-success' : 'badge-danger'}">
                       ${t.type === 'in' ? 'Masuk' : 'Keluar'}
