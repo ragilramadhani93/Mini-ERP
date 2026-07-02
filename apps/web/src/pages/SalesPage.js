@@ -1103,6 +1103,10 @@ export class SalesPage {
       if (e.target === e.currentTarget) { this.showModal = false; this.editingSale = null; this.formCustomerName = ''; this.formMarketplace = ''; this.formPlatformFee = 0; this.saleDate = new Date().toISOString().slice(0, 10); this.renderAndBind() }
     })
 
+    document.getElementById('sale_date')?.addEventListener('change', (e) => {
+      this.saleDate = e.target.value
+    })
+
     document.getElementById('close-view-modal')?.addEventListener('click', () => {
       this.showViewModal = false
       this.renderAndBind()
