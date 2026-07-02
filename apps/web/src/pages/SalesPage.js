@@ -755,8 +755,10 @@ export class SalesPage {
   }
 
   getPaymentLabel(method) {
-    const pm = this.paymentMethods.find(p => p.code === method)
-    return pm?.name || method
+    const pm = this.paymentMethods.find(p => p.code === method && p.is_active)
+    if (pm) return pm.name
+    const inactive = this.paymentMethods.find(p => p.code === method)
+    return inactive ? `${inactive.name} (nonaktif)` : method
   }
 
   _renderPaymentDetail(sale) {
