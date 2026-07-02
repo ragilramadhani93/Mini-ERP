@@ -526,14 +526,21 @@ export class SalesPage {
                   <span>Subtotal</span>
                   <strong id="totalSubtotal">Rp ${this.formatNumber(total)}</strong>
                 </div>
-                <div class="total-row" id="totalPaidRow" style="${this.splitPayments.length > 0 ? '' : 'display:none'}">
+                <div class="total-row" style="display:block;">
                   <span>Pembayaran</span>
                   <strong id="totalPaid" style="color:#16a34a">Rp ${this.formatNumber(totalPaid)}</strong>
                 </div>
-                <div class="total-row" id="totalRemainingRow" style="${this.splitPayments.length > 0 ? '' : 'display:none'}">
+                ${totalPaid > total ? `
+                <div class="total-row" style="display:block;background:#fef3c7;padding:10px;border-radius:8px;">
+                  <span style="color:#d97706;font-weight:600;">➕ Lebih Bayar</span>
+                  <strong style="color:#d97706;">Rp ${this.formatNumber(totalPaid - total)}</strong>
+                </div>
+                ` : `
+                <div class="total-row" style="display:block;">
                   <span>Sisa</span>
                   <strong id="totalRemaining" style="color:${remaining > 0 ? '#ef4444' : '#16a34a'}">Rp ${this.formatNumber(remaining)}</strong>
                 </div>
+                `}
                 <div class="total-row grand-total">
                   <span>Total</span>
                   <strong id="totalGrand">Rp ${this.formatNumber(total)}</strong>
@@ -1234,21 +1241,24 @@ export class SalesPage {
 
       const totalAmount = validItems.reduce((sum, item) => sum + item.subtotal, 0)
       const platformFee = parseInt(formData.get('platform_fee')) || 0
-      const totalReceived = totalAmount - platformFee
       const status = formData.get('status') || 'draft'
       const paymentMethod = formData.get('payment_method') || 'cash'
-      const mainAmount = parseInt(formData.get('main_payment_amount')) || totalReceived
+      const mainAmount = parseInt(formData.get('main_payment_amount')) || totalAmount
       const isSplit = this.splitPayments.length > 0
       const isEdit = !!this.editingSale
 
       const splitTotal = this.splitPayments.reduce((sum, sp) => sum + (sp.amount || 0), 0)
+      const totalPaid = mainAmount + splitTotal
+      const totalReceived = totalPaid
       const paymentDetails = {
         main_method: paymentMethod,
         main_amount: mainAmount,
         splits: this.splitPayments.filter(sp => sp.amount > 0),
         total_split: splitTotal,
-        total_paid: mainAmount + splitTotal,
-        total_received: totalReceived
+        total_paid: totalPaid,
+        total_received: totalReceived,
+        is_overpaid: totalPaid > totalAmount,
+        overpaid_amount: totalPaid > totalAmount ? totalPaid - totalAmount : 0
       }
 
       this.loading = true
@@ -1356,7 +1366,7 @@ export class SalesPage {
         await this.supabase.from('cash_transactions').insert({
           type: 'in', category: 'sales', amount: totalReceived,
           reference_type: 'sales', reference_id: sale.id,
-          description: `Penjualan ${sale.invoice_number}${formData.get('customer_name') ? ` - ${formData.get('customer_name')}` : ''}${formData.get('marketplace') ? ` (${formData.get('marketplace')})` : ''}`,
+          description: `Penjualan ${sale.invoice_number}${formData.get('customer_name') ? ` - ${formData.get('customer_name')}` : ''}${paymentDetails.is_overpaid ? ` (Lebih bayar Rp ${this.formatNumber(paymentDetails.overpaid_amount)})` : ''}`,
           created_by: this.auth.user.id,
           created_at: saleCreatedAt
         })
@@ -1454,20 +1464,10 @@ export class SalesPage {
     if (el('totalQty')) el('totalQty').textContent = totalQty
     if (el('totalSubtotal')) el('totalSubtotal').textContent = 'Rp ' + this.formatNumber(total)
     if (el('totalGrand')) el('totalGrand').textContent = 'Rp ' + this.formatNumber(total)
-
-    const payRow = el('totalPaidRow')
-    const remRow = el('totalRemainingRow')
-    if (payRow && remRow) {
-      if (this.splitPayments.length > 0) {
-        payRow.style.display = ''
-        remRow.style.display = ''
-        el('totalPaid').textContent = 'Rp ' + this.formatNumber(totalPaid)
-        el('totalRemaining').textContent = 'Rp ' + this.formatNumber(remaining)
-        el('totalRemaining').style.color = remaining > 0 ? '#ef4444' : '#16a34a'
-      } else {
-        payRow.style.display = 'none'
-        remRow.style.display = 'none'
-      }
+    if (el('totalPaid')) el('totalPaid').textContent = 'Rp ' + this.formatNumber(totalPaid)
+    if (el('totalRemaining')) {
+      el('totalRemaining').textContent = 'Rp ' + this.formatNumber(remaining)
+      el('totalRemaining').style.color = remaining > 0 ? '#ef4444' : '#16a34a'
     }
   }
 
