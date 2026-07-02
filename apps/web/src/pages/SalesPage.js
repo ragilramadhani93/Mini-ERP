@@ -121,9 +121,11 @@ export class SalesPage {
     filtered.forEach(s => (s.sale_items || []).forEach(i => { if (i.products?.name) catSet.add(i.products.name) }))
 
     const totalProfit = filtered.reduce((sum, s) => {
-      return sum + (s.sale_items || []).reduce((s2, i) => s2 + ((i.unit_price - (i.products?.cost_price || 0)) * i.quantity - i.discount), 0)
+      const received = s.total_received || (s.total_amount - (s.platform_fee || 0))
+      const cogs = (s.sale_items || []).reduce((s2, i) => s2 + ((i.products?.cost_price || 0) * i.quantity), 0)
+      return sum + (received - cogs)
     }, 0)
-    const totalRevenue = filtered.reduce((sum, s) => sum + (s.total_amount || 0), 0)
+    const totalRevenue = filtered.reduce((sum, s) => sum + (s.total_received || (s.total_amount - (s.platform_fee || 0))), 0)
     const marginPct = totalRevenue ? ((totalProfit / totalRevenue) * 100).toFixed(1) : '0'
 
     return `
@@ -818,7 +820,10 @@ export class SalesPage {
   }
 
   calcTotal(sales) {
-    return sales.reduce((sum, s) => sum + (s.total_amount || 0), 0)
+    return sales.reduce((sum, s) => {
+      const received = s.total_received || (s.total_amount - (s.platform_fee || 0))
+      return sum + received
+    }, 0)
   }
 
   formatNumber(num) {
