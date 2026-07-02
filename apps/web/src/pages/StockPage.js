@@ -199,7 +199,7 @@ export class StockPage {
     })
 
     document.getElementById('bulk-stock-btn')?.addEventListener('click', async () => {
-      if (!confirm(`Anda yakin ingin menambahkan stok masuk 100 untuk SEMUA produk?`)) {
+      if (!confirm(`Anda yakin ingin menambahkan stok masuk 100 untuk SEMUA ${this.products.length} produk?`)) {
         return
       }
       
@@ -207,24 +207,39 @@ export class StockPage {
       this.renderAndBind()
 
       try {
-        // Loop semua produk dan tambahkan stok masuk
-        for (const product of this.products) {
-          await this.supabase.rpc('add_stock_movement', {
-            p_product_id: product.id,
-            p_quantity: 100,
-            p_type: 'in',
-            p_reason: 'purchase',
-            p_notes: 'Bulk input stok awal',
-            p_created_by: this.auth.user.id
-          })
-        }
+        // Insert stock movements dan update current_stock secara manual
+        const now = new Date().toISOString()
+        const movements = this.products.map(product => ({
+          product_id: product.id,
+          quantity: 100,
+          type: 'in',
+          reason: 'purchase',
+          notes: 'Bulk input stok awal',
+          created_by: this.auth.user.id,
+          created_at: now
+        }))
+
+        // Insert ke stock_movements
+        const { error: insertError } = await this.supabase.from('stock_movements').insert(movements)
+        if (insertError) throw insertError
+
+        // Update current_stock untuk setiap produk
+        const updatePromises = this.products.map(product => 
+          this.supabase.from('products')
+            .update({ current_stock: (product.current_stock || 0) + 100 })
+            .eq('id', product.id)
+        )
+
+        await Promise.all(updatePromises)
+
+        alert(`Berhasil menambahkan stok masuk 100 untuk SEMUA ${this.products.length} produk!`)
         
-        alert(`Berhasil menambahkan stok masuk 100 untuk ${this.products.length} produk!`)
         this.loading = false
         await this.loadData()
         this.renderAndBind()
       } catch (error) {
-        alert('Gagal: ' + error.message)
+        console.error('Bulk error:', error)
+        alert('Gagal: ' + (error.message || 'Terjadi kesalahan'))
         this.loading = false
         this.renderAndBind()
       }
