@@ -500,13 +500,13 @@ export class SalesPage {
                 <input type="date" id="sale_date" name="sale_date" value="${this.saleDate}">
               </div>
 
-              <div class="form-group" id="markupSection" style="display:none">
+              <div class="form-group hidden" id="markupSection">
                 <label>Markup Shopee (42.86%)</label>
                 <input type="number" id="markup_amount" name="markup_amount" min="0" value="${this.formMarkupAmount || 0}" placeholder="0" readonly style="background:#fff7ed">
                 <small style="color:#92400e;font-size:11px">Harga jual dinaikkan agar net tetap sama</small>
               </div>
 
-              <div class="form-group" id="platformFeeSection" style="display:none">
+              <div class="form-group hidden" id="platformFeeSection">
                 <label>Potongan Platform (30%)</label>
                 <input type="number" id="platform_fee" name="platform_fee" min="0" value="${this.formPlatformFee || 0}" placeholder="0" readonly style="background:#f1f5f9">
               </div>
@@ -1114,6 +1114,10 @@ export class SalesPage {
   }
 
   _bindModalEvents() {
+    if (!this.showModal) return
+
+    this._updateTotals()
+
     document.getElementById('close-modal')?.addEventListener('click', () => {
       this.showModal = false; this.editingSale = null
       this.formCustomerName = ''; this.formMarketplace = ''; this.formPlatformFee = 0
