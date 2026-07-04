@@ -93,7 +93,7 @@ export class SalesPage {
     if (this.showOnlyOverpaid) {
       filtered = filtered.filter(s => {
         const totalReceived = s.payment_details?.total_received || s.payment_details?.total_paid || s.total_received || (s.total_amount - (s.platform_fee || 0))
-        const isOverpaid = s.payment_details?.is_overpaid || (totalReceived > s.total_amount)
+        const isOverpaid = s.payment_details?.is_overpaid || false
         return isOverpaid
       })
     }
@@ -293,9 +293,9 @@ export class SalesPage {
                 }
 
                 // Calculate total received and check for overpaid
-                const totalReceived = s.payment_details?.total_received || s.payment_details?.total_paid || s.total_received || (s.total_amount - (s.platform_fee || 0))
-                const isOverpaid = s.payment_details?.is_overpaid || (totalReceived > s.total_amount)
-                const overpaidAmount = s.payment_details?.overpaid_amount || (isOverpaid ? totalReceived - s.total_amount : 0)
+        const totalReceived = s.payment_details?.total_received || s.payment_details?.total_paid || s.total_received || (s.total_amount - (s.platform_fee || 0))
+        const isOverpaid = s.payment_details?.is_overpaid || false
+        const overpaidAmount = s.payment_details?.overpaid_amount || 0
 
                 // Prepare template variables
                 const customerHtml = isWalkIn ? `
@@ -549,16 +549,14 @@ export class SalesPage {
                   <span>Subtotal</span>
                   <strong id="totalSubtotal">Rp ${this.formatNumber(total)}</strong>
                 </div>
-                ${this.formMarkupAmount > 0 ? `
-                <div class="total-row" style="color:#92400e">
+                <div id="markupDisplayRow" class="total-row hidden" style="color:#92400e">
                   <span>Markup Shopee (42.86%)</span>
-                  <strong>+ Rp ${this.formatNumber(this.formMarkupAmount)}</strong>
+                  <strong id="markupDisplayAmount">+ Rp 0</strong>
                 </div>
-                <div class="total-row" style="color:#ef4444">
+                <div id="feeDisplayRow" class="total-row hidden" style="color:#ef4444">
                   <span>Potongan Platform (30%)</span>
-                  <strong>- Rp ${this.formatNumber(this.formPlatformFee)}</strong>
+                  <strong id="feeDisplayAmount">- Rp 0</strong>
                 </div>
-                ` : ''}
                 <div class="total-row" style="display:block;">
                   <span>Pembayaran</span>
                   <strong id="totalPaid" style="color:#16a34a">Rp ${this.formatNumber(totalPaid)}</strong>
@@ -569,7 +567,7 @@ export class SalesPage {
                     <strong id="overpaidAmount" style="color:#d97706;">Rp 0</strong>
                   </div>
                 </div>
-                <div id="remainingSection" class="total-row" style="display:block;">
+                <div id="remainingSection" class="total-row">
                   <span>Sisa</span>
                   <strong id="totalRemaining" style="color:#ef4444">Rp 0</strong>
                 </div>
@@ -606,8 +604,8 @@ export class SalesPage {
     const byInitials = byName.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()
     const totalQty = items.reduce((sum, i) => sum + i.quantity, 0)
     const totalReceived = sale?.payment_details?.total_received || sale?.payment_details?.total_paid || sale?.total_received || (sale?.total_amount - (sale?.platform_fee || 0))
-    const isOverpaid = sale?.payment_details?.is_overpaid || (totalReceived > sale?.total_amount)
-    const overpaidAmount = sale?.payment_details?.overpaid_amount || (isOverpaid ? totalReceived - sale?.total_amount : 0)
+    const isOverpaid = sale?.payment_details?.is_overpaid || false
+    const overpaidAmount = sale?.payment_details?.overpaid_amount || 0
 
     const marketplaceNames = {
       shopee: 'Shopee', tiktok: 'TikTok Shop', tokopedia: 'Tokopedia', lazada: 'Lazada'
@@ -1051,8 +1049,8 @@ export class SalesPage {
         if (!sale) return
         if (!confirm(`Tutup ${sale.invoice_number} sebagai LUNAS?`)) return
         const totalReceived = sale.payment_details?.total_received || sale.payment_details?.total_paid || sale.total_received || (sale.total_amount - (sale.platform_fee || 0))
-        const isOverpaid = sale.payment_details?.is_overpaid || (totalReceived > sale.total_amount)
-        const overpaidAmount = sale.payment_details?.overpaid_amount || (isOverpaid ? totalReceived - sale.total_amount : 0)
+        const isOverpaid = sale.payment_details?.is_overpaid || false
+        const overpaidAmount = sale.payment_details?.overpaid_amount || 0
         
         await this.supabase.from('sales').update({
           status: 'completed',
@@ -1154,12 +1152,12 @@ export class SalesPage {
     })
 
     document.getElementById('view-close-sale-btn')?.addEventListener('click', async () => {
-      const sale = this.selectedSale
-      if (!sale) return
-      if (!confirm(`Tutup ${sale.invoice_number} sebagai LUNAS?`)) return
-      const totalReceived = sale.payment_details?.total_received || sale.payment_details?.total_paid || sale.total_received || (sale.total_amount - (sale.platform_fee || 0))
-      const isOverpaid = sale.payment_details?.is_overpaid || (totalReceived > sale.total_amount)
-      const overpaidAmount = sale.payment_details?.overpaid_amount || (isOverpaid ? totalReceived - sale.total_amount : 0)
+        const sale = this.selectedSale
+        if (!sale) return
+        if (!confirm(`Tutup ${sale.invoice_number} sebagai LUNAS?`)) return
+        const totalReceived = sale.payment_details?.total_received || sale.payment_details?.total_paid || sale.total_received || (sale.total_amount - (sale.platform_fee || 0))
+        const isOverpaid = sale.payment_details?.is_overpaid || false
+        const overpaidAmount = sale.payment_details?.overpaid_amount || 0
       
       await this.supabase.from('sales').update({
         status: 'completed', payment_status: 'paid', paid_amount: totalReceived
@@ -1325,6 +1323,7 @@ export class SalesPage {
       const totalPaid = mainAmount + splitTotal
       const totalReceived = totalPaid
       const markedUpTotal = totalAmount + markupAmount
+      const actualDue = markedUpTotal - platformFee
       const paymentDetails = {
         main_method: paymentMethod,
         main_amount: mainAmount,
@@ -1335,8 +1334,8 @@ export class SalesPage {
         total_amount_original: totalAmount,
         markup_amount: markupAmount,
         platform_fee: platformFee,
-        is_overpaid: totalPaid > markedUpTotal,
-        overpaid_amount: totalPaid > markedUpTotal ? totalPaid - markedUpTotal : 0
+        is_overpaid: totalPaid > actualDue,
+        overpaid_amount: totalPaid > actualDue ? totalPaid - actualDue : 0
       }
 
       this.loading = true
@@ -1579,13 +1578,24 @@ export class SalesPage {
     const markupSection = document.getElementById('markupSection')
     if (markupSection) markupSection.classList.toggle('hidden', markupAmount === 0)
 
+    const markupRow = document.getElementById('markupDisplayRow')
+    const feeRow = document.getElementById('feeDisplayRow')
+    const markupDisplay = document.getElementById('markupDisplayAmount')
+    const feeDisplay = document.getElementById('feeDisplayAmount')
+    if (markupRow) markupRow.classList.toggle('hidden', markupAmount === 0)
+    if (feeRow) feeRow.classList.toggle('hidden', totalFee === 0)
+    if (markupDisplay) markupDisplay.textContent = '+ Rp ' + this.formatNumber(markupAmount)
+    if (feeDisplay) feeDisplay.textContent = '- Rp ' + this.formatNumber(totalFee)
+
     const el = (id) => document.getElementById(id)
     if (el('totalQty')) el('totalQty').textContent = totalQty
     if (el('totalSubtotal')) el('totalSubtotal').textContent = 'Rp ' + this.formatNumber(total)
     if (el('totalGrand')) el('totalGrand').textContent = 'Rp ' + this.formatNumber(markedUpTotal)
     if (el('totalPaid')) el('totalPaid').textContent = 'Rp ' + this.formatNumber(totalPaid)
 
-    const remaining = markedUpTotal - totalPaid
+    // Calculate actual due: markedUpTotal minus platform fee
+    const actualDue = markedUpTotal - totalFee
+    const remaining = actualDue - totalPaid
     const isOverpaid = remaining < 0
     const overpaidSection = el('overpaidSection')
     const remainingSection = el('remainingSection')
