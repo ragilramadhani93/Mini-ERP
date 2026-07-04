@@ -82,6 +82,7 @@ export class DashboardPage {
     const topProducts = this.getTopProducts(sales, products)
     const recentActivities = this.getRecentActivities(sales, cash)
     const pendingPO = purchaseOrders.filter(po => po.status === 'approved' || po.status === 'pending')
+    const expenseBreakdown = this.getExpenseBreakdown(cash)
 
     return `
       <div class="dashboard-container">
@@ -162,7 +163,7 @@ export class DashboardPage {
           </div>
         </section>
 
-        <!-- TOP PRODUCT + MARKETPLACE -->
+        <!-- TOP PRODUCT + EXPENSE BREAKDOWN -->
         <section class="grid-2">
           <div class="card">
             <div class="card-header">
@@ -184,6 +185,32 @@ export class DashboardPage {
             `).join('')}
           </div>
 
+          <div class="card">
+            <div class="card-header">
+              <h3>Pengeluaran Terbesar</h3>
+            </div>
+            ${expenseBreakdown.length === 0 ? `
+              <p style="color:#9ca3af; text-align:center; padding:20px 0;">Belum ada pengeluaran</p>
+            ` : expenseBreakdown.slice(0, 4).map((item, i) => {
+              const barW = item.percentage
+              const colors = ['bg-rose-500', 'bg-orange-500', 'bg-amber-500', 'bg-sky-500']
+              return `
+                <div style="margin-bottom:12px;">
+                  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+                    <div style="display:flex; align-items:center; gap:6px;">
+                      <span style="width:6px;height:6px;border-radius:50%;background:${['#f43f5e','#f97316','#f59e0b','#0ea5e9'][i]}"></span>
+                      <strong style="font-size:13px;color:#1e293b;">${item.label}</strong>
+                    </div>
+                    <span style="font-size:13px;font-weight:600;color:#0f172a;">Rp ${this.formatNumber(item.total)}</span>
+                  </div>
+                  <div style="height:6px;background:#f1f5f9;border-radius:4px;overflow:hidden;">
+                    <div style="height:100%;width:${barW}%;background:${['#f43f5e','#f97316','#f59e0b','#0ea5e9'][i]};border-radius:4px;transition:width 0.3s;"></div>
+                  </div>
+                  <span style="font-size:10px;color:#94a3b8;">${item.percentage}% dari total pengeluaran</span>
+                </div>
+              `
+            }).join('')}
+          </div>
         </section>
 
         <!-- AI FORECAST -->
@@ -268,6 +295,31 @@ export class DashboardPage {
       data.push({ date: dateStr, sales: total, dateRaw: date.toISOString() })
     }
     return data
+  }
+
+  getExpenseBreakdown(cash) {
+    const expenses = cash.filter(c => c.type === 'out')
+    const byCategory = {}
+    expenses.forEach(c => {
+      const cat = c.category || 'lainnya'
+      if (!byCategory[cat]) byCategory[cat] = 0
+      byCategory[cat] += c.amount
+    })
+    const total = Object.values(byCategory).reduce((s, v) => s + v, 0)
+    if (total === 0) return []
+    const labels = {
+      purchase: 'Pembelian Stok', operational: 'Operasional', salary: 'Gaji',
+      advertising: 'Iklan', platform_fee: 'Biaya Platform', other_income: 'Lainnya',
+      lainnya: 'Lainnya'
+    }
+    return Object.entries(byCategory)
+      .map(([cat, amount]) => ({
+        category: cat,
+        label: labels[cat] || cat,
+        total: amount,
+        percentage: Math.round((amount / total) * 100)
+      }))
+      .sort((a, b) => b.total - a.total)
   }
 
   getTopProducts(sales, products) {
