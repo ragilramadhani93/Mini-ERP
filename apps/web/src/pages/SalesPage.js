@@ -563,20 +563,19 @@ export class SalesPage {
                   <span>Pembayaran</span>
                   <strong id="totalPaid" style="color:#16a34a">Rp ${this.formatNumber(totalPaid)}</strong>
                 </div>
-                ${totalPaid > (this.formMarkedUpTotal || total) ? `
-                <div class="total-row" style="display:block;background:#fef3c7;padding:10px;border-radius:8px;">
-                  <span style="color:#d97706;font-weight:600;">➕ Lebih Bayar</span>
-                  <strong style="color:#d97706;">Rp ${this.formatNumber(totalPaid - (this.formMarkedUpTotal || total))}</strong>
+                <div id="overpaidSection" class="hidden">
+                  <div class="total-row" style="display:block;background:#fef3c7;padding:10px;border-radius:8px;">
+                    <span style="color:#d97706;font-weight:600;">➕ Lebih Bayar</span>
+                    <strong id="overpaidAmount" style="color:#d97706;">Rp 0</strong>
+                  </div>
                 </div>
-                ` : `
-                <div class="total-row" style="display:block;">
+                <div id="remainingSection" class="total-row" style="display:block;">
                   <span>Sisa</span>
-                  <strong id="totalRemaining" style="color:${(this.formMarkedUpTotal || total) - totalPaid > 0 ? '#ef4444' : '#16a34a'}">Rp ${this.formatNumber((this.formMarkedUpTotal || total) - totalPaid)}</strong>
+                  <strong id="totalRemaining" style="color:#ef4444">Rp 0</strong>
                 </div>
-                `}
                 <div class="total-row grand-total">
                   <span>Total</span>
-                  <strong id="totalGrand">Rp ${this.formatNumber(this.formMarkedUpTotal || total)}</strong>
+                  <strong id="totalGrand">Rp ${this.formatNumber(total)}</strong>
                 </div>
               </div>
 
@@ -1522,7 +1521,10 @@ export class SalesPage {
   _isShopeeCheckout(method) {
     if (!method) return false
     const m = method.toLowerCase()
-    return m.includes('shopee') && (m.includes('checkout') || m.includes('pay') || m.includes('cod'))
+    if (m.includes('shopee')) return true
+    const pm = this.paymentMethods.find(p => p.code === method)
+    if (pm && pm.name && pm.name.toLowerCase().includes('shopee')) return true
+    return false
   }
 
   _getShopeeAmount() {
@@ -1582,10 +1584,20 @@ export class SalesPage {
     if (el('totalSubtotal')) el('totalSubtotal').textContent = 'Rp ' + this.formatNumber(total)
     if (el('totalGrand')) el('totalGrand').textContent = 'Rp ' + this.formatNumber(markedUpTotal)
     if (el('totalPaid')) el('totalPaid').textContent = 'Rp ' + this.formatNumber(totalPaid)
-    if (el('totalRemaining')) {
-      const remaining = markedUpTotal - totalPaid
-      el('totalRemaining').textContent = 'Rp ' + this.formatNumber(remaining)
-      el('totalRemaining').style.color = remaining > 0 ? '#ef4444' : '#16a34a'
+
+    const remaining = markedUpTotal - totalPaid
+    const isOverpaid = remaining < 0
+    const overpaidSection = el('overpaidSection')
+    const remainingSection = el('remainingSection')
+    if (overpaidSection) overpaidSection.classList.toggle('hidden', !isOverpaid)
+    if (remainingSection) remainingSection.classList.toggle('hidden', isOverpaid)
+    if (isOverpaid) {
+      if (el('overpaidAmount')) el('overpaidAmount').textContent = 'Rp ' + this.formatNumber(Math.abs(remaining))
+    } else {
+      if (el('totalRemaining')) {
+        el('totalRemaining').textContent = 'Rp ' + this.formatNumber(remaining)
+        el('totalRemaining').style.color = remaining > 0 ? '#ef4444' : '#16a34a'
+      }
     }
   }
 
