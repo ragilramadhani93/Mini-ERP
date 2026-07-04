@@ -28,6 +28,9 @@ export class SalesPage {
     this.formCustomerName = ''
     this.formMarketplace = ''
     this.formPlatformFee = 0
+    this.formMarkupAmount = 0
+    this.formShopeeAmount = 0
+    this.formMarkedUpTotal = 0
     this.saleDate = new Date().toISOString().slice(0, 10)
     this.customers = [
       'Rumah Tangga Bahagia',
@@ -497,8 +500,14 @@ export class SalesPage {
                 <input type="date" id="sale_date" name="sale_date" value="${this.saleDate}">
               </div>
 
-              <div class="form-group" id="platformFeeSection">
-                <label>Potongan Platform</label>
+              <div class="form-group" id="markupSection" style="display:none">
+                <label>Markup Shopee (42.86%)</label>
+                <input type="number" id="markup_amount" name="markup_amount" min="0" value="${this.formMarkupAmount || 0}" placeholder="0" readonly style="background:#fff7ed">
+                <small style="color:#92400e;font-size:11px">Harga jual dinaikkan agar net tetap sama</small>
+              </div>
+
+              <div class="form-group" id="platformFeeSection" style="display:none">
+                <label>Potongan Platform (30%)</label>
                 <input type="number" id="platform_fee" name="platform_fee" min="0" value="${this.formPlatformFee || 0}" placeholder="0" readonly style="background:#f1f5f9">
               </div>
 
@@ -540,24 +549,34 @@ export class SalesPage {
                   <span>Subtotal</span>
                   <strong id="totalSubtotal">Rp ${this.formatNumber(total)}</strong>
                 </div>
+                ${this.formMarkupAmount > 0 ? `
+                <div class="total-row" style="color:#92400e">
+                  <span>Markup Shopee (42.86%)</span>
+                  <strong>+ Rp ${this.formatNumber(this.formMarkupAmount)}</strong>
+                </div>
+                <div class="total-row" style="color:#ef4444">
+                  <span>Potongan Platform (30%)</span>
+                  <strong>- Rp ${this.formatNumber(this.formPlatformFee)}</strong>
+                </div>
+                ` : ''}
                 <div class="total-row" style="display:block;">
                   <span>Pembayaran</span>
                   <strong id="totalPaid" style="color:#16a34a">Rp ${this.formatNumber(totalPaid)}</strong>
                 </div>
-                ${totalPaid > total ? `
+                ${totalPaid > (this.formMarkedUpTotal || total) ? `
                 <div class="total-row" style="display:block;background:#fef3c7;padding:10px;border-radius:8px;">
                   <span style="color:#d97706;font-weight:600;">➕ Lebih Bayar</span>
-                  <strong style="color:#d97706;">Rp ${this.formatNumber(totalPaid - total)}</strong>
+                  <strong style="color:#d97706;">Rp ${this.formatNumber(totalPaid - (this.formMarkedUpTotal || total))}</strong>
                 </div>
                 ` : `
                 <div class="total-row" style="display:block;">
                   <span>Sisa</span>
-                  <strong id="totalRemaining" style="color:${remaining > 0 ? '#ef4444' : '#16a34a'}">Rp ${this.formatNumber(remaining)}</strong>
+                  <strong id="totalRemaining" style="color:${(this.formMarkedUpTotal || total) - totalPaid > 0 ? '#ef4444' : '#16a34a'}">Rp ${this.formatNumber((this.formMarkedUpTotal || total) - totalPaid)}</strong>
                 </div>
                 `}
                 <div class="total-row grand-total">
                   <span>Total</span>
-                  <strong id="totalGrand">Rp ${this.formatNumber(total)}</strong>
+                  <strong id="totalGrand">Rp ${this.formatNumber(this.formMarkedUpTotal || total)}</strong>
                 </div>
               </div>
 
@@ -930,6 +949,9 @@ export class SalesPage {
       this.formCustomerName = ''
       this.formMarketplace = ''
       this.formPlatformFee = 0
+      this.formMarkupAmount = 0
+      this.formShopeeAmount = 0
+      this.formMarkedUpTotal = 0
       this.saleDate = new Date().toISOString().slice(0, 10)
       this.splitPayments = []
       this.showModal = true
@@ -1010,7 +1032,10 @@ export class SalesPage {
         this.mainPaymentAmount = sale.payment_details?.main_amount || sale.total_received || sale.total_amount || 0
         this.formCustomerName = sale.customer_name || ''
         this.formMarketplace = sale.marketplace || ''
-        this.formPlatformFee = sale.platform_fee || 0
+        this.formPlatformFee = sale.payment_details?.platform_fee || sale.platform_fee || 0
+        this.formMarkupAmount = sale.payment_details?.markup_amount || 0
+        this.formShopeeAmount = sale.payment_details?.shopee_amount || 0
+        this.formMarkedUpTotal = sale.payment_details?.markup_amount ? (sale.total_amount || 0) : 0
         this.saleDate = sale.created_at ? new Date(sale.created_at).toISOString().slice(0, 10) : new Date().toISOString().slice(0, 10)
         this.splitPayments = (sale.split_payments || []).filter(sp => sp.amount > 0).map(sp => ({
           method: sp.method,
@@ -1199,6 +1224,7 @@ export class SalesPage {
 
     document.getElementById('payment_method')?.addEventListener('change', (e) => {
       this.paymentMethod = e.target.value
+      this._updateTotals()
     })
 
     document.getElementById('main_payment_amount')?.addEventListener('input', (e) => {
@@ -1223,6 +1249,7 @@ export class SalesPage {
       sel.addEventListener('change', () => {
         const idx = parseInt(sel.dataset.index)
         this.splitPayments[idx].method = sel.value
+        this._updateTotals()
       })
     })
 
@@ -1284,6 +1311,7 @@ export class SalesPage {
 
       const totalAmount = validItems.reduce((sum, item) => sum + item.subtotal, 0)
       const platformFee = parseInt(formData.get('platform_fee')) || 0
+      const markupAmount = parseInt(formData.get('markup_amount')) || 0
       const status = formData.get('status') || 'draft'
       const paymentMethod = formData.get('payment_method') || 'cash'
       const mainAmount = parseInt(formData.get('main_payment_amount')) || totalAmount
@@ -1293,6 +1321,7 @@ export class SalesPage {
       const splitTotal = this.splitPayments.reduce((sum, sp) => sum + (sp.amount || 0), 0)
       const totalPaid = mainAmount + splitTotal
       const totalReceived = totalPaid
+      const markedUpTotal = totalAmount + markupAmount
       const paymentDetails = {
         main_method: paymentMethod,
         main_amount: mainAmount,
@@ -1300,8 +1329,11 @@ export class SalesPage {
         total_split: splitTotal,
         total_paid: totalPaid,
         total_received: totalReceived,
-        is_overpaid: totalPaid > totalAmount,
-        overpaid_amount: totalPaid > totalAmount ? totalPaid - totalAmount : 0
+        total_amount_original: totalAmount,
+        markup_amount: markupAmount,
+        platform_fee: platformFee,
+        is_overpaid: totalPaid > markedUpTotal,
+        overpaid_amount: totalPaid > markedUpTotal ? totalPaid - markedUpTotal : 0
       }
 
       this.loading = true
@@ -1313,10 +1345,11 @@ export class SalesPage {
       const saleCreatedAt = new Date(saleDateValue + 'T' + new Date().toTimeString().slice(0, 8)).toISOString()
 
       let sale, saleError
+      const saleTotalAmount = markupAmount > 0 ? markedUpTotal : totalAmount
       if (isEdit) {
         const result = await this.supabase.from('sales').update({
           customer_name: formData.get('customer_name') || null,
-          total_amount: totalAmount,
+          total_amount: saleTotalAmount,
           payment_method: paymentMethod,
           marketplace: saleMarketplace,
           platform_fee: platformFee,
@@ -1334,7 +1367,7 @@ export class SalesPage {
         const result = await this.supabase.from('sales').insert({
           invoice_number: 'INV-' + Date.now().toString(36).toUpperCase(),
           customer_name: formData.get('customer_name') || null,
-          total_amount: totalAmount,
+          total_amount: saleTotalAmount,
           payment_method: paymentMethod,
           marketplace: saleMarketplace,
           platform_fee: platformFee,
@@ -1482,34 +1515,71 @@ export class SalesPage {
     this.renderAndBind()
   }
 
+  _isShopeeCheckout(method) {
+    if (!method) return false
+    const m = method.toLowerCase()
+    return m.includes('shopee') && (m.includes('checkout') || m.includes('pay') || m.includes('cod'))
+  }
+
+  _getShopeeAmount() {
+    const total = this.transactionItems.reduce((sum, item) => sum + item.subtotal, 0)
+    const splitTotal = this.splitPayments.reduce((sum, sp) => sum + (sp.amount || 0), 0)
+    const mainAmount = this.mainPaymentAmount || total
+
+    let shopeeAmount = 0
+    if (this._isShopeeCheckout(this.paymentMethod)) {
+      shopeeAmount = mainAmount
+    }
+    this.splitPayments.forEach(sp => {
+      if (this._isShopeeCheckout(sp.method)) {
+        shopeeAmount += sp.amount || 0
+      }
+    })
+    return shopeeAmount
+  }
+
   _updateTotals() {
     const total = this.transactionItems.reduce((sum, item) => sum + item.subtotal, 0)
     const totalQty = this.transactionItems.reduce((sum, item) => sum + item.qty, 0)
     const splitTotal = this.splitPayments.reduce((sum, sp) => sum + (sp.amount || 0), 0)
     const mainAmount = this.mainPaymentAmount || total
     const totalPaid = mainAmount + splitTotal
-    const remaining = total - totalPaid
 
+    const shopeeAmount = this._getShopeeAmount()
+    const hasShopee = shopeeAmount > 0
+
+    let markupAmount = 0
     let totalFee = 0
-    this.transactionItems.forEach(item => {
-      if (item.marketplace && item.subtotal) {
-        if (item.marketplace === 'shopee') {
-          totalFee += Math.round(item.subtotal * 0.3)
-        }
-      }
-    })
+    let markedUpTotal = total
+
+    if (hasShopee) {
+      markupAmount = Math.round(shopeeAmount * 0.4286)
+      totalFee = Math.round((shopeeAmount + markupAmount) * 0.3)
+      markedUpTotal = total + markupAmount
+    }
+
+    this.formShopeeAmount = shopeeAmount
+    this.formMarkupAmount = markupAmount
     this.formPlatformFee = totalFee
+    this.formMarkedUpTotal = markedUpTotal
+
     const feeInput = document.getElementById('platform_fee')
     if (feeInput) feeInput.value = totalFee
     const feeSection = document.getElementById('platformFeeSection')
     if (feeSection) feeSection.classList.toggle('hidden', totalFee === 0)
 
+    const markupInput = document.getElementById('markup_amount')
+    if (markupInput) markupInput.value = markupAmount
+    const markupSection = document.getElementById('markupSection')
+    if (markupSection) markupSection.classList.toggle('hidden', markupAmount === 0)
+
     const el = (id) => document.getElementById(id)
     if (el('totalQty')) el('totalQty').textContent = totalQty
     if (el('totalSubtotal')) el('totalSubtotal').textContent = 'Rp ' + this.formatNumber(total)
-    if (el('totalGrand')) el('totalGrand').textContent = 'Rp ' + this.formatNumber(total)
+    if (el('totalGrand')) el('totalGrand').textContent = 'Rp ' + this.formatNumber(markedUpTotal)
     if (el('totalPaid')) el('totalPaid').textContent = 'Rp ' + this.formatNumber(totalPaid)
     if (el('totalRemaining')) {
+      const remaining = markedUpTotal - totalPaid
       el('totalRemaining').textContent = 'Rp ' + this.formatNumber(remaining)
       el('totalRemaining').style.color = remaining > 0 ? '#ef4444' : '#16a34a'
     }
