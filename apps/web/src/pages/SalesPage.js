@@ -1111,9 +1111,9 @@ export class SalesPage {
   }
 
   _bindModalEvents() {
-    if (!this.showModal) return
-
-    this._updateTotals()
+    if (this.showModal) {
+      this._updateTotals()
+    }
 
     document.getElementById('close-modal')?.addEventListener('click', () => {
       this.showModal = false; this.editingSale = null
