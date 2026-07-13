@@ -42,10 +42,12 @@ export class SalesPage {
       'Tokopedia Customer'
     ]
     this.showOnlyOverpaid = false
+    this.useDeposit = false
+    this.depositAmount = 0
   }
 
   async loadData() {
-    const [salesRes, productsRes, methodsRes, skusRes, variantsRes] = await Promise.all([
+    const [salesRes, productsRes, methodsRes, skusRes, variantsRes, depositsRes] = await Promise.all([
       this.supabase.from('sales')
         .select('*, sale_items(*, products(name, sku, cost_price)), created_by_user:users(full_name), split_payments(*)')
         .order('created_at', { ascending: false })
@@ -61,7 +63,9 @@ export class SalesPage {
         .order('created_at'),
       this.supabase.from('product_variants')
         .select('*')
-        .order('sort_order')
+        .order('sort_order'),
+      this.supabase.from('customer_deposits')
+        .select('*')
     ])
 
     this.sales = salesRes.data || []
@@ -69,6 +73,14 @@ export class SalesPage {
     this.paymentMethods = methodsRes.data || []
     this.productSkus = skusRes.data || []
     this.productVariants = variantsRes.data || []
+    this.customerDeposits = depositsRes.data || []
+  }
+
+  getCustomerDeposit(customerName) {
+    if (!customerName) return 0
+    return this.customerDeposits
+      .filter(d => d.customer_name === customerName)
+      .reduce((sum, d) => sum + (d.amount || 0), 0)
   }
 
   getFilteredSales() {
@@ -384,7 +396,17 @@ export class SalesPage {
     const totalDisc = this.transactionItems.reduce((sum, item) => sum + (item.discount || 0), 0)
     const splitTotal = this.splitPayments.reduce((sum, sp) => sum + (sp.amount || 0), 0)
     const mainAmount = this.mainPaymentAmount || total
-    const totalPaid = mainAmount + splitTotal
+    const customerDeposit = this.getCustomerDeposit(this.formCustomerName)
+    
+    let depositToUse = 0
+    if (this.useDeposit && customerDeposit > 0) {
+      const markedUpTotal = total + (this.formMarkupAmount || 0)
+      const actualDue = markedUpTotal - (this.formPlatformFee || 0)
+      depositToUse = Math.min(customerDeposit, actualDue)
+      this.depositAmount = depositToUse
+    }
+
+    const totalPaid = mainAmount + splitTotal + depositToUse
     const remaining = total - totalPaid
 
     return `
@@ -487,13 +509,24 @@ export class SalesPage {
               <div class="summary-title">Ringkasan Transaksi</div>
 
               <div class="form-group">
-                <label>Pelanggan</label>
-                <input type="text" id="customer_name" name="customer_name" list="customer-list" placeholder="Ketik nama pelanggan..." value="${this.formCustomerName || ''}">
-                <datalist id="customer-list">
-                  <option value="Pelanggan Umum">
-                  ${this.customers.map(c => `<option value="${c}">`).join('')}
-                </datalist>
-              </div>
+        <label>Pelanggan</label>
+        <input type="text" id="customer_name" name="customer_name" list="customer-list" placeholder="Ketik nama pelanggan..." value="${this.formCustomerName || ''}">
+        <datalist id="customer-list">
+          <option value="Pelanggan Umum">
+          ${this.customers.map(c => `<option value="${c}">`).join('')}
+        </datalist>
+        ${customerDeposit > 0 ? `<p style="font-size:12px;color:#16a34a;margin-top:4px;">💰 Saldo Deposit: Rp ${this.formatNumber(customerDeposit)}</p>` : ''}
+      </div>
+      
+      ${customerDeposit > 0 ? `
+      <div class="form-group">
+        <label style="display:flex;align-items:center;gap:8px;">
+          <input type="checkbox" id="use_deposit" ${this.useDeposit ? 'checked' : ''} style="width:auto;">
+          Gunakan Deposit
+        </label>
+        ${this.useDeposit ? `<p style="font-size:12px;color:#7A3B58;margin-top:4px;">Akan menggunakan Rp ${this.formatNumber(depositToUse)} dari deposit</p>` : ''}
+      </div>
+      ` : ''}
 
               <div class="form-group">
                 <label>Tanggal Transaksi</label>
@@ -561,6 +594,12 @@ export class SalesPage {
                   <span>Pembayaran</span>
                   <strong id="totalPaid" style="color:#16a34a">Rp ${this.formatNumber(totalPaid)}</strong>
                 </div>
+                ${depositToUse > 0 ? `
+                <div class="total-row" style="display:block;background:#dcfce7;padding:10px;border-radius:8px;">
+                  <span style="color:#166534;font-weight:600;">💰 Deposit Digunakan</span>
+                  <strong style="color:#166534;">- Rp ${this.formatNumber(depositToUse)}</strong>
+                </div>
+                ` : ''}
                 <div id="overpaidSection" class="hidden">
                   <div class="total-row" style="display:block;background:#fef3c7;padding:10px;border-radius:8px;">
                     <span style="color:#d97706;font-weight:600;">➕ Lebih Bayar</span>
@@ -952,6 +991,8 @@ export class SalesPage {
       this.saleDate = new Date().toISOString().slice(0, 10)
       this.splitPayments = []
       this.showModal = true
+      this.useDeposit = false
+      this.depositAmount = 0
       this.transactionItems = [{ productId: '', qty: 1, discount: 0, subtotal: 0 }]
       this.renderAndBind()
     })
@@ -1119,16 +1160,43 @@ export class SalesPage {
       this.showModal = false; this.editingSale = null
       this.formCustomerName = ''; this.formMarketplace = ''; this.formPlatformFee = 0
       this.saleDate = new Date().toISOString().slice(0, 10)
+      this.useDeposit = false
+      this.depositAmount = 0
       this.renderAndBind()
     })
     document.getElementById('cancel-modal')?.addEventListener('click', () => {
       this.showModal = false; this.editingSale = null
       this.formCustomerName = ''; this.formMarketplace = ''; this.formPlatformFee = 0
       this.saleDate = new Date().toISOString().slice(0, 10)
+      this.useDeposit = false
+      this.depositAmount = 0
       this.renderAndBind()
     })
     document.getElementById('modal-overlay')?.addEventListener('click', (e) => {
-      if (e.target === e.currentTarget) { this.showModal = false; this.editingSale = null; this.formCustomerName = ''; this.formMarketplace = ''; this.formPlatformFee = 0; this.saleDate = new Date().toISOString().slice(0, 10); this.renderAndBind() }
+      if (e.target === e.currentTarget) { 
+        this.showModal = false; 
+        this.editingSale = null; 
+        this.formCustomerName = ''; 
+        this.formMarketplace = ''; 
+        this.formPlatformFee = 0; 
+        this.saleDate = new Date().toISOString().slice(0, 10);
+        this.useDeposit = false
+        this.depositAmount = 0
+        this.renderAndBind() 
+      }
+    })
+
+    document.getElementById('customer_name')?.addEventListener('input', (e) => {
+      this.formCustomerName = e.target.value
+      this.useDeposit = false // Reset deposit usage when customer changes
+      this._updateTotals()
+      this.renderAndBind()
+    })
+    
+    document.getElementById('use_deposit')?.addEventListener('change', (e) => {
+      this.useDeposit = e.target.checked
+      this._updateTotals()
+      this.renderAndBind()
     })
 
     document.getElementById('sale_date')?.addEventListener('change', (e) => {
@@ -1318,12 +1386,23 @@ export class SalesPage {
       const mainAmount = parseInt(formData.get('main_payment_amount')) || totalAmount
       const isSplit = this.splitPayments.length > 0
       const isEdit = !!this.editingSale
+      const customerName = formData.get('customer_name') || null
+      const customerDeposit = this.getCustomerDeposit(customerName)
+      
+      let depositToUse = 0
+      if (this.useDeposit && customerDeposit > 0) {
+        const markedUpTotal = totalAmount + markupAmount
+        const actualDue = markedUpTotal - platformFee
+        depositToUse = Math.min(customerDeposit, actualDue)
+      }
 
       const splitTotal = this.splitPayments.reduce((sum, sp) => sum + (sp.amount || 0), 0)
-      const totalPaid = mainAmount + splitTotal
-      const totalReceived = totalPaid
+      const totalPaid = mainAmount + splitTotal + depositToUse
+      const totalReceived = mainAmount + splitTotal // actual cash received
       const markedUpTotal = totalAmount + markupAmount
       const actualDue = markedUpTotal - platformFee
+      const overpaidAmount = totalPaid > actualDue ? totalPaid - actualDue : 0
+      
       const paymentDetails = {
         main_method: paymentMethod,
         main_amount: mainAmount,
@@ -1334,8 +1413,9 @@ export class SalesPage {
         total_amount_original: totalAmount,
         markup_amount: markupAmount,
         platform_fee: platformFee,
+        deposit_used: depositToUse,
         is_overpaid: totalPaid > actualDue,
-        overpaid_amount: totalPaid > actualDue ? totalPaid - actualDue : 0
+        overpaid_amount: overpaidAmount
       }
 
       this.loading = true
@@ -1445,10 +1525,39 @@ export class SalesPage {
         await this.supabase.from('cash_transactions').insert({
           type: 'in', category: 'sales', amount: totalReceived,
           reference_type: 'sales', reference_id: sale.id,
-          description: `Penjualan ${sale.invoice_number}${formData.get('customer_name') ? ` - ${formData.get('customer_name')}` : ''}${paymentDetails.is_overpaid ? ` (Lebih bayar Rp ${this.formatNumber(paymentDetails.overpaid_amount)})` : ''}`,
+          description: `Penjualan ${sale.invoice_number}${customerName ? ` - ${customerName}` : ''}${paymentDetails.is_overpaid ? ` (Lebih bayar Rp ${this.formatNumber(paymentDetails.overpaid_amount)})` : ''}${paymentDetails.deposit_used ? ` (Menggunakan deposit Rp ${this.formatNumber(paymentDetails.deposit_used)})` : ''}`,
           created_by: this.auth.user.id,
           created_at: saleCreatedAt
         })
+        
+        // Handle deposits
+        if (customerName) {
+          // If we used deposit, subtract it
+          if (paymentDetails.deposit_used > 0) {
+            await this.supabase.from('customer_deposits').insert({
+              customer_name: customerName,
+              amount: -paymentDetails.deposit_used,
+              reference_type: 'sales',
+              reference_id: sale.id,
+              description: `Penggunaan deposit untuk ${sale.invoice_number}`,
+              created_by: this.auth.user.id,
+              created_at: saleCreatedAt
+            })
+          }
+          
+          // If there's an overpayment, add it to deposit
+          if (paymentDetails.is_overpaid && paymentDetails.overpaid_amount > 0) {
+            await this.supabase.from('customer_deposits').insert({
+              customer_name: customerName,
+              amount: paymentDetails.overpaid_amount,
+              reference_type: 'sales',
+              reference_id: sale.id,
+              description: `Tambah deposit dari lebih bayar ${sale.invoice_number}`,
+              created_by: this.auth.user.id,
+              created_at: saleCreatedAt
+            })
+          }
+        }
       }
 
       this.loading = false

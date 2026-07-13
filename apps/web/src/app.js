@@ -24,6 +24,7 @@ import { ShopeePage } from './pages/ShopeePage.js'
 import { SettingsPage } from './pages/SettingsPage.js'
 import { SettingsRolePage } from './pages/SettingsRolePage.js'
 import { AssetsPage } from './pages/AssetsPage.js'
+import { DepositPage } from './pages/DepositPage.js'
 
 const isDemo = import.meta.env.VITE_DEMO_MODE === 'true'
 
@@ -58,6 +59,7 @@ const routes = {
   '/finance/expenses': { component: FinancePage, roles: ['owner', 'admin', 'staff_keuangan'] },
   '/purchase-orders': { component: PurchaseOrderPage, roles: ['owner', 'admin'] },
   '/debts': { component: DebtPage, roles: ['owner', 'admin', 'staff_keuangan'] },
+  '/deposits': { component: DepositPage, roles: ['owner', 'admin', 'staff_keuangan'] },
   '/barcode': { component: BarcodePage, roles: ['owner', 'admin', 'staff_gudang'] },
   '/import-export': { component: ImportExportPage, roles: ['owner', 'admin'] },
   '/analytics': { component: AnalyticsPage, roles: ['owner', 'admin'] },

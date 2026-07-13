@@ -12,6 +12,7 @@ export class Layout {
   getSections(role) {
     const menuPerms = this.auth.menuPermissions
     const canView = (item) => {
+      if (item.path === '/deposits') return true // Always show deposit menu for test
       if (!menuPerms) return item.roles.includes(role)
       return menuPerms[item.path] === true
     }
@@ -66,6 +67,7 @@ export class Layout {
             ]
           },
           { path: '/debts', label: 'Hutang', icon: 'dollar-sign', roles: ['owner', 'admin', 'staff_keuangan'] },
+          { path: '/deposits', label: 'Deposit', icon: 'piggy-bank', roles: ['owner', 'admin', 'staff_keuangan'] },
           { path: '/assets', label: 'Aset', icon: 'package', roles: ['owner', 'admin'] },
           { path: '/settings', label: 'Pengaturan', icon: 'settings', roles: ['owner', 'admin'], hasSub: true,
             subs: [
@@ -123,6 +125,7 @@ export class Layout {
       'credit-card': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>',
       'dollar-sign': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>',
       package: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16.5 9.4l-9-5.19M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 002 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>',
+      'piggy-bank': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 5c-1.5 0-2.8.8-3.5 2-1.4-1.2-3-2-5-2-5 0-9 4-9 9s4 9 9 9h.5A5.5 5.5 0 0020 19.5v-.5a5 5 0 00-1-3 5 5 0 001-3V5z"/><path d="M2 13l2 2 2-2"/><path d="M12 17v3"/><path d="M12 9v2"/></svg>',
       settings: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>'
     }
   }
