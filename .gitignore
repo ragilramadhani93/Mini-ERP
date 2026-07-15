@@ -10,3 +10,4 @@ android/local.properties
 .DS_Store
 *.log
 supabase/.temp
+.turbo
