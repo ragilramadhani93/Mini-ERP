@@ -1190,7 +1190,6 @@ export class SalesPage {
       this.formCustomerName = e.target.value
       this.useDeposit = false // Reset deposit usage when customer changes
       this._updateTotals()
-      this.renderAndBind()
     })
     
     document.getElementById('use_deposit')?.addEventListener('change', (e) => {
