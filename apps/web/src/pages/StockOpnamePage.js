@@ -1,7 +1,3 @@
-import { SkeletonPage } from '../components/Skeleton.js'
-import { toast } from '../components/ToastNotification.js'
-import { ConfirmModal } from '../components/ConfirmModal.js'
-
 export class StockOpnamePage {
   constructor({ supabase, auth }) {
     this.supabase = supabase
@@ -14,27 +10,20 @@ export class StockOpnamePage {
   }
 
   async loadData() {
-    try {
-      const [productsRes, opnamesRes] = await Promise.all([
-        this.supabase.from('products')
-          .select('id, sku, name, current_stock, cost_price')
-          .order('name'),
-        this.supabase.from('stock_opname')
-          .select('*, products(sku, name), created_by_user:users(full_name)')
-          .order('created_at', { ascending: false })
-          .limit(50)
-      ])
-      this.products = productsRes.data || []
-      this.opnames = opnamesRes.data || []
-      this.products.forEach(p => {
-        this.physicalStocks[p.id] = p.current_stock
-      })
-    } catch (err) {
-      console.error('Load opname error:', err)
-      toast.error('Gagal', 'Gagal memuat data: ' + err.message)
-      this.products = []
-      this.opnames = []
-    }
+    const [productsRes, opnamesRes] = await Promise.all([
+      this.supabase.from('products')
+        .select('id, sku, name, current_stock, cost_price')
+        .order('name'),
+      this.supabase.from('stock_opname')
+        .select('*, products(sku, name), created_by_user:users(full_name)')
+        .order('created_at', { ascending: false })
+        .limit(50)
+    ])
+    this.products = productsRes.data || []
+    this.opnames = opnamesRes.data || []
+    this.products.forEach(p => {
+      this.physicalStocks[p.id] = p.current_stock
+    })
   }
 
   render() {
@@ -174,8 +163,6 @@ export class StockOpnamePage {
   }
 
   async bindEvents() {
-    const outlet = document.getElementById('router-outlet')
-    if (outlet) outlet.innerHTML = SkeletonPage()
     await this.loadData()
     this.renderAndBind()
   }
@@ -214,13 +201,13 @@ export class StockOpnamePage {
       })
 
       if (differences.length === 0) {
-        toast.info('Tidak ada selisih', 'Semua data stok sudah sesuai')
+        alert('Tidak ada selisih stok. Semua data sudah sesuai.')
         this.saving = false
         this.renderAndBind()
         return
       }
 
-      if (!(await ConfirmModal.show({ title: 'Simpan Opname', message: `Terdapat ${differences.length} produk dengan selisih. Simpan opname?`, confirmText: 'Ya, Simpan', variant: 'primary' }))) {
+      if (!confirm(`Terdapat ${differences.length} produk dengan selisih. Simpan opname?`)) {
         this.saving = false
         this.renderAndBind()
         return
@@ -237,14 +224,14 @@ export class StockOpnamePage {
       const { error } = await this.supabase.from('stock_opname').insert(opnameData)
 
       if (error) {
-        toast.error('Gagal simpan', 'Gagal menyimpan opname: ' + error.message)
+        alert('Gagal menyimpan: ' + error.message)
       } else {
         for (const o of opnameData) {
           await this.supabase.from('products').update({
             current_stock: o.physical_stock
           }).eq('id', o.product_id)
         }
-        toast.success('Berhasil', 'Stock opname berhasil disimpan')
+        alert('Stock opname berhasil disimpan!')
       }
 
       this.saving = false

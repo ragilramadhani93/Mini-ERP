@@ -1,10 +1,4 @@
 import { Exporter } from '../utils/export.js'
-import { formatNumber, calcTotal } from '../components/SalesHelper.js'
-import { SkeletonSales } from '../components/Skeleton.js'
-import { toast } from '../components/ToastNotification.js'
-import { ConfirmModal } from '../components/ConfirmModal.js'
-import { StatPremium } from '../components/StatPremium.js'
-import { PremiumButton } from '../components/PremiumButton.js'
 
 export class SalesPage {
   constructor({ supabase, auth, router }) {
@@ -883,11 +877,14 @@ export class SalesPage {
   }
 
   calcTotal(sales) {
-    return calcTotal(sales)
+    return sales.reduce((sum, s) => {
+      const received = s.total_received || (s.total_amount - (s.platform_fee || 0))
+      return sum + received
+    }, 0)
   }
 
   formatNumber(num) {
-    return formatNumber(num)
+    return num ? num.toLocaleString('id-ID') : '0'
   }
 
   formatDate(date) {
@@ -977,8 +974,6 @@ export class SalesPage {
   }
 
   async bindEvents() {
-    const outlet = document.getElementById('router-outlet')
-    if (outlet) outlet.innerHTML = SkeletonSales()
     await this.loadData()
     this.renderAndBind()
   }
@@ -1093,7 +1088,7 @@ export class SalesPage {
       btn.addEventListener('click', async () => {
         const sale = this.sales.find(s => s.id === btn.dataset.id)
         if (!sale) return
-        if (!(await ConfirmModal.show({ title: 'Tutup Penjualan', message: `Tutup ${sale.invoice_number} sebagai LUNAS?`, confirmText: 'Ya, Tutup', variant: 'success' }))) return
+        if (!confirm(`Tutup ${sale.invoice_number} sebagai LUNAS?`)) return
         const totalReceived = sale.payment_details?.total_received || sale.payment_details?.total_paid || sale.total_received || (sale.total_amount - (sale.platform_fee || 0))
         const isOverpaid = sale.payment_details?.is_overpaid || false
         const overpaidAmount = sale.payment_details?.overpaid_amount || 0
@@ -1130,7 +1125,7 @@ export class SalesPage {
       btn.addEventListener('click', async () => {
         const sale = this.sales.find(s => s.id === btn.dataset.id)
         if (!sale) return
-        if (!(await ConfirmModal.show({ title: 'Hapus Penjualan', message: `Hapus ${sale.invoice_number}? Data tidak dapat dikembalikan.`, confirmText: 'Ya, Hapus', variant: 'danger' }))) return
+        if (!confirm(`Hapus ${sale.invoice_number}? Data tidak dapat dikembalikan.`)) return
         await this.supabase.from('split_payments').delete().eq('sale_id', sale.id)
         await this.supabase.from('sale_items').delete().eq('sale_id', sale.id)
         await this.supabase.from('sales').delete().eq('id', sale.id)
@@ -1226,7 +1221,7 @@ export class SalesPage {
     document.getElementById('view-close-sale-btn')?.addEventListener('click', async () => {
         const sale = this.selectedSale
         if (!sale) return
-        if (!(await ConfirmModal.show({ title: 'Tutup Penjualan', message: `Tutup ${sale.invoice_number} sebagai LUNAS?`, confirmText: 'Ya, Tutup', variant: 'success' }))) return
+        if (!confirm(`Tutup ${sale.invoice_number} sebagai LUNAS?`)) return
         const totalReceived = sale.payment_details?.total_received || sale.payment_details?.total_paid || sale.total_received || (sale.total_amount - (sale.platform_fee || 0))
         const isOverpaid = sale.payment_details?.is_overpaid || false
         const overpaidAmount = sale.payment_details?.overpaid_amount || 0
@@ -1370,7 +1365,7 @@ export class SalesPage {
 
       try {
       if (!this.auth?.user?.id) {
-        toast.error('Sesi Habis', 'Silakan login kembali')
+        alert('Sesi habis. Silakan login kembali.')
         this.showModal = false
         this.renderAndBind()
         return
@@ -1378,7 +1373,7 @@ export class SalesPage {
       const formData = new FormData(e.target)
       const validItems = this.transactionItems.filter(item => item.productId && item.qty > 0)
       if (validItems.length === 0) {
-        toast.error('Item Kosong', 'Tambahkan minimal 1 item produk')
+        alert('Tambahkan minimal 1 item produk')
         return
       }
 
@@ -1448,7 +1443,7 @@ export class SalesPage {
         }).eq('id', this.editingSale.id).select().single()
         sale = result.data
         saleError = result.error
-        if (saleError) { toast.error('Gagal Update', 'Gagal update penjualan: ' + saleError.message); this.loading = false; this.renderAndBind(); return }
+        if (saleError) { alert('Gagal update penjualan: ' + saleError.message); this.loading = false; this.renderAndBind(); return }
       } else {
         const result = await this.supabase.from('sales').insert({
           invoice_number: 'INV-' + Date.now().toString(36).toUpperCase(),
@@ -1467,7 +1462,7 @@ export class SalesPage {
         }).select().single()
         sale = result.data
         saleError = result.error
-        if (saleError) { toast.error('Gagal Simpan', 'Gagal simpan penjualan: ' + saleError.message); this.loading = false; this.renderAndBind(); return }
+        if (saleError) { alert('Gagal simpan penjualan: ' + saleError.message); this.loading = false; this.renderAndBind(); return }
       }
 
       // Save sale_items
@@ -1482,7 +1477,7 @@ export class SalesPage {
         sku_id: item.skuId || null, marketplace: item.marketplace || null
       }))
       const { error: itemsError } = await this.supabase.from('sale_items').insert(saleItems)
-      if (itemsError) { toast.error('Gagal Item', 'Gagal menyimpan item: ' + itemsError.message); this.loading = false; this.renderAndBind(); return }
+      if (itemsError) { alert('Gagal menyimpan item: ' + itemsError.message); this.loading = false; this.renderAndBind(); return }
 
       // Save split payments
       if (isSplit) {
@@ -1493,11 +1488,11 @@ export class SalesPage {
           }))
           if (splitInserts.length > 0) {
             const { error: splitError } = await this.supabase.from('split_payments').insert(splitInserts)
-            if (splitError) { toast.error('Gagal Split', 'Gagal menyimpan split payment: ' + splitError.message) }
+            if (splitError) { alert('Gagal menyimpan split payment: ' + splitError.message) }
           }
         }
       }
-      if (itemsError) { toast.error('Gagal Item', 'Gagal menyimpan item: ' + itemsError.message); this.loading = false; this.renderAndBind(); return }
+      if (itemsError) { alert('Gagal menyimpan item: ' + itemsError.message); this.loading = false; this.renderAndBind(); return }
 
       // Only deduct stock when status is completed (not draft)
       if (status === 'completed' && !isEdit) {
@@ -1507,7 +1502,7 @@ export class SalesPage {
             const sku = this.productSkus.find(s => s.id === item.skuId)
             const skuStock = sku?.current_stock || 0
             if (!isBackdated && skuStock < item.qty) {
-              toast.error('Stok Varian', `Stok varian tidak mencukupi. Stok: ${skuStock}`)
+              alert(`Stok varian tidak mencukupi. Stok: ${skuStock}`)
               return null
             }
             return this.supabase.from('product_skus').update({
@@ -1522,7 +1517,7 @@ export class SalesPage {
         }).filter(Boolean)
         const stockResults = await Promise.all(stockPromises)
         const stockError = stockResults.find(r => r.error)
-        if (stockError) { toast.error('Gagal Stok', 'Gagal update stok: ' + stockError.error.message); this.loading = false; this.renderAndBind(); return }
+        if (stockError) { alert('Gagal update stok: ' + stockError.error.message); this.loading = false; this.renderAndBind(); return }
       }
 
       if (status === 'completed') {
@@ -1588,7 +1583,7 @@ export class SalesPage {
       this.renderAndBind()
       } catch (err) {
         console.error('Save error:', err)
-        toast.error('Kesalahan', err.message || 'Terjadi kesalahan saat menyimpan transaksi')
+        alert('Terjadi kesalahan: ' + err.message)
       } finally {
         this.loading = false
       }
@@ -1616,7 +1611,7 @@ export class SalesPage {
         price = parseInt(varOption.dataset.price) || price
         stock = parseInt(varOption.dataset.stock) || stock
       } else {
-        toast.error('Pilih Varian', 'Pilih varian produk terlebih dahulu')
+        alert('Pilih varian produk terlebih dahulu')
         return
       }
     }
@@ -1624,7 +1619,7 @@ export class SalesPage {
     const qty = parseInt(qtyInp.value) || 0
     const discount = parseInt(discInp?.value) || 0
 
-    if (qty > stock) { toast.error('Stok Habis', `Stok tidak mencukupi. Stok: ${stock}`); qtyInp.value = stock; return }
+    if (qty > stock) { alert(`Stok tidak mencukupi. Stok: ${stock}`); qtyInp.value = stock; return }
 
     this.transactionItems[index] = { productId: sel.value, skuId, qty, discount, price, subtotal: (qty * price) - discount }
     this.renderAndBind()

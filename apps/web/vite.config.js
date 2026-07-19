@@ -14,8 +14,7 @@ export default defineConfig({
         manualChunks: {
           'vendor-chart': ['chart.js'],
           'vendor-pdf': ['jspdf', 'jspdf-autotable'],
-          'vendor-qrcode': ['html5-qrcode'],
-          'vendor-xlsx': ['xlsx']
+          'vendor-qrcode': ['html5-qrcode']
         }
       }
     },

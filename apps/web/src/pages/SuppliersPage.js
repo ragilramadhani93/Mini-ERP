@@ -1,7 +1,3 @@
-import { ConfirmModal } from '../components/ConfirmModal.js'
-import { SkeletonPage } from '../components/Skeleton.js'
-import { toast } from '../components/ToastNotification.js'
-
 export class SuppliersPage {
   constructor({ supabase }) {
     this.supabase = supabase
@@ -11,14 +7,8 @@ export class SuppliersPage {
   }
 
   async loadData() {
-    try {
-      const { data } = await this.supabase.from('suppliers').select('*').order('supplier_name')
-      this.suppliers = data || []
-    } catch (err) {
-      console.error('Load suppliers error:', err)
-      toast.error('Gagal', 'Gagal memuat supplier: ' + err.message)
-      this.suppliers = []
-    }
+    const { data } = await this.supabase.from('suppliers').select('*').order('supplier_name')
+    this.suppliers = data || []
   }
 
   render() {
@@ -111,8 +101,6 @@ export class SuppliersPage {
   }
 
   async bindEvents() {
-    const outlet = document.getElementById('router-outlet')
-    if (outlet) outlet.innerHTML = SkeletonPage()
     await this.loadData()
     this.renderAndBind()
   }
@@ -136,7 +124,7 @@ export class SuppliersPage {
     document.querySelectorAll('.delete-supplier').forEach(btn => {
       btn.addEventListener('click', async () => {
         const id = btn.dataset.id
-        if (await ConfirmModal.show({ title: 'Hapus Supplier', message: 'Hapus supplier ini?', confirmText: 'Ya, Hapus', variant: 'danger' })) {
+        if (confirm('Hapus supplier ini?')) {
           await this.supabase.from('suppliers').delete().eq('id', id)
           await this.loadData()
           this.renderAndBind()

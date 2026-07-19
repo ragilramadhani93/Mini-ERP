@@ -1,6 +1,3 @@
-import { SkeletonPage } from '../components/Skeleton.js'
-import { toast } from '../components/ToastNotification.js'
-
 export class RegisterPage {
   constructor({ auth, router }) {
     this.auth = auth

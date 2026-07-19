@@ -1,7 +1,3 @@
-import { SkeletonPage } from '../components/Skeleton.js'
-import { toast } from '../components/ToastNotification.js'
-import { ConfirmModal } from '../components/ConfirmModal.js'
-
 export class AssetsPage {
   constructor({ supabase, auth }) {
     this.supabase = supabase
@@ -14,17 +10,11 @@ export class AssetsPage {
   }
 
   async loadData() {
-    try {
-      const { data } = await this.supabase.from('assets')
-        .select('*')
-        .order('created_at', { ascending: false })
-        .limit(50)
-      this.assets = data || []
-    } catch (err) {
-      console.error('Load assets error:', err)
-      toast.error('Gagal', 'Gagal memuat data aset: ' + err.message)
-      this.assets = []
-    }
+    const { data } = await this.supabase.from('assets')
+      .select('*')
+      .order('created_at', { ascending: false })
+      .limit(50)
+    this.assets = data || []
   }
 
   render() {
@@ -209,8 +199,6 @@ export class AssetsPage {
   }
 
   async bindEvents() {
-    const outlet = document.getElementById('router-outlet')
-    if (outlet) outlet.innerHTML = SkeletonPage()
     await this.loadData()
     this.renderAndBind()
   }
@@ -239,7 +227,7 @@ export class AssetsPage {
 
     document.querySelectorAll('.delete-asset').forEach(btn => {
       btn.addEventListener('click', async () => {
-        if (!(await ConfirmModal.show({ title: 'Hapus Aset', message: 'Hapus aset ini?', confirmText: 'Ya, Hapus', variant: 'danger' }))) return
+        if (!confirm('Hapus aset ini?')) return
         await this.supabase.from('assets').delete().eq('id', btn.dataset.id)
         await this.loadData()
         this.renderAndBind()
@@ -281,10 +269,10 @@ export class AssetsPage {
 
       if (this.editingAsset) {
         const { error } = await this.supabase.from('assets').update(data).eq('id', this.editingAsset.id)
-        if (error) { toast.error('Gagal', 'Gagal simpan aset: ' + error.message); this.loading = false; this.renderAndBind(); return }
+        if (error) { alert('Gagal: ' + error.message); this.loading = false; this.renderAndBind(); return }
       } else {
         const { error } = await this.supabase.from('assets').insert(data)
-        if (error) { toast.error('Gagal', 'Gagal simpan aset baru: ' + error.message); this.loading = false; this.renderAndBind(); return }
+        if (error) { alert('Gagal: ' + error.message); this.loading = false; this.renderAndBind(); return }
 
         await this.supabase.from('cash_transactions').insert({
           type: 'out',

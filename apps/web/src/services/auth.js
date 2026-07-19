@@ -1,5 +1,3 @@
-import { toast } from '../components/ToastNotification.js'
-
 export class AuthService {
   constructor(supabase) {
     this.supabase = supabase
@@ -81,7 +79,6 @@ export class AuthService {
     if (this.onLogoutCallback) {
       this.onLogoutCallback()
     }
-    toast.info('Berhasil keluar', 'Sampai jumpa lagi!');
   }
 
   getRole() {

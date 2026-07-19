@@ -1,6 +1,4 @@
 import { Exporter } from '../utils/export.js'
-import { SkeletonPage } from '../components/Skeleton.js'
-import { toast } from '../components/ToastNotification.js'
 
 export class ImportExportPage {
   constructor({ supabase, auth }) {
@@ -171,7 +169,7 @@ export class ImportExportPage {
         Exporter.downloadPDF(exportConfig.title, exportConfig.headers, exportConfig.rows, exportConfig.filename)
       }
     } catch (err) {
-      toast.error('Gagal Export', err.message || 'Gagal melakukan export data')
+      alert('Gagal export: ' + err.message)
     }
     this.loading = false
   }
@@ -236,8 +234,6 @@ export class ImportExportPage {
   }
 
   async bindEvents() {
-    const outlet = document.getElementById('router-outlet')
-    if (outlet) outlet.innerHTML = SkeletonPage()
     this.renderAndBind()
   }
 

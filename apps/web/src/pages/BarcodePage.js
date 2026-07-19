@@ -1,7 +1,5 @@
 import { Html5Qrcode } from 'html5-qrcode'
 import { Camera, CameraResultType, CameraSource } from '@capacitor/camera'
-import { SkeletonPage } from '../components/Skeleton.js'
-import { toast } from '../components/ToastNotification.js'
 
 export class BarcodePage {
   constructor({ supabase, auth, router }) {
@@ -19,16 +17,10 @@ export class BarcodePage {
   }
 
   async loadData() {
-    try {
-      const { data } = await this.supabase.from('products')
-        .select('id, sku, name, current_stock, sell_price, cost_price, min_stock')
-        .order('name')
-      this.products = data || []
-    } catch (err) {
-      console.error('Load products error:', err)
-      toast.error('Gagal', 'Gagal memuat data produk: ' + err.message)
-      this.products = []
-    }
+    const { data } = await this.supabase.from('products')
+      .select('id, sku, name, current_stock, sell_price, cost_price, min_stock')
+      .order('name')
+    this.products = data || []
   }
 
   render() {
@@ -186,7 +178,7 @@ export class BarcodePage {
       this.scanQuantity = 1
       this.renderAndBind()
     } else {
-      toast.error('Tidak ditemukan', `Produk dengan kode "${code}" tidak ditemukan`)
+      alert(`Produk dengan kode "${code}" tidak ditemukan`)
     }
   }
 
@@ -202,14 +194,14 @@ export class BarcodePage {
         
         // For Capacitor, we need a library to scan barcodes from image.
         // For now, let's show a message
-        toast.info('Info', 'Gunakan fitur scan manual untuk mobile')
+        alert('Untuk scanning di mobile, silakan gunakan fitur scan manual!')
       } catch (err) {
-        toast.error('Kamera', 'Gagal mengakses kamera: ' + (err.message || err))
+        alert('Gagal mengakses kamera: ' + (err.message || err))
       }
     } else {
       try {
         const cameras = await Html5Qrcode.getCameras()
-        if (cameras.length === 0) { toast.error('Kamera', 'Kamera tidak tersedia'); return }
+        if (cameras.length === 0) { alert('Kamera tidak tersedia'); return }
         this.cameraId = cameras[0].id
 
         this.isScanning = true
@@ -225,7 +217,7 @@ export class BarcodePage {
           () => {}
         )
       } catch (err) {
-        toast.error('Kamera', 'Gagal mengakses kamera: ' + (err.message || err))
+        alert('Gagal mengakses kamera: ' + (err.message || err))
         this.isScanning = false
         this.renderAndBind()
       }
@@ -242,8 +234,6 @@ export class BarcodePage {
   }
 
   async bindEvents() {
-    const outlet = document.getElementById('router-outlet')
-    if (outlet) outlet.innerHTML = SkeletonPage()
     await this.loadData()
     this.renderAndBind()
   }
@@ -275,18 +265,18 @@ export class BarcodePage {
         p_product_id: this.scannedProduct.id, p_quantity: qty, p_type: 'in', p_reason: 'adjustment',
         p_notes: 'Scan barcode', p_created_by: this.auth.user.id
       })
-      toast.success('Stok Masuk', `${this.scannedProduct.name} stok bertambah ${qty}`)
+      alert(`Stok ${this.scannedProduct.name} bertambah ${qty}`)
       await this.loadData(); this.renderAndBind()
     })
 
     document.getElementById('action-stock-out')?.addEventListener('click', async () => {
       const qty = parseInt(document.getElementById('scan-qty')?.value) || 1
-      if (qty > this.scannedProduct.current_stock) { toast.error('Stok Habis', 'Stok tidak mencukupi'); return }
+      if (qty > this.scannedProduct.current_stock) { alert('Stok tidak mencukupi'); return }
       await this.supabase.rpc('add_stock_movement', {
         p_product_id: this.scannedProduct.id, p_quantity: qty, p_type: 'out', p_reason: 'adjustment',
         p_notes: 'Scan barcode', p_created_by: this.auth.user.id
       })
-      toast.success('Stok Keluar', `${this.scannedProduct.name} stok berkurang ${qty}`)
+      alert(`Stok ${this.scannedProduct.name} berkurang ${qty}`)
       await this.loadData(); this.renderAndBind()
     })
 
@@ -301,14 +291,14 @@ export class BarcodePage {
         created_by: this.auth.user.id
       })
       await this.supabase.from('products').update({ current_stock: physical }).eq('id', this.scannedProduct.id)
-      toast.success('Opname', `${this.scannedProduct.name} stok diupdate: ${physical}`)
+      alert(`Stok ${this.scannedProduct.name} diupdate: ${physical}`)
       await this.loadData(); this.renderAndBind()
     })
 
     document.getElementById('action-sale')?.addEventListener('click', () => {
       const qty = parseInt(document.getElementById('scan-qty')?.value) || 1
       this.router.navigate(`/sales`)
-      setTimeout(() => toast.info('Penjualan', `${this.scannedProduct.name} (${qty}) - Buka halaman penjualan`), 300)
+      setTimeout(() => alert(`Tambahkan "${this.scannedProduct.name}" (qty: ${qty}) ke halaman penjualan`), 300)
     })
 
     document.getElementById('search-prod')?.addEventListener('search', () => {

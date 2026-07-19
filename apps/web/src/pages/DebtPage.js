@@ -1,6 +1,3 @@
-import { SkeletonPage } from '../components/Skeleton.js'
-import { toast } from '../components/ToastNotification.js'
-
 export class DebtPage {
   constructor({ supabase, auth }) {
     this.supabase = supabase
@@ -15,22 +12,14 @@ export class DebtPage {
   }
 
   async loadData() {
-    try {
-      const [payablesRes, suppliersRes, purchasesRes] = await Promise.all([
-        this.supabase.from('payables').select('*').order('created_at', { ascending: false }).limit(50),
-        this.supabase.from('suppliers').select('id, supplier_name').order('supplier_name'),
-        this.supabase.from('purchases').select('id, po_number, total_amount, status, suppliers(supplier_name)').order('created_at', { ascending: false })
-      ])
-      this.payables = payablesRes.data || []
-      this.suppliers = suppliersRes.data || []
-      this.purchases = purchasesRes.data || []
-    } catch (err) {
-      console.error('Load debts error:', err)
-      toast.error('Gagal', 'Gagal memuat data hutang: ' + err.message)
-      this.payables = []
-      this.suppliers = []
-      this.purchases = []
-    }
+    const [payablesRes, suppliersRes, purchasesRes] = await Promise.all([
+      this.supabase.from('payables').select('*').order('created_at', { ascending: false }).limit(50),
+      this.supabase.from('suppliers').select('id, supplier_name').order('supplier_name'),
+      this.supabase.from('purchases').select('id, po_number, total_amount, status, suppliers(supplier_name)').order('created_at', { ascending: false })
+    ])
+    this.payables = payablesRes.data || []
+    this.suppliers = suppliersRes.data || []
+    this.purchases = purchasesRes.data || []
   }
 
   render() {
@@ -214,8 +203,6 @@ export class DebtPage {
   }
 
   async bindEvents() {
-    const outlet = document.getElementById('router-outlet')
-    if (outlet) outlet.innerHTML = SkeletonPage()
     await this.loadData()
     this.renderAndBind()
   }
@@ -273,7 +260,7 @@ export class DebtPage {
         due_date: fd.get('due_date'),
         description: fd.get('description') || null
       })
-      if (error) { toast.error('Gagal', 'Gagal simpan hutang: ' + error.message); this.loading = false; this.renderAndBind(); return }
+      if (error) { alert('Gagal: ' + error.message); this.loading = false; this.renderAndBind(); return }
       this.showModal = false; this.loading = false
       await this.loadData(); this.renderAndBind()
     })

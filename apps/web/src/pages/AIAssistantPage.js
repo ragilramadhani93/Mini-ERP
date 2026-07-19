@@ -1,6 +1,3 @@
-import { SkeletonPage } from '../components/Skeleton.js'
-import { toast } from '../components/ToastNotification.js'
-
 export class AIAssistantPage {
   constructor({ supabase, auth }) {
     this.supabase = supabase
@@ -340,8 +337,6 @@ Berikan 5-7 insight bisnis paling penting!`
   }
 
   async bindEvents() {
-    const outlet = document.getElementById('router-outlet')
-    if (outlet) outlet.innerHTML = SkeletonPage()
     await this.loadData()
     this.renderAndBind()
   }
@@ -356,7 +351,7 @@ Berikan 5-7 insight bisnis paling penting!`
     })
 
     document.getElementById('toggle-ai-mode')?.addEventListener('click', () => {
-      toast.info('Groq AI', 'Update VITE_USE_GROQ_AI di .env lalu restart dev server')
+      alert(`Untuk mengaktifkan/menonaktifkan Groq AI:\n\n1. Update src/.env:\n   VITE_USE_GROQ_AI=true/false\n2. Restart dev server`)
     })
   }
 
