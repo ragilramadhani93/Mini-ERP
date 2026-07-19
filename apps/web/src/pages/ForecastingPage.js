@@ -1,3 +1,6 @@
+import { SkeletonPage } from '../components/Skeleton.js'
+import { toast } from '../components/ToastNotification.js'
+
 export class ForecastingPage {
   constructor({ supabase }) {
     this.supabase = supabase
@@ -11,20 +14,27 @@ export class ForecastingPage {
 
   async loadData() {
     this.loading = true
-    const since = new Date()
-    since.setDate(since.getDate() - this.forecastPeriod)
+    try {
+      const since = new Date()
+      since.setDate(since.getDate() - this.forecastPeriod)
 
-    const [productsRes, salesRes] = await Promise.all([
-      this.supabase.from('products')
-        .select('*, suppliers(supplier_name), categories(name)')
-        .order('name'),
-      this.supabase.from('sale_items')
-        .select('quantity, product_id, sales!inner(created_at)')
-        .gte('sales.created_at', since.toISOString())
-    ])
-    this.products = productsRes.data || []
-    this.sales = salesRes.data || []
-    this.calculateForecasts()
+      const [productsRes, salesRes] = await Promise.all([
+        this.supabase.from('products')
+          .select('*, suppliers(supplier_name), categories(name)')
+          .order('name'),
+        this.supabase.from('sale_items')
+          .select('quantity, product_id, sales!inner(created_at)')
+          .gte('sales.created_at', since.toISOString())
+      ])
+      this.products = productsRes.data || []
+      this.sales = salesRes.data || []
+      this.calculateForecasts()
+    } catch (err) {
+      console.error('Load forecasting error:', err)
+      toast.error('Gagal', 'Gagal memuat data forecasting: ' + err.message)
+      this.products = []
+      this.sales = []
+    }
     this.loading = false
   }
 
@@ -239,6 +249,8 @@ export class ForecastingPage {
   formatNumber(num) { return num ? num.toLocaleString('id-ID') : '0' }
 
   async bindEvents() {
+    const outlet = document.getElementById('router-outlet')
+    if (outlet) outlet.innerHTML = SkeletonPage()
     await this.loadData()
     this.renderAndBind()
   }

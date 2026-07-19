@@ -1,3 +1,7 @@
+import { SkeletonPage } from '../components/Skeleton.js'
+import { toast } from '../components/ToastNotification.js'
+import { ConfirmModal } from '../components/ConfirmModal.js'
+
 export class StockPage {
   constructor({ supabase, auth }) {
     this.supabase = supabase
@@ -10,17 +14,22 @@ export class StockPage {
   }
 
   async loadData() {
-    const [movementsRes, productsRes] = await Promise.all([
-      this.supabase.from('stock_movements')
-        .select('*, products(name, sku), created_by_user:users(full_name)')
-        .order('created_at', { ascending: false })
-        .limit(50),
-      this.supabase.from('products')
-        .select('id, sku, name, current_stock')
-        .order('name')
-    ])
-    this.movements = movementsRes.data || []
-    this.products = productsRes.data || []
+    try {
+      const [movementsRes, productsRes] = await Promise.all([
+        this.supabase.from('stock_movements')
+          .select('*, products(name, sku), created_by_user:users(full_name)')
+          .order('created_at', { ascending: false })
+          .limit(50),
+        this.supabase.from('products')
+          .select('id, sku, name, current_stock')
+          .order('name')
+      ])
+      this.movements = movementsRes.data || []
+      this.products = productsRes.data || []
+    } catch (err) {
+      console.error('❌ Load stock error:', err)
+      toast.error('Gagal', 'Gagal memuat data stok: ' + err.message)
+    }
   }
 
   render() {
@@ -181,7 +190,14 @@ export class StockPage {
   }
 
   async bindEvents() {
-    await this.loadData()
+    const outlet = document.getElementById('router-outlet')
+    if (outlet) outlet.innerHTML = SkeletonPage()
+    try {
+      await this.loadData()
+    } catch (err) {
+      console.error('❌ Load stock error:', err)
+      toast.error('Gagal', 'Gagal memuat data stok: ' + err.message)
+    }
     this.renderAndBind()
   }
 
@@ -199,7 +215,7 @@ export class StockPage {
     })
 
     document.getElementById('bulk-stock-btn')?.addEventListener('click', async () => {
-      if (!confirm(`Anda yakin ingin menambahkan stok masuk 100 untuk SEMUA ${this.products.length} produk?`)) {
+      if (!(await ConfirmModal.show({ title: 'Stok Masuk Massal', message: `Anda yakin ingin menambahkan stok masuk 100 untuk SEMUA ${this.products.length} produk?`, confirmText: 'Ya, Tambahkan', variant: 'primary' }))) {
         return
       }
       
@@ -232,14 +248,14 @@ export class StockPage {
 
         await Promise.all(updatePromises)
 
-        alert(`Berhasil menambahkan stok masuk 100 untuk SEMUA ${this.products.length} produk!`)
+        toast.success('Berhasil', `Stok masuk 100 untuk ${this.products.length} produk berhasil ditambahkan`)
         
         this.loading = false
         await this.loadData()
         this.renderAndBind()
       } catch (error) {
         console.error('Bulk error:', error)
-        alert('Gagal: ' + (error.message || 'Terjadi kesalahan'))
+        toast.error('Gagal', error.message || 'Terjadi kesalahan saat menambahkan stok bulk')
         this.loading = false
         this.renderAndBind()
       }
@@ -281,7 +297,7 @@ export class StockPage {
       })
 
       if (error) {
-        alert('Gagal menyimpan: ' + error.message)
+        toast.error('Gagal Simpan', error.message || 'Gagal menyimpan transaksi stok')
         this.loading = false
         this.renderAndBind()
         return

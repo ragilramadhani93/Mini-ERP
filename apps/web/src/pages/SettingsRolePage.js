@@ -1,3 +1,6 @@
+import { SkeletonPage } from '../components/Skeleton.js'
+import { toast } from '../components/ToastNotification.js'
+
 export class SettingsRolePage {
   constructor({ supabase, auth, router }) {
     this.supabase = supabase
@@ -138,6 +141,8 @@ export class SettingsRolePage {
   }
 
   async bindEvents() {
+    const outlet = document.getElementById('router-outlet')
+    if (outlet) outlet.innerHTML = SkeletonPage()
     this.loading = true
     await this.loadData()
     this.loading = false
@@ -177,7 +182,7 @@ export class SettingsRolePage {
       if (changes.length === 0) {
         this.saving = false
         this.renderAndBind()
-        this.showToast('Tidak ada perubahan yang perlu disimpan', 'info')
+        toast.info('Info', 'Tidak ada perubahan yang perlu disimpan')
         return
       }
 
@@ -200,9 +205,9 @@ export class SettingsRolePage {
       this.dirty = false
       this.renderAndBind()
       if (hasError) {
-        this.showToast('Beberapa perubahan gagal disimpan', 'error')
+        toast.error('Gagal', 'Beberapa perubahan gagal disimpan')
       } else {
-        this.showToast('Akses menu berhasil diperbarui', 'success')
+        toast.success('Berhasil', 'Akses menu berhasil diperbarui')
       }
     }
 
@@ -221,7 +226,6 @@ export class SettingsRolePage {
             <a href="#/settings/roles" class="tab-btn ${currentPath === '/settings/roles' ? 'active' : ''}" style="padding:6px 16px;border-radius:6px;font-size:13px;font-weight:500;cursor:pointer;text-decoration:none;${currentPath === '/settings/roles' ? 'background:#7A3B58;color:#fff' : 'color:#64748b;background:transparent'}">Atur Peran</a>
           </div>
           ${this.render()}
-          <div id="toast-container" style="position:fixed;bottom:24px;right:24px;z-index:9999"></div>
         </div>
       `
       this._bindListeners()
@@ -229,18 +233,4 @@ export class SettingsRolePage {
     }
   }
 
-  showToast(message, type = 'success') {
-    const container = document.getElementById('toast-container')
-    if (!container) return
-    const bg = type === 'success' ? '#065f46' : type === 'error' ? '#991b1b' : '#1e40af'
-    const toast = document.createElement('div')
-    toast.textContent = message
-    toast.style.cssText = `background:${bg};color:#fff;padding:10px 18px;border-radius:8px;font-size:13px;font-weight:500;box-shadow:0 4px 12px rgba(0,0,0,0.15);margin-top:8px;opacity:0;transition:opacity 0.3s`
-    container.appendChild(toast)
-    requestAnimationFrame(() => { toast.style.opacity = '1' })
-    setTimeout(() => {
-      toast.style.opacity = '0'
-      setTimeout(() => toast.remove(), 300)
-    }, 2500)
-  }
 }

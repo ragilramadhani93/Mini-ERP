@@ -1,3 +1,7 @@
+import { SkeletonPage } from '../components/Skeleton.js'
+import { toast } from '../components/ToastNotification.js'
+import { ConfirmModal } from '../components/ConfirmModal.js'
+
 export class PurchaseOrderPage {
   constructor({ supabase, auth }) {
     this.supabase = supabase
@@ -13,21 +17,29 @@ export class PurchaseOrderPage {
   }
 
   async loadData() {
-    const [ordersRes, productsRes, suppliersRes] = await Promise.all([
-      this.supabase.from('purchases')
-        .select('*, suppliers(supplier_name), purchase_items(*, products(name, sku)), created_by_user:users(full_name)')
-        .order('created_at', { ascending: false })
-        .limit(50),
-      this.supabase.from('products')
-        .select('id, sku, name, cost_price, current_stock')
-        .order('name'),
-      this.supabase.from('suppliers')
-        .select('id, supplier_name')
-        .order('supplier_name')
-    ])
-    this.orders = ordersRes.data || []
-    this.products = productsRes.data || []
-    this.suppliers = suppliersRes.data || []
+    try {
+      const [ordersRes, productsRes, suppliersRes] = await Promise.all([
+        this.supabase.from('purchases')
+          .select('*, suppliers(supplier_name), purchase_items(*, products(name, sku)), created_by_user:users(full_name)')
+          .order('created_at', { ascending: false })
+          .limit(50),
+        this.supabase.from('products')
+          .select('id, sku, name, cost_price, current_stock')
+          .order('name'),
+        this.supabase.from('suppliers')
+          .select('id, supplier_name')
+          .order('supplier_name')
+      ])
+      this.orders = ordersRes.data || []
+      this.products = productsRes.data || []
+      this.suppliers = suppliersRes.data || []
+    } catch (err) {
+      console.error('Load PO error:', err)
+      toast.error('Gagal', 'Gagal memuat data purchase order: ' + err.message)
+      this.orders = []
+      this.products = []
+      this.suppliers = []
+    }
   }
 
   get filteredOrders() {
@@ -272,6 +284,8 @@ export class PurchaseOrderPage {
   }
 
   async bindEvents() {
+    const outlet = document.getElementById('router-outlet')
+    if (outlet) outlet.innerHTML = SkeletonPage()
     await this.loadData()
     this.renderAndBind()
   }
@@ -300,7 +314,7 @@ export class PurchaseOrderPage {
     document.querySelectorAll('.approve-po').forEach(btn => {
       btn.addEventListener('click', async () => {
         if (this.auth.getRole() !== 'owner') {
-          alert('Hanya owner yang bisa approve PO')
+          toast.error('Akses ditolak', 'Hanya owner yang bisa approve PO')
           return
         }
         await this.supabase.from('purchases').update({ status: 'approved' }).eq('id', btn.dataset.id)
@@ -312,10 +326,10 @@ export class PurchaseOrderPage {
     document.querySelectorAll('.cancel-po').forEach(btn => {
       btn.addEventListener('click', async () => {
         if (this.auth.getRole() !== 'owner') {
-          alert('Hanya owner yang bisa cancel PO')
+          toast.error('Akses ditolak', 'Hanya owner yang bisa cancel PO')
           return
         }
-        if (confirm('Batalkan PO ini?')) {
+        if (await ConfirmModal.show({ title: 'Batalkan PO', message: 'Batalkan PO ini?', confirmText: 'Ya, Batalkan', variant: 'danger' })) {
           await this.supabase.from('purchases').update({ status: 'cancelled' }).eq('id', btn.dataset.id)
           await this.loadData()
           this.renderAndBind()
@@ -325,7 +339,7 @@ export class PurchaseOrderPage {
 
     document.querySelectorAll('.receive-po').forEach(btn => {
       btn.addEventListener('click', async () => {
-        if (confirm('Konfirmasi barang sudah diterima? Stok akan otomatis bertambah.')) {
+        if (await ConfirmModal.show({ title: 'Barang Diterima', message: 'Konfirmasi barang sudah diterima? Stok akan otomatis bertambah.', confirmText: 'Ya, Terima', variant: 'success' })) {
           const po = this.orders.find(o => o.id === btn.dataset.id)
           const items = po?.purchase_items || []
           for (const item of items) {
@@ -410,7 +424,7 @@ export class PurchaseOrderPage {
       const formData = new FormData(form)
 
       const validItems = this.orderItems.filter(i => i.productId && i.qty > 0 && i.price > 0)
-      if (validItems.length === 0) { alert('Tambahkan minimal 1 item'); this.loading = false; this.renderAndBind(); return }
+      if (validItems.length === 0) { toast.error('Item kosong', 'Tambahkan minimal 1 item'); this.loading = false; this.renderAndBind(); return }
 
       const total = validItems.reduce((s, i) => s + i.qty * i.price, 0)
 
@@ -422,7 +436,7 @@ export class PurchaseOrderPage {
         created_by: this.auth.user.id
       }).select().single()
 
-      if (error) { alert('Gagal: ' + error.message); this.loading = false; this.renderAndBind(); return }
+      if (error) { toast.error('Gagal', 'Gagal: ' + error.message); this.loading = false; this.renderAndBind(); return }
 
       const poItems = validItems.map(i => ({
         purchase_id: po.id,

@@ -1,5 +1,7 @@
 import { Chart, registerables } from 'chart.js'
 Chart.register(...registerables)
+import { SkeletonPage } from '../components/Skeleton.js'
+import { toast } from '../components/ToastNotification.js'
 
 export class AnalyticsPage {
   constructor({ supabase, auth }) {
@@ -14,21 +16,29 @@ export class AnalyticsPage {
   }
 
   async loadData() {
-    const days = parseInt(this.period)
-    const since = new Date()
-    since.setDate(since.getDate() - days)
+    try {
+      const days = parseInt(this.period)
+      const since = new Date()
+      since.setDate(since.getDate() - days)
 
-    const [salesRes, productsRes, categoriesRes] = await Promise.all([
-      this.supabase.from('sales')
-        .select('*, sale_items(*, products(id, name, sku, cost_price, sell_price, category_id)), created_at')
-        .gte('created_at', since.toISOString())
-        .order('created_at'),
-      this.supabase.from('products').select('*, categories(name)').order('name'),
-      this.supabase.from('categories').select('*').order('name')
-    ])
-    this.sales = salesRes.data || []
-    this.products = productsRes.data || []
-    this.categories = categoriesRes.data || []
+      const [salesRes, productsRes, categoriesRes] = await Promise.all([
+        this.supabase.from('sales')
+          .select('*, sale_items(*, products(id, name, sku, cost_price, sell_price, category_id)), created_at')
+          .gte('created_at', since.toISOString())
+          .order('created_at'),
+        this.supabase.from('products').select('*, categories(name)').order('name'),
+        this.supabase.from('categories').select('*').order('name')
+      ])
+      this.sales = salesRes.data || []
+      this.products = productsRes.data || []
+      this.categories = categoriesRes.data || []
+    } catch (err) {
+      console.error('Load analytics error:', err)
+      toast.error('Gagal', 'Gagal memuat data analitik: ' + err.message)
+      this.sales = []
+      this.products = []
+      this.categories = []
+    }
   }
 
   destroyCharts() {
@@ -433,6 +443,8 @@ export class AnalyticsPage {
   }
 
   async bindEvents() {
+    const outlet = document.getElementById('router-outlet')
+    if (outlet) outlet.innerHTML = SkeletonPage()
     await this.loadData()
     this.destroyCharts()
     this.renderAndBind()

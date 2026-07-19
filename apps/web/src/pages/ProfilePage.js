@@ -1,3 +1,6 @@
+import { SkeletonPage } from '../components/Skeleton.js'
+import { toast } from '../components/ToastNotification.js'
+
 export class ProfilePage {
   constructor({ supabase, auth }) {
     this.supabase = supabase
@@ -37,27 +40,32 @@ export class ProfilePage {
   }
 
   async loadData() {
-    const isOwner = this.auth.getRole() === 'owner'
-    const isAdmin = this.auth.getRole() === 'admin'
-    const queries = [
-      this.supabase.from('roles').select('*').order('name')
-    ]
-    if (isAdmin) {
-      queries.push(this.supabase.from('users').select('id, full_name, email, phone, is_active, role_id, roles!inner(name)').order('full_name'))
+    try {
+      const isOwner = this.auth.getRole() === 'owner'
+      const isAdmin = this.auth.getRole() === 'admin'
+      const queries = [
+        this.supabase.from('roles').select('*').order('name')
+      ]
+      if (isAdmin) {
+        queries.push(this.supabase.from('users').select('id, full_name, email, phone, is_active, role_id, roles!inner(name)').order('full_name'))
+      }
+      if (isOwner) {
+        queries.push(this.supabase.from('role_permissions').select('role_id, menu_path, can_view'))
+      }
+      const results = await Promise.all(queries)
+      this.roles = results[0].data || []
+      if (isAdmin) this.users = results[1]?.data || []
+      if (isOwner) {
+        this.permissions = {}
+        ;(results[isOwner ? 1 : 0]?.data || []).forEach(p => {
+          this.permissions[`${p.role_id}:${p.menu_path}`] = p.can_view
+        })
+      }
+      this.addUserForm.role_id = this.roles.find(r => r.name === 'admin')?.id || ''
+    } catch (err) {
+      console.error('Load profile error:', err)
+      toast.error('Gagal', 'Gagal memuat data: ' + err.message)
     }
-    if (isOwner) {
-      queries.push(this.supabase.from('role_permissions').select('role_id, menu_path, can_view'))
-    }
-    const results = await Promise.all(queries)
-    this.roles = results[0].data || []
-    if (isAdmin) this.users = results[1]?.data || []
-    if (isOwner) {
-      this.permissions = {}
-      ;(results[isOwner ? 1 : 0]?.data || []).forEach(p => {
-        this.permissions[`${p.role_id}:${p.menu_path}`] = p.can_view
-      })
-    }
-    this.addUserForm.role_id = this.roles.find(r => r.name === 'admin')?.id || ''
   }
 
   render() {
@@ -288,9 +296,9 @@ export class ProfilePage {
       const { data: { publicUrl } } = this.supabase.storage.from('avatars').getPublicUrl(filePath)
       await this.supabase.from('users').update({ avatar_url: publicUrl }).eq('id', this.auth.user.id)
       await this.auth.setUser(this.auth.user)
-      alert('Foto profil berhasil diupload!')
+      toast.success('Berhasil', 'Foto profil berhasil diupload')
     } catch (err) {
-      alert('Gagal upload foto: ' + err.message)
+      toast.error('Gagal Upload', err.message || 'Gagal upload foto profil')
     } finally {
       this.uploading = false
       this.renderAndBind()
@@ -298,6 +306,8 @@ export class ProfilePage {
   }
 
   async bindEvents() {
+    const outlet = document.getElementById('router-outlet')
+    if (outlet) outlet.innerHTML = SkeletonPage()
     await this.loadData()
     this.renderAndBind()
   }

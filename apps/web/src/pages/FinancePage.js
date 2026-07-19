@@ -1,3 +1,6 @@
+import { SkeletonPage } from '../components/Skeleton.js'
+import { toast } from '../components/ToastNotification.js'
+
 export class FinancePage {
   constructor({ supabase, auth, path }) {
     this.supabase = supabase
@@ -21,55 +24,60 @@ export class FinancePage {
   }
 
   async loadData() {
-    const now = new Date()
-    let dateFrom, dateTo
+    try {
+      const now = new Date()
+      let dateFrom, dateTo
 
-    if (this.dateFrom && this.dateTo) {
-      dateFrom = new Date(this.dateFrom)
-      dateTo = new Date(this.dateTo)
-      dateTo.setDate(dateTo.getDate() + 1)
-    } else {
-      // Default: tampilkan 30 hari terakhir
-      dateFrom = new Date(now)
-      dateFrom.setDate(dateFrom.getDate() - 30)
-      dateTo = new Date(now)
-      dateTo.setDate(dateTo.getDate() + 1)
+      if (this.dateFrom && this.dateTo) {
+        dateFrom = new Date(this.dateFrom)
+        dateTo = new Date(this.dateTo)
+        dateTo.setDate(dateTo.getDate() + 1)
+      } else {
+        // Default: tampilkan 30 hari terakhir
+        dateFrom = new Date(now)
+        dateFrom.setDate(dateFrom.getDate() - 30)
+        dateTo = new Date(now)
+        dateTo.setDate(dateTo.getDate() + 1)
+      }
+
+      let txQuery = this.supabase.from('cash_transactions')
+        .select('*, created_by:users(full_name)')
+        .gte('created_at', dateFrom.toISOString())
+        .lte('created_at', dateTo.toISOString())
+        .order('created_at', { ascending: false })
+
+      let salesQuery = this.supabase.from('sales')
+        .select('id, payment_method, total_amount, platform_fee, total_received, status, split_payments(*), payment_details, created_at')
+        .gte('created_at', dateFrom.toISOString())
+        .lte('created_at', dateTo.toISOString())
+        .eq('status', 'completed')
+
+      const [txRes, salesRes, methodsRes] = await Promise.all([
+        txQuery,
+        salesQuery,
+        this.supabase.from('payment_methods')
+          .select('*')
+          .order('sort_order')
+      ])
+
+      this.transactions = txRes.data || []
+      this.sales = salesRes.data || []
+      this.paymentMethods = methodsRes.data || []
+
+      const saleIds = [...new Set(this.transactions.filter(t => t.reference_type === 'sales' && t.reference_id).map(t => t.reference_id))]
+      if (saleIds.length > 0) {
+        const { data: relatedSales } = await this.supabase.from('sales').select('id, created_at').in('id', saleIds)
+        this.saleDateMap = {}
+        ;(relatedSales || []).forEach(s => { this.saleDateMap[s.id] = s.created_at })
+      } else {
+        this.saleDateMap = {}
+      }
+
+      this.calcSalesByMethod()
+    } catch (err) {
+      console.error('❌ Load finance error:', err)
+      toast.error('Gagal', 'Gagal memuat data keuangan: ' + err.message)
     }
-
-    let txQuery = this.supabase.from('cash_transactions')
-      .select('*, created_by:users(full_name)')
-      .gte('created_at', dateFrom.toISOString())
-      .lte('created_at', dateTo.toISOString())
-      .order('created_at', { ascending: false })
-
-    let salesQuery = this.supabase.from('sales')
-      .select('id, payment_method, total_amount, platform_fee, total_received, status, split_payments(*), payment_details, created_at')
-      .gte('created_at', dateFrom.toISOString())
-      .lte('created_at', dateTo.toISOString())
-      .eq('status', 'completed')
-
-    const [txRes, salesRes, methodsRes] = await Promise.all([
-      txQuery,
-      salesQuery,
-      this.supabase.from('payment_methods')
-        .select('*')
-        .order('sort_order')
-    ])
-
-    this.transactions = txRes.data || []
-    this.sales = salesRes.data || []
-    this.paymentMethods = methodsRes.data || []
-
-    const saleIds = [...new Set(this.transactions.filter(t => t.reference_type === 'sales' && t.reference_id).map(t => t.reference_id))]
-    if (saleIds.length > 0) {
-      const { data: relatedSales } = await this.supabase.from('sales').select('id, created_at').in('id', saleIds)
-      this.saleDateMap = {}
-      ;(relatedSales || []).forEach(s => { this.saleDateMap[s.id] = s.created_at })
-    } else {
-      this.saleDateMap = {}
-    }
-
-    this.calcSalesByMethod()
   }
 
   calcSalesByMethod() {
@@ -386,6 +394,8 @@ export class FinancePage {
   }
 
   async bindEvents() {
+    const outlet = document.getElementById('router-outlet')
+    if (outlet) outlet.innerHTML = SkeletonPage()
     await this.loadData()
     this.renderAndBind()
   }
@@ -474,7 +484,7 @@ export class FinancePage {
       })
 
       if (error) {
-        alert('Gagal: ' + error.message)
+        toast.error('Gagal Simpan', error.message || 'Gagal menyimpan transaksi keuangan')
         this.loading = false
         this.renderAndBind()
         return

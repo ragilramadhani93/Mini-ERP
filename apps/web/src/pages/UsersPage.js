@@ -1,3 +1,6 @@
+import { SkeletonPage } from '../components/Skeleton.js'
+import { toast } from '../components/ToastNotification.js'
+
 export class UsersPage {
   constructor({ supabase }) {
     this.supabase = supabase
@@ -8,12 +11,19 @@ export class UsersPage {
   }
 
   async loadData() {
-    const [usersRes, rolesRes] = await Promise.all([
-      this.supabase.from('users').select('*, roles(name)').order('created_at', { ascending: false }),
-      this.supabase.from('roles').select('*').order('name')
-    ])
-    this.users = usersRes.data || []
-    this.roles = rolesRes.data || []
+    try {
+      const [usersRes, rolesRes] = await Promise.all([
+        this.supabase.from('users').select('*, roles(name)').order('created_at', { ascending: false }),
+        this.supabase.from('roles').select('*').order('name')
+      ])
+      this.users = usersRes.data || []
+      this.roles = rolesRes.data || []
+    } catch (err) {
+      console.error('Load users error:', err)
+      toast.error('Gagal', 'Gagal memuat data pengguna: ' + err.message)
+      this.users = []
+      this.roles = []
+    }
   }
 
   render() {
@@ -122,6 +132,8 @@ export class UsersPage {
   }
 
   async bindEvents() {
+    const outlet = document.getElementById('router-outlet')
+    if (outlet) outlet.innerHTML = SkeletonPage()
     await this.loadData()
     this.renderAndBind()
   }
@@ -182,7 +194,7 @@ export class UsersPage {
           password: formData.get('password')
         })
         if (authError) {
-          alert(authError.message)
+          toast.error('Gagal Daftar', authError.message)
           return
         }
         if (authData.user) {

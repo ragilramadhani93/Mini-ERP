@@ -1,3 +1,7 @@
+import { ConfirmModal } from '../components/ConfirmModal.js'
+import { SkeletonPage } from '../components/Skeleton.js'
+import { toast } from '../components/ToastNotification.js'
+
 export class CategoriesPage {
   constructor({ supabase }) {
     this.supabase = supabase
@@ -7,8 +11,14 @@ export class CategoriesPage {
   }
 
   async loadData() {
-    const { data } = await this.supabase.from('categories').select('*').order('name')
-    this.categories = data || []
+    try {
+      const { data } = await this.supabase.from('categories').select('*').order('name')
+      this.categories = data || []
+    } catch (err) {
+      console.error('Load categories error:', err)
+      toast.error('Gagal', 'Gagal memuat kategori: ' + err.message)
+      this.categories = []
+    }
   }
 
   render() {
@@ -91,6 +101,8 @@ export class CategoriesPage {
   }
 
   async bindEvents() {
+    const outlet = document.getElementById('router-outlet')
+    if (outlet) outlet.innerHTML = SkeletonPage()
     await this.loadData()
     this.renderAndBind()
   }
@@ -114,7 +126,7 @@ export class CategoriesPage {
     document.querySelectorAll('.delete-category').forEach(btn => {
       btn.addEventListener('click', async () => {
         const id = btn.dataset.id
-        if (confirm('Hapus kategori ini?')) {
+        if (await ConfirmModal.show({ title: 'Hapus Kategori', message: 'Hapus kategori ini?', confirmText: 'Ya, Hapus', variant: 'danger' })) {
           await this.supabase.from('categories').delete().eq('id', id)
           await this.loadData()
           this.renderAndBind()

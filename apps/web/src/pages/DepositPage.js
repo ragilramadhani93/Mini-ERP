@@ -1,3 +1,6 @@
+import { SkeletonPage } from '../components/Skeleton.js'
+import { toast } from '../components/ToastNotification.js'
+
 export class DepositPage {
   constructor({ supabase, auth }) {
     this.supabase = supabase
@@ -7,12 +10,17 @@ export class DepositPage {
   }
 
   async loadData() {
-    const { data: depositsData } = await this.supabase
-      .from('customer_deposits')
-      .select('*')
-      .order('created_at', { ascending: false })
-    
-    this.deposits = depositsData || []
+    try {
+      const { data: depositsData } = await this.supabase
+        .from('customer_deposits')
+        .select('*')
+        .order('created_at', { ascending: false })
+      this.deposits = depositsData || []
+    } catch (err) {
+      console.error('Load deposits error:', err)
+      toast.error('Gagal', 'Gagal memuat data deposit: ' + err.message)
+      this.deposits = []
+    }
   }
 
   getCustomerBalances() {
@@ -156,9 +164,7 @@ export class DepositPage {
 
   async bindEvents() {
     const outlet = document.getElementById('router-outlet')
-    if (outlet) {
-      outlet.innerHTML = '<div class="flex items-center justify-center min-h-[300px]"><div class="text-gray-400 text-sm">Memuat data...</div></div>'
-    }
+    if (outlet) outlet.innerHTML = SkeletonPage()
     await this.loadData()
     this.renderAndBind()
     if (window.lucide) window.lucide.createIcons()

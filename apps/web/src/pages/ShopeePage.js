@@ -1,3 +1,7 @@
+import { SkeletonPage } from '../components/Skeleton.js'
+import { toast } from '../components/ToastNotification.js'
+import { ConfirmModal } from '../components/ConfirmModal.js'
+
 export class ShopeePage {
   constructor({ supabase, auth, router }) {
     this.supabase = supabase
@@ -233,7 +237,7 @@ export class ShopeePage {
       }
     }
     
-    alert(`Import selesai!\nBerhasil: ${successCount} baris\nGagal: ${errorCount} baris`)
+    toast.info(`Import selesai`, `Berhasil: ${successCount} baris, Gagal: ${errorCount} baris`)
     this.importedData = []
     this.fileType = 'csv'
     this.renderAndBind()
@@ -383,7 +387,7 @@ export class ShopeePage {
     // Preview button handler
     document.getElementById('previewBtn').addEventListener('click', async () => {
       if (!selectedFile) {
-        alert('Pilih file terlebih dahulu!')
+        toast.error('File belum dipilih', 'Pilih file terlebih dahulu!')
         return
       }
 
@@ -411,7 +415,7 @@ export class ShopeePage {
         }
 
         if (parsedData.length === 0) {
-          alert('File kosong atau format salah!')
+          toast.error('File kosong', 'File kosong atau format salah!')
           return
         }
 
@@ -420,29 +424,31 @@ export class ShopeePage {
         document.getElementById('importBtn').disabled = false
         
         // Show success message
-        alert(`Berhasil membaca ${parsedData.length} baris data dari file ${selectedFile.name}`)
+        toast.success('Berhasil baca', `${parsedData.length} baris dari ${selectedFile.name}`)
         
         this.renderAndBind()
       } catch (error) {
         console.error('Error reading file:', error)
-        alert(`Error membaca file: ${error.message}`)
+        toast.error('Gagal baca', 'Error membaca file: ' + error.message)
       }
     })
 
     // Import button handler
     document.getElementById('importBtn').addEventListener('click', async () => {
       if (parsedData.length === 0) {
-        alert('Tidak ada data untuk diimport!')
+        toast.error('Data kosong', 'Tidak ada data untuk diimport!')
         return
       }
       
-      if (confirm(`Anda yakin ingin mengimport ${parsedData.length} baris data dari ${selectedFile.name}?`)) {
+      if (await ConfirmModal.show({ title: 'Import Data', message: `Anda yakin ingin mengimport ${parsedData.length} baris data dari ${selectedFile.name}?`, confirmText: 'Ya, Import' })) {
         await this.saveImportedSales(parsedData)
       }
     })
   }
 
   async bindEvents() {
+    const outlet = document.getElementById('router-outlet')
+    if (outlet) outlet.innerHTML = SkeletonPage()
     await this.loadData()
     this.renderAndBind()
   }

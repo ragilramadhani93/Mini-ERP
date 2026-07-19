@@ -1,3 +1,8 @@
+import { SkeletonPage } from '../components/Skeleton.js'
+import { toast } from '../components/ToastNotification.js'
+import { ConfirmModal } from '../components/ConfirmModal.js'
+import { StatPremium } from '../components/StatPremium.js'
+
 export class ProductsPage {
   constructor({ supabase, auth, router }) {
     this.supabase = supabase
@@ -38,6 +43,7 @@ export class ProductsPage {
     } catch (err) {
       console.error('❌ Load products error:', err)
       this.error = err.message
+      toast.error('Gagal', 'Gagal memuat data produk: ' + err.message)
     }
   }
 
@@ -92,24 +98,12 @@ export class ProductsPage {
           </div>
 
           <!-- KPI -->
-          <div class="summary-grid">
-            <div class="summary-card">
-              <span>Total Produk</span>
-              <h2>${stats.totalProducts}</h2>
-            </div>
-            <div class="summary-card">
-              <span>Total Stok</span>
-              <h2>${this.formatNumber(stats.totalStock)}</h2>
-            </div>
-            <div class="summary-card">
-              <span>Nilai Inventori</span>
-              <h2>Rp ${this.formatNumber(stats.totalInventoryValue)}</h2>
-            </div>
-            <div class="summary-card danger">
-              <span>Stok Menipis</span>
-              <h2>${stats.lowStockCount} Produk</h2>
-            </div>
-          </div>
+        <div class="stats-grid">
+          ${StatPremium({ accent: 'gold', icon: '📦', label: 'Total Produk', value: stats.totalProducts.toString() })}
+          ${StatPremium({ accent: 'emerald', icon: '📊', label: 'Total Stok', value: this.formatNumber(stats.totalStock) })}
+          ${StatPremium({ accent: 'maroon', icon: '💰', label: 'Nilai Inventori', value: 'Rp ' + this.formatNumber(stats.totalInventoryValue) })}
+          ${StatPremium({ accent: 'coral', icon: '⚠️', label: 'Stok Menipis', value: stats.lowStockCount + ' Produk' })}
+        </div>
 
           <!-- TAB: Aktif / Nonaktif -->
           <div class="flex items-center gap-2" style="border-bottom:1px solid #e2e8f0;padding-bottom:8px">
@@ -411,7 +405,14 @@ export class ProductsPage {
   }
 
   async bindEvents() {
-    await this.loadData()
+    const outlet = document.getElementById('router-outlet')
+    if (outlet) outlet.innerHTML = SkeletonPage()
+    try {
+      await this.loadData()
+    } catch (err) {
+      console.error('❌ Load products error:', err)
+      toast.error('Gagal', 'Gagal memuat data produk: ' + err.message)
+    }
     this.renderAndBind()
   }
 
@@ -430,7 +431,7 @@ export class ProductsPage {
     })
 
     document.getElementById('export-btn')?.addEventListener('click', () => {
-      alert('Export feature coming soon!')
+      toast.info('Coming Soon', 'Fitur export akan segera tersedia')
     })
 
     document.getElementById('view-low-stock')?.addEventListener('click', (e) => {
@@ -456,13 +457,14 @@ export class ProductsPage {
     document.querySelectorAll('.delete-product').forEach(btn => {
       btn.addEventListener('click', async () => {
         const id = btn.dataset.id
-        if (confirm('Nonaktifkan produk ini? Produk tidak akan muncul di daftar aktif.')) {
+        if (await ConfirmModal.show({ title: 'Nonaktifkan Produk', message: 'Nonaktifkan produk ini? Produk tidak akan muncul di daftar aktif.', confirmText: 'Ya, Nonaktifkan', variant: 'danger' })) {
           try {
             await this.supabase.from('products').update({ is_active: false }).eq('id', id)
             await this.loadData()
             this.renderAndBind()
           } catch (err) {
             console.error('❌ Nonaktifkan product error:', err)
+      toast.error('Gagal', 'Gagal menonaktifkan produk: ' + err.message)
             this.error = err.message
             this.renderAndBind()
           }
@@ -479,6 +481,7 @@ export class ProductsPage {
           this.renderAndBind()
         } catch (err) {
           console.error('❌ Aktifkan product error:', err)
+      toast.error('Gagal', 'Gagal mengaktifkan produk: ' + err.message)
           this.error = err.message
           this.renderAndBind()
         }
@@ -632,6 +635,7 @@ export class ProductsPage {
         this.renderAndBind()
       } catch (err) {
         console.error('❌ Save product error:', err)
+      toast.error('Gagal Simpan', 'Gagal menyimpan produk: ' + err.message)
         this.error = err.message
         this.renderAndBind()
       }

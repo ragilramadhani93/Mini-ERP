@@ -1,3 +1,6 @@
+import { SkeletonPage } from '../components/Skeleton.js'
+import { toast } from '../components/ToastNotification.js'
+
 export class SettingsPage {
   constructor({ supabase, auth, router }) {
     this.supabase = supabase
@@ -10,11 +13,17 @@ export class SettingsPage {
   }
 
   async loadData() {
-    const { data } = await this.supabase
-      .from('payment_methods')
-      .select('*')
-      .order('sort_order')
-    this.paymentMethods = data || []
+    try {
+      const { data } = await this.supabase
+        .from('payment_methods')
+        .select('*')
+        .order('sort_order')
+      this.paymentMethods = data || []
+    } catch (err) {
+      console.error('Load settings error:', err)
+      toast.error('Gagal', 'Gagal memuat pengaturan: ' + err.message)
+      this.paymentMethods = []
+    }
   }
 
   render() {
@@ -142,6 +151,8 @@ export class SettingsPage {
   }
 
   async bindEvents() {
+    const outlet = document.getElementById('router-outlet')
+    if (outlet) outlet.innerHTML = SkeletonPage()
     await this.loadData()
     this.renderAndBind()
   }
@@ -203,7 +214,7 @@ export class SettingsPage {
         error = e
       }
 
-      if (error) { alert('Gagal: ' + error.message); this.loading = false; this.renderAndBind(); return }
+      if (error) { toast.error('Gagal', 'Gagal simpan metode pembayaran: ' + error.message); this.loading = false; this.renderAndBind(); return }
 
       this.showModal = false; this.loading = false
       await this.loadData()
