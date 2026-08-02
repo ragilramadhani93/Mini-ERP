@@ -1116,6 +1116,35 @@ export class SalesPage {
           description: `Penjualan ${sale.invoice_number}${sale.customer_name ? ` - ${sale.customer_name}` : ''}${isOverpaid ? ` (Lebih bayar Rp ${this.formatNumber(overpaidAmount)})` : ''}`,
           created_by: this.auth.user.id
         })
+
+        // Handle deposits (sama seperti jalur Simpan Transaksi)
+        if (sale.customer_name) {
+          // If we used deposit, subtract it
+          if ((pd?.deposit_used || 0) > 0) {
+            await this.supabase.from('customer_deposits').insert({
+              customer_name: sale.customer_name,
+              amount: -(pd.deposit_used || 0),
+              reference_type: 'sales',
+              reference_id: sale.id,
+              description: `Penggunaan deposit untuk ${sale.invoice_number}`,
+              created_by: this.auth.user.id,
+              created_at: sale.created_at
+            })
+          }
+          // If there's an overpayment, add it to deposit
+          if (isOverpaid && overpaidAmount > 0) {
+            await this.supabase.from('customer_deposits').insert({
+              customer_name: sale.customer_name,
+              amount: overpaidAmount,
+              reference_type: 'sales',
+              reference_id: sale.id,
+              description: `Tambah deposit dari lebih bayar ${sale.invoice_number}`,
+              created_by: this.auth.user.id,
+              created_at: sale.created_at
+            })
+          }
+        }
+
         await this.loadData()
         this.renderAndBind()
       })
@@ -1247,6 +1276,35 @@ export class SalesPage {
         description: `Penjualan ${sale.invoice_number}${sale.customer_name ? ` - ${sale.customer_name}` : ''}${isOverpaid ? ` (Lebih bayar Rp ${this.formatNumber(overpaidAmount)})` : ''}`,
         created_by: this.auth.user.id
       })
+
+      // Handle deposits (sama seperti jalur Simpan Transaksi)
+      if (sale.customer_name) {
+        // If we used deposit, subtract it
+        if ((pd?.deposit_used || 0) > 0) {
+          await this.supabase.from('customer_deposits').insert({
+            customer_name: sale.customer_name,
+            amount: -(pd.deposit_used || 0),
+            reference_type: 'sales',
+            reference_id: sale.id,
+            description: `Penggunaan deposit untuk ${sale.invoice_number}`,
+            created_by: this.auth.user.id,
+            created_at: sale.created_at
+          })
+        }
+        // If there's an overpayment, add it to deposit
+        if (isOverpaid && overpaidAmount > 0) {
+          await this.supabase.from('customer_deposits').insert({
+            customer_name: sale.customer_name,
+            amount: overpaidAmount,
+            reference_type: 'sales',
+            reference_id: sale.id,
+            description: `Tambah deposit dari lebih bayar ${sale.invoice_number}`,
+            created_by: this.auth.user.id,
+            created_at: sale.created_at
+          })
+        }
+      }
+
       this.showViewModal = false
       await this.loadData()
       this.renderAndBind()
