@@ -4,6 +4,7 @@ export class FinancePage {
     this.auth = auth
     this.path = path
     this.transactions = []
+    this.deposits = []
     this.activeTab = path === '/finance/expenses' ? 'out' : 'all'
     this.showModal = false
     this.transactionType = 'in'
@@ -48,17 +49,25 @@ export class FinancePage {
       .lte('created_at', dateTo.toISOString())
       .eq('status', 'completed')
 
-    const [txRes, salesRes, methodsRes] = await Promise.all([
+    let depositQuery = this.supabase.from('customer_deposits')
+      .select('*')
+      .gte('created_at', dateFrom.toISOString())
+      .lte('created_at', dateTo.toISOString())
+      .order('created_at', { ascending: false })
+
+    const [txRes, salesRes, methodsRes, depositRes] = await Promise.all([
       txQuery,
       salesQuery,
       this.supabase.from('payment_methods')
         .select('*')
-        .order('sort_order')
+        .order('sort_order'),
+      depositQuery
     ])
 
     this.transactions = txRes.data || []
     this.sales = salesRes.data || []
     this.paymentMethods = methodsRes.data || []
+    this.deposits = depositRes.data || []
 
     const saleIds = [...new Set(this.transactions.filter(t => t.reference_type === 'sales' && t.reference_id).map(t => t.reference_id))]
     if (saleIds.length > 0) {
@@ -123,11 +132,12 @@ export class FinancePage {
           </button>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
           ${this.renderStatCard('Saldo Kas', stats.balance, 'wallet', stats.balance >= 0 ? 'success' : 'danger')}
           ${this.renderStatCard('Pemasukan', stats.income, 'trending-up', 'success')}
           ${this.renderStatCard('Pengeluaran', stats.expense, 'trending-down', 'danger')}
           ${this.renderStatCard('Profit', stats.profit, 'bar-chart-3', stats.profit >= 0 ? 'primary' : 'danger')}
+          ${this.renderStatCard('Total Deposit', stats.deposit, 'coins', 'warning')}
         </div>
 
         <div class="flex flex-col lg:flex-row gap-4 items-start lg:items-center justify-between bg-white p-4 rounded-xl border border-gray-100">
@@ -349,14 +359,16 @@ export class FinancePage {
   }
 
   calcStats() {
-    const { transactions } = this
+    const { transactions, deposits } = this
     const income = transactions.filter(t => t.type === 'in').reduce((s, t) => s + t.amount, 0)
     const expense = transactions.filter(t => t.type === 'out').reduce((s, t) => s + t.amount, 0)
+    const deposit = deposits.reduce((s, d) => s + (d.amount || 0), 0)
     return {
       income,
       expense,
       balance: income - expense,
-      profit: income - expense
+      profit: income - expense,
+      deposit
     }
   }
 
