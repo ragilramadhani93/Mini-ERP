@@ -4,6 +4,7 @@ export class FinancePage {
     this.auth = auth
     this.path = path
     this.transactions = []
+    this.sales = []
     this.deposits = []
     this.activeTab = path === '/finance/expenses' ? 'out' : 'all'
     this.showModal = false
@@ -139,6 +140,8 @@ export class FinancePage {
           ${this.renderStatCard('Profit', stats.profit, 'bar-chart-3', stats.profit >= 0 ? 'primary' : 'danger')}
           ${this.renderStatCard('Total Deposit', stats.deposit, 'coins', 'warning')}
         </div>
+
+        ${this.renderSalesSummary()}
 
         <div class="flex flex-col lg:flex-row gap-4 items-start lg:items-center justify-between bg-white p-4 rounded-xl border border-gray-100">
           <div class="flex flex-wrap gap-2 items-center">
@@ -284,6 +287,65 @@ export class FinancePage {
           </div>
           <div class="p-2 rounded-xl ${colors[color]}">
             <i data-lucide="${icon}" class="w-5 h-5"></i>
+          </div>
+        </div>
+      </div>
+    `
+  }
+
+  renderSalesSummary() {
+    const totalSales = this.sales.reduce((sum, s) => sum + (s.total_amount || 0), 0)
+    const depositUsed = this.sales.reduce((sum, s) => sum + (s.payment_details?.deposit_used || 0), 0)
+    const netSales = totalSales - depositUsed
+    const totalDepositIn = this.deposits
+      .filter(d => (d.amount || 0) > 0)
+      .reduce((sum, d) => sum + d.amount, 0)
+
+    return `
+      <div class="card p-4">
+        <div class="flex items-center justify-between mb-4">
+          <div>
+            <h3 class="font-semibold" style="font-size:14px;color:#0f172a">Ringkasan Penjualan & Deposit</h3>
+            <p style="font-size:12px;color:#64748b;margin-top:2px">Total penjualan lunas, deposit masuk, dan deposit yang digunakan</p>
+          </div>
+          <span class="badge" style="background:#7A3B58;color:white;border-radius:9999px;padding:4px 12px;font-size:12px;font-weight:600">${this.sales.length} transaksi</span>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+          <div style="background:#f8fafc;border:1px solid #f1f5f9;border-radius:12px;padding:16px">
+            <div class="flex items-center gap-2 mb-2">
+              <div class="p-1.5 rounded-lg" style="background:#eef2ff;color:#4f46e5">
+                <i data-lucide="shopping-cart" class="w-4 h-4"></i>
+              </div>
+              <p class="text-xs text-gray-500 font-medium">Total Penjualan</p>
+            </div>
+            <p class="text-xl font-bold text-gray-900">Rp ${this.formatNumber(totalSales)}</p>
+          </div>
+          <div style="background:#ecfeff;border:1px solid #cffafe;border-radius:12px;padding:16px">
+            <div class="flex items-center gap-2 mb-2">
+              <div class="p-1.5 rounded-lg" style="background:#cffafe;color:#0891b2">
+                <i data-lucide="piggy-bank" class="w-4 h-4"></i>
+              </div>
+              <p class="text-xs text-gray-500 font-medium">Deposit Masuk</p>
+            </div>
+            <p class="text-xl font-bold" style="color:#0891b2">Rp ${this.formatNumber(totalDepositIn)}</p>
+          </div>
+          <div style="background:#fffbeb;border:1px solid #fef3c7;border-radius:12px;padding:16px">
+            <div class="flex items-center gap-2 mb-2">
+              <div class="p-1.5 rounded-lg" style="background:#fef3c7;color:#d97706">
+                <i data-lucide="arrow-down-left" class="w-4 h-4"></i>
+              </div>
+              <p class="text-xs text-gray-500 font-medium">Deposit Digunakan</p>
+            </div>
+            <p class="text-xl font-bold" style="color:#d97706">${depositUsed > 0 ? '-' : ''} Rp ${this.formatNumber(depositUsed)}</p>
+          </div>
+          <div style="background:#f0fdf4;border:1px solid #dcfce7;border-radius:12px;padding:16px">
+            <div class="flex items-center gap-2 mb-2">
+              <div class="p-1.5 rounded-lg" style="background:#dcfce7;color:#16a34a">
+                <i data-lucide="wallet" class="w-4 h-4"></i>
+              </div>
+              <p class="text-xs text-gray-500 font-medium">Total Penjualan - Deposit</p>
+            </div>
+            <p class="text-xl font-bold" style="color:#16a34a">Rp ${this.formatNumber(netSales)}</p>
           </div>
         </div>
       </div>

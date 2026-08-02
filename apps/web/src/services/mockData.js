@@ -61,11 +61,11 @@ export const mockData = {
     { id: 'pi4', purchase_id: 'po3', product_id: 'p6', quantity: 20, unit_price: 10000 }
   ],
   sales: [
-    { id: 'sa1', invoice_number: 'INV-2406-0001', customer_name: 'Rumah Tangga Bahagia', total_amount: 225000, payment_method: 'cash', marketplace: null, platform_fee: 0, total_received: 225000, created_at: daysAgo(5), created_by: 'u1' },
-    { id: 'sa2', invoice_number: 'INV-2406-0002', customer_name: 'Toko Elektronik Jaya', total_amount: 550000, payment_method: 'bank_transfer', marketplace: null, platform_fee: 0, total_received: 550000, created_at: daysAgo(4), created_by: 'u1' },
-    { id: 'sa3', invoice_number: 'INV-2406-0003', customer_name: 'Warung Makan Sederhana', total_amount: 475000, payment_method: 'cash', marketplace: null, platform_fee: 0, total_received: 475000, created_at: daysAgo(2), created_by: 'u1' },
-    { id: 'sa4', invoice_number: 'INV-2406-0004', customer_name: 'Perorangan', total_amount: 147500, payment_method: 'cash', marketplace: null, platform_fee: 0, total_received: 147500, created_at: daysAgo(1), created_by: 'u1' },
-    { id: 'sa5', invoice_number: 'INV-2406-0005', customer_name: 'Shopee Customer', total_amount: 300000, payment_method: 'bank_transfer', marketplace: 'shopee', platform_fee: 30000, total_received: 270000, created_at: daysAgo(0), created_by: 'u1' }
+    { id: 'sa1', invoice_number: 'INV-2406-0001', customer_name: 'Rumah Tangga Bahagia', total_amount: 225000, payment_method: 'cash', marketplace: null, platform_fee: 0, total_received: 175000, status: 'completed', payment_details: { deposit_used: 50000 }, created_at: daysAgo(5), created_by: 'u1' },
+    { id: 'sa2', invoice_number: 'INV-2406-0002', customer_name: 'Toko Elektronik Jaya', total_amount: 550000, payment_method: 'bank_transfer', marketplace: null, platform_fee: 0, total_received: 550000, status: 'completed', created_at: daysAgo(4), created_by: 'u1' },
+    { id: 'sa3', invoice_number: 'INV-2406-0003', customer_name: 'Warung Makan Sederhana', total_amount: 475000, payment_method: 'cash', marketplace: null, platform_fee: 0, total_received: 475000, status: 'completed', created_at: daysAgo(2), created_by: 'u1' },
+    { id: 'sa4', invoice_number: 'INV-2406-0004', customer_name: 'Perorangan', total_amount: 147500, payment_method: 'cash', marketplace: null, platform_fee: 0, total_received: 147500, status: 'completed', created_at: daysAgo(1), created_by: 'u1' },
+    { id: 'sa5', invoice_number: 'INV-2406-0005', customer_name: 'Shopee Customer', total_amount: 300000, payment_method: 'bank_transfer', marketplace: 'shopee', platform_fee: 30000, total_received: 270000, status: 'completed', created_at: daysAgo(0), created_by: 'u1' }
   ],
   sale_items: [
     { id: 'si1', sale_id: 'sa1', product_id: 'p4', quantity: 10, unit_price: 25000, discount: 0 },
