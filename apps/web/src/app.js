@@ -25,6 +25,7 @@ import { SettingsPage } from './pages/SettingsPage.js'
 import { SettingsRolePage } from './pages/SettingsRolePage.js'
 import { AssetsPage } from './pages/AssetsPage.js'
 import { DepositPage } from './pages/DepositPage.js'
+import { ReturPage } from './pages/ReturPage.js'
 
 const isDemo = import.meta.env.VITE_DEMO_MODE === 'true'
 
@@ -60,6 +61,7 @@ const routes = {
   '/purchase-orders': { component: PurchaseOrderPage, roles: ['owner', 'admin'] },
   '/debts': { component: DebtPage, roles: ['owner', 'admin', 'staff_keuangan'] },
   '/deposits': { component: DepositPage, roles: ['owner', 'admin', 'staff_keuangan'] },
+  '/returns': { component: ReturPage, roles: ['owner', 'admin'] },
   '/barcode': { component: BarcodePage, roles: ['owner', 'admin', 'staff_gudang'] },
   '/import-export': { component: ImportExportPage, roles: ['owner', 'admin'] },
   '/analytics': { component: AnalyticsPage, roles: ['owner', 'admin'] },
