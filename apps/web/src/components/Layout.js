@@ -46,6 +46,7 @@ export class Layout {
         label: 'Transaksi',
         items: [
           { path: '/sales', label: 'Penjualan', icon: 'shopping-bag', roles: ['owner', 'admin'] },
+          { path: '/returns', label: 'Retur', icon: 'refresh-ccw', roles: ['owner', 'admin'] },
           { path: '/shopee', label: 'Import Marketplace', icon: 'file', roles: ['owner', 'admin'] },
           { path: '/purchase-orders', label: 'PO', icon: 'file-text', roles: ['owner', 'admin'] },
           { path: '/suppliers', label: 'Supplier', icon: 'users', roles: ['owner', 'admin'] }

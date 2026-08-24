@@ -151,12 +151,18 @@ export const mockData = {
     { id: 'rp54', role_id: 'r4', menu_path: '/debts', can_view: true },
     { id: 'rp55', role_id: 'r1', menu_path: '/deposits', can_view: true },
     { id: 'rp56', role_id: 'r2', menu_path: '/deposits', can_view: true },
-    { id: 'rp57', role_id: 'r4', menu_path: '/deposits', can_view: true }
+    { id: 'rp57', role_id: 'r4', menu_path: '/deposits', can_view: true },
+    { id: 'rp58', role_id: 'r1', menu_path: '/returns', can_view: true },
+    { id: 'rp59', role_id: 'r2', menu_path: '/returns', can_view: true }
   ],
   customer_deposits: [
     { id: 'd1', customer_name: 'Rumah Tangga Bahagia', amount: 50000, description: 'Tambah deposit awal', reference_type: null, reference_id: null, created_by: 'u1', created_at: '2026-06-25T14:00:00Z' },
     { id: 'd2', customer_name: 'Rumah Tangga Bahagia', amount: -20000, description: 'Penggunaan deposit untuk INV-2026-0001', reference_type: 'sales', reference_id: 's1', created_by: 'u1', created_at: '2026-06-26T09:15:00Z' },
     { id: 'd3', customer_name: 'Toko Elektronik Jaya', amount: 100000, description: 'Tambah deposit awal', reference_type: null, reference_id: null, created_by: 'u1', created_at: '2026-06-27T10:00:00Z' }
+  ],
+  sales_returns: [
+    { id: 'sr1', sale_id: 'sa1', invoice_number: 'INV-2406-0001', customer_name: 'Rumah Tangga Bahagia', return_items: [{ product_id: 'p5', product_name: 'Sabun Cuci Piring 450ml', unit_price: 15000, quantity: 5, subtotal: 75000 }], total_product_amount: 75000, shipping_cost: 15000, total_refund: 90000, reason: 'Produk rusak', status: 'completed', created_by: 'u1', created_at: daysAgo(3) },
+    { id: 'sr2', sale_id: 'sa2', invoice_number: 'INV-2406-0002', customer_name: 'Toko Elektronik Jaya', return_items: [{ product_id: 'p3', product_name: 'Mouse Wireless', unit_price: 55000, quantity: 2, subtotal: 110000 }], total_product_amount: 110000, shipping_cost: 20000, total_refund: 130000, reason: 'Salah kirim varian', status: 'completed', created_by: 'u1', created_at: daysAgo(2) }
   ],
   assets: [
     { id: 'a1', name: 'Laptop Lenovo ThinkPad', type: 'elektronik', acquisition_value: 12000000, acquisition_date: '2025-01-15', location: 'Kantor', status: 'active', description: 'Laptop untuk admin toko' },
