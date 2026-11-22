@@ -11,10 +11,10 @@ export class RegisterPage {
       <div class="min-h-screen flex items-center justify-center bg-gray-50 px-4">
         <div class="w-full max-w-md">
           <div class="text-center mb-8">
-              <img src="https://wpnejkrfjlblxkcakzrg.supabase.co/storage/v1/object/public/Logo/ChatGPT%20Image%20Jun%2021,%202026,%2010_58_16%20PM.png" 
-                 alt="Jenna Shop Logo" 
-                 class="w-48 mx-auto mb-4 object-contain">
-            <h1 class="text-3xl font-bold text-primary-600">Jenna <span style="color:#7A3B58">Shop</span></h1>
+            <div class="w-16 h-16 rounded-2xl mx-auto mb-3 flex items-center justify-center text-white font-bold text-2xl shadow-md" style="background: linear-gradient(135deg, #7A3B58, #4f46e5);">
+              JS
+            </div>
+            <h1 class="text-3xl font-bold text-gray-900">Jenna <span style="color:#7A3B58">Shop</span></h1>
             <p class="text-gray-500 mt-2">Daftarkan akun Anda</p>
           </div>
           
@@ -36,7 +36,7 @@ export class RegisterPage {
               </div>
               <div>
                 <label for="email">Email</label>
-                <input type="email" id="email" name="email" required placeholder="admin@toko.com">
+                <input type="email" id="email" name="email" required placeholder="staff@toko.com">
               </div>
               <div>
                 <label for="password">Password</label>

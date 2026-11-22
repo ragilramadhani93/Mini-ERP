@@ -17,6 +17,7 @@ export class ProfilePage {
       { path: '/stock/opname', label: 'Opname', section: 'Inventori' },
       { path: '/barcode', label: 'Scanner', section: 'Inventori' },
       { path: '/sales', label: 'Penjualan', section: 'Transaksi' },
+      { path: '/returns', label: 'Retur', section: 'Transaksi' },
       { path: '/shopee', label: 'Import Marketplace', section: 'Transaksi' },
       { path: '/purchase-orders', label: 'PO', section: 'Transaksi' },
       { path: '/suppliers', label: 'Supplier', section: 'Transaksi' },
@@ -27,6 +28,7 @@ export class ProfilePage {
       { path: '/import-export', label: 'Laporan', section: 'Lainnya' },
       { path: '/finance', label: 'Keuangan', section: 'Lainnya' },
       { path: '/debts', label: 'Hutang', section: 'Lainnya' },
+      { path: '/deposits', label: 'Deposit', section: 'Lainnya' },
       { path: '/assets', label: 'Aset', section: 'Lainnya' },
       { path: '/settings', label: 'Pengaturan', section: 'Lainnya' }
     ]
@@ -62,7 +64,9 @@ export class ProfilePage {
 
   render() {
     const p = this.auth.profile
-    const avatarUrl = p?.avatar_url || 'https://coresg-normal.trae.ai/api/ide/v1/text-to-image?prompt=default%20user%20avatar%20placeholder&image_size=square'
+    const initialLetter = encodeURIComponent((p?.full_name || 'U').charAt(0).toUpperCase())
+    const defaultAvatar = `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" fill="%237A3B58"/><text x="50" y="55" font-size="38" font-family="sans-serif" font-weight="bold" fill="%23ffffff" text-anchor="middle" dominant-baseline="middle">${initialLetter}</text></svg>`
+    const avatarUrl = p?.avatar_url || defaultAvatar
     const isOwner = p?.roles?.name === 'owner'
     const isAdmin = p?.roles?.name === 'admin'
     const canChangeRole = isOwner || isAdmin

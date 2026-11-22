@@ -192,18 +192,24 @@ export class FinancePage {
             </thead>
             <tbody>
               ${this.getFiltered().length === 0 ? `
-                <tr><td colspan="6" class="text-center text-gray-500 py-8">Belum ada transaksi</td></tr>
+                <tr>
+                  <td colspan="6" class="text-center py-12 text-stone-400">
+                    <i data-lucide="wallet" class="w-8 h-8 mx-auto mb-2 text-stone-300"></i>
+                    <p class="text-sm font-medium text-stone-600">Belum ada mutasi keuangan</p>
+                    <p class="text-xs text-stone-400 mt-0.5">Catatan arus kas masuk dan keluar akan tampil di sini</p>
+                  </td>
+                </tr>
               ` : this.getFiltered().map(t => `
                 <tr>
-                  <td class="text-sm text-gray-500 whitespace-nowrap">${this.formatDate((t.reference_type === 'sales' && t.reference_id && this.saleDateMap?.[t.reference_id]) || t.created_at)}</td>
+                  <td class="text-sm text-stone-600 whitespace-nowrap">${this.formatDate((t.reference_type === 'sales' && t.reference_id && this.saleDateMap?.[t.reference_id]) || t.created_at)}</td>
                   <td>
                     <span class="badge ${t.type === 'in' ? 'badge-success' : 'badge-danger'}">
                       ${t.type === 'in' ? 'Masuk' : 'Keluar'}
                     </span>
                   </td>
                   <td>${this.getCategoryLabel(t.category)}</td>
-                  <td class="max-w-xs truncate">${t.description}</td>
-                  <td class="text-right font-semibold ${t.type === 'in' ? 'text-success-600' : 'text-danger-600'}">
+                  <td class="max-w-xs truncate text-stone-800">${t.description}</td>
+                  <td class="text-right font-semibold tnum ${t.type === 'in' ? 'text-emerald-700' : 'text-rose-700'}">
                     ${t.type === 'in' ? '+' : '-'}Rp ${this.formatNumber(t.amount)}
                   </td>
                   <td class="text-sm text-gray-500">${t.created_by?.full_name || '-'}</td>
@@ -240,7 +246,13 @@ export class FinancePage {
             </thead>
             <tbody>
               ${this.salesByMethod.length === 0 ? `
-                <tr><td colspan="6" class="text-center text-gray-500 py-8">Belum ada penjualan lunas</td></tr>
+                <tr>
+                  <td colspan="6" class="text-center py-12 text-stone-400">
+                    <i data-lucide="credit-card" class="w-8 h-8 mx-auto mb-2 text-stone-300"></i>
+                    <p class="text-sm font-medium text-stone-600">Belum ada penjualan lunas</p>
+                    <p class="text-xs text-stone-400 mt-0.5">Ringkasan per metode pembayaran akan tampil setelah transaksi tercatat</p>
+                  </td>
+                </tr>
               ` : this.salesByMethod.map(m => {
                 const pct = total > 0 ? ((m.total / total) * 100).toFixed(1) : 0
                 return `
@@ -249,10 +261,10 @@ export class FinancePage {
                       <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${m.color};margin-right:6px;vertical-align:middle"></span>
                       <span style="font-weight:500">${m.name}</span>
                     </td>
-                    <td style="text-align:right">${m.count}</td>
-                    <td style="text-align:right;font-weight:600">Rp ${this.formatNumber(m.total)}</td>
-                    <td style="text-align:right;color:#ef4444">${m.fee > 0 ? `Rp ${this.formatNumber(m.fee)}` : '-'}</td>
-                    <td style="text-align:right;color:#16a34a;font-weight:700">Rp ${this.formatNumber(m.received)}</td>
+                    <td class="text-right tnum">${m.count}</td>
+                    <td class="text-right font-semibold tnum">Rp ${this.formatNumber(m.total)}</td>
+                    <td class="text-right text-rose-600 tnum">${m.fee > 0 ? `Rp ${this.formatNumber(m.fee)}` : '-'}</td>
+                    <td class="text-right font-bold text-emerald-700 tnum">Rp ${this.formatNumber(m.received)}</td>
                     <td style="text-align:right">
                       <div style="display:flex;align-items:center;gap:6px;justify-content:flex-end">
                         <span style="font-size:12px;color:#64748b">${pct}%</span>

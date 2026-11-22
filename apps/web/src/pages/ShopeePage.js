@@ -15,11 +15,21 @@ export class ShopeePage {
     const lines = csvText.trim().split('\n')
     if (lines.length < 2) return []
     
-    const headers = lines[0].split(',').map(h => h.trim())
+    const headers = lines[0].split(',').map(h => h.trim().replace(/^"|"$/g, ''))
     const data = []
     
     for (let i = 1; i < lines.length; i++) {
-      const values = lines[i].split(',').map(v => v.trim())
+      const line = lines[i]
+      const values = []
+      let current = ''
+      let inQuotes = false
+      for (const char of line) {
+        if (char === '"') { inQuotes = !inQuotes; continue }
+        if (char === ',' && !inQuotes) { values.push(current.trim()); current = ''; continue }
+        current += char
+      }
+      values.push(current.trim())
+
       if (values.length === headers.length) {
         const row = {}
         headers.forEach((header, index) => {

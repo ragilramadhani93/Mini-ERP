@@ -148,17 +148,17 @@ export class ForecastingPage {
                     <tr class="${isUrgent ? 'bg-warning-50/50' : ''}">
                       <td class="font-medium">${f.name}</td>
                       <td class="font-mono text-xs">${f.sku}</td>
-                      <td class="text-right font-semibold">${f.current_stock}</td>
-                      <td class="text-right">${f.min_stock}</td>
-                      <td class="text-right">${f.totalSold}</td>
-                      <td class="text-right">${f.avgDaily}</td>
-                      <td class="text-right font-semibold ${isUrgent && !isEmpty ? 'text-danger-600' : ''}">
-                        ${isEmpty ? '∞ (tdk ada data)' : f.daysUntilEmpty <= 0 ? 'Habis!' : `${f.daysUntilEmpty} hari`}
+                      <td class="text-right font-semibold tnum">${f.current_stock}</td>
+                      <td class="text-right tnum">${f.min_stock}</td>
+                      <td class="text-right tnum">${f.totalSold}</td>
+                      <td class="text-right tnum">${f.avgDaily}</td>
+                      <td class="text-right font-semibold tnum ${isUrgent && !isEmpty ? 'text-danger-600' : ''}">
+                        ${isEmpty ? 'N/A (belum ada data)' : f.daysUntilEmpty <= 0 ? 'Habis!' : `${f.daysUntilEmpty} hari`}
                       </td>
-                      <td class="text-right font-semibold text-primary-600">
+                      <td class="text-right font-semibold text-primary-600 tnum">
                         ${f.recommendQty > 0 ? `${f.recommendQty} pcs` : '-'}
                       </td>
-                      <td class="text-right">${f.recommendQty > 0 ? `Rp ${this.formatNumber(f.restockCost)}` : '-'}</td>
+                      <td class="text-right tnum">${f.recommendQty > 0 ? `Rp ${this.formatNumber(f.restockCost)}` : '-'}</td>
                       <td>
                         <span class="badge ${isUrgent ? 'badge-danger' : isEmpty ? 'badge-warning' : 'badge-success'}">
                           ${isUrgent ? 'Restock' : isEmpty ? 'No Data' : 'Aman'}
@@ -180,8 +180,8 @@ export class ForecastingPage {
             </h3>
             ${this.renderTopList(
               this.forecasts.filter(f => f.totalSold > 0).sort((a, b) => b.totalSold - a.totalSold).slice(0, 5),
-              f => `${f.totalSold} terjual • ${f.avgDaily}/hari`,
-              f => `Stok: ${f.current_stock} (${f.daysUntilEmpty === Infinity ? '∞' : f.daysUntilEmpty + ' hari'})`
+              f => `${f.totalSold} terjual &middot; ${f.avgDaily}/hari`,
+              f => `Stok: ${f.current_stock} (${f.daysUntilEmpty === Infinity ? 'N/A' : f.daysUntilEmpty + ' hari'})`
             )}
           </div>
 
@@ -192,7 +192,7 @@ export class ForecastingPage {
             </h3>
             ${this.renderTopList(
               this.forecasts.filter(f => f.totalSold === 0).slice(0, 5),
-              f => `0 terjual • Stok: ${f.current_stock}`,
+              f => `0 terjual &middot; Stok: ${f.current_stock}`,
               f => `Nilai: Rp ${this.formatNumber(f.totalValue)}`
             )}
           </div>

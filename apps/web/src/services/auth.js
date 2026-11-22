@@ -39,11 +39,11 @@ export class AuthService {
     })
     if (authError) throw authError
 
-    // Insert ke tabel users
+    // Insert ke tabel users (role default: staff_gudang)
     const { data: roleData } = await this.supabase
       .from('roles')
       .select('id')
-      .eq('name', 'admin')
+      .eq('name', 'staff_gudang')
       .single()
     
     const { error: insertError } = await this.supabase

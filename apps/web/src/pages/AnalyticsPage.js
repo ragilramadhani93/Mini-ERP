@@ -169,7 +169,7 @@ export class AnalyticsPage {
                 <p class="text-xs text-gray-500">${data.count} transaksi</p>
               </div>
             </div>
-            <p class="text-sm font-semibold">Rp ${this.formatNumber(data.total)}</p>
+            <p class="text-sm font-semibold tnum text-stone-900">Rp ${this.formatNumber(data.total)}</p>
           </div>
         `).join('')}
       </div>
@@ -436,7 +436,9 @@ export class AnalyticsPage {
     await this.loadData()
     this.destroyCharts()
     this.renderAndBind()
+  }
 
+  _bindListeners() {
     document.getElementById('period-select')?.addEventListener('change', async (e) => {
       this.period = e.target.value
       await this.loadData()
@@ -452,11 +454,16 @@ export class AnalyticsPage {
     if (window.lucide) window.lucide.createIcons()
   }
 
+  destroy() {
+    this.destroyCharts()
+  }
+
   renderAndBind() {
     const outlet = document.getElementById('router-outlet')
     if (outlet) {
       outlet.innerHTML = this.render()
       setTimeout(() => this.buildCharts(), 100)
     }
+    this._bindListeners()
   }
 }

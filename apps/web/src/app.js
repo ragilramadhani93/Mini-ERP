@@ -1,39 +1,8 @@
 import { AuthService } from './services/auth.js'
 import { Router } from './utils/router.js'
 import { Layout } from './components/Layout.js'
-import { LoginPage } from './pages/LoginPage.js'
-import { RegisterPage } from './pages/RegisterPage.js'
-import { DashboardPage } from './pages/DashboardPage.js'
-import { ProductsPage } from './pages/ProductsPage.js'
-import { StockPage } from './pages/StockPage.js'
-import { StockOpnamePage } from './pages/StockOpnamePage.js'
-import { SalesPage } from './pages/SalesPage.js'
-import { FinancePage } from './pages/FinancePage.js'
-import { PurchaseOrderPage } from './pages/PurchaseOrderPage.js'
-import { DebtPage } from './pages/DebtPage.js'
-import { BarcodePage } from './pages/BarcodePage.js'
-import { ImportExportPage } from './pages/ImportExportPage.js'
-import { AnalyticsPage } from './pages/AnalyticsPage.js'
-import { ForecastingPage } from './pages/ForecastingPage.js'
-import { AIAssistantPage } from './pages/AIAssistantPage.js'
-import { CategoriesPage } from './pages/CategoriesPage.js'
-import { SuppliersPage } from './pages/SuppliersPage.js'
-import { UsersPage } from './pages/UsersPage.js'
-import { ProfilePage } from './pages/ProfilePage.js'
-import { ShopeePage } from './pages/ShopeePage.js'
-import { SettingsPage } from './pages/SettingsPage.js'
-import { SettingsRolePage } from './pages/SettingsRolePage.js'
-import { AssetsPage } from './pages/AssetsPage.js'
-import { DepositPage } from './pages/DepositPage.js'
-import { ReturPage } from './pages/ReturPage.js'
-
-const isDemo = import.meta.env.VITE_DEMO_MODE === 'true'
 
 async function createSupabase() {
-  if (isDemo) {
-    const { MockDatabase } = await import('./services/mockData.js')
-    return new MockDatabase()
-  }
   const { createClient } = await import('@supabase/supabase-js')
   const url = import.meta.env.VITE_SUPABASE_URL
   const key = import.meta.env.VITE_SUPABASE_ANON_KEY
@@ -47,37 +16,38 @@ async function createSupabase() {
 let supabase
 let auth
 let router
+let layout
+let activePage = null
 
 const routes = {
-  '/login': { component: LoginPage, public: true },
-  '/register': { component: RegisterPage, public: true },
-  '/': { component: DashboardPage, roles: ['owner', 'admin', 'staff_gudang', 'staff_keuangan'] },
-  '/products': { component: ProductsPage, roles: ['owner', 'admin', 'staff_gudang'] },
-  '/stock': { component: StockPage, roles: ['owner', 'admin', 'staff_gudang'] },
-  '/stock/opname': { component: StockOpnamePage, roles: ['owner', 'admin', 'staff_gudang'] },
-  '/sales': { component: SalesPage, roles: ['owner', 'admin'] },
-  '/finance': { component: FinancePage, roles: ['owner', 'admin', 'staff_keuangan'] },
-  '/finance/expenses': { component: FinancePage, roles: ['owner', 'admin', 'staff_keuangan'] },
-  '/purchase-orders': { component: PurchaseOrderPage, roles: ['owner', 'admin'] },
-  '/debts': { component: DebtPage, roles: ['owner', 'admin', 'staff_keuangan'] },
-  '/deposits': { component: DepositPage, roles: ['owner', 'admin', 'staff_keuangan'] },
-  '/returns': { component: ReturPage, roles: ['owner', 'admin'] },
-  '/barcode': { component: BarcodePage, roles: ['owner', 'admin', 'staff_gudang'] },
-  '/import-export': { component: ImportExportPage, roles: ['owner', 'admin'] },
-  '/analytics': { component: AnalyticsPage, roles: ['owner', 'admin'] },
-  '/forecasting': { component: ForecastingPage, roles: ['owner', 'admin'] },
-  '/ai-assistant': { component: AIAssistantPage, roles: ['owner', 'admin'] },
-  '/categories': { component: CategoriesPage, roles: ['owner', 'admin'] },
-  '/suppliers': { component: SuppliersPage, roles: ['owner', 'admin'] },
-  '/users': { component: UsersPage, roles: ['owner'] },
-  '/profile': { component: ProfilePage, roles: ['owner', 'admin', 'staff_gudang', 'staff_keuangan'] },
-  '/shopee': { component: ShopeePage, roles: ['owner', 'admin'] },
-  '/settings': { component: SettingsPage, roles: ['owner', 'admin'] },
-  '/settings/roles': { component: SettingsRolePage, roles: ['owner'] },
-  '/assets': { component: AssetsPage, roles: ['owner', 'admin'] }
+  '/login': { load: () => import('./pages/LoginPage.js').then(m => m.LoginPage), public: true },
+  '/register': { load: () => import('./pages/RegisterPage.js').then(m => m.RegisterPage), public: true },
+  '/': { load: () => import('./pages/DashboardPage.js').then(m => m.DashboardPage), roles: ['owner', 'admin', 'staff_gudang', 'staff_keuangan'] },
+  '/products': { load: () => import('./pages/ProductsPage.js').then(m => m.ProductsPage), roles: ['owner', 'admin', 'staff_gudang'] },
+  '/stock': { load: () => import('./pages/StockPage.js').then(m => m.StockPage), roles: ['owner', 'admin', 'staff_gudang'] },
+  '/stock/opname': { load: () => import('./pages/StockOpnamePage.js').then(m => m.StockOpnamePage), roles: ['owner', 'admin', 'staff_gudang'] },
+  '/sales': { load: () => import('./pages/SalesPage.js').then(m => m.SalesPage), roles: ['owner', 'admin'] },
+  '/finance': { load: () => import('./pages/FinancePage.js').then(m => m.FinancePage), roles: ['owner', 'admin', 'staff_keuangan'] },
+  '/finance/expenses': { load: () => import('./pages/FinancePage.js').then(m => m.FinancePage), roles: ['owner', 'admin', 'staff_keuangan'] },
+  '/purchase-orders': { load: () => import('./pages/PurchaseOrderPage.js').then(m => m.PurchaseOrderPage), roles: ['owner', 'admin'] },
+  '/debts': { load: () => import('./pages/DebtPage.js').then(m => m.DebtPage), roles: ['owner', 'admin', 'staff_keuangan'] },
+  '/deposits': { load: () => import('./pages/DepositPage.js').then(m => m.DepositPage), roles: ['owner', 'admin', 'staff_keuangan'] },
+  '/returns': { load: () => import('./pages/ReturPage.js').then(m => m.ReturPage), roles: ['owner', 'admin'] },
+  '/retur': { load: () => import('./pages/ReturPage.js').then(m => m.ReturPage), roles: ['owner', 'admin'] },
+  '/barcode': { load: () => import('./pages/BarcodePage.js').then(m => m.BarcodePage), roles: ['owner', 'admin', 'staff_gudang'] },
+  '/import-export': { load: () => import('./pages/ImportExportPage.js').then(m => m.ImportExportPage), roles: ['owner', 'admin'] },
+  '/analytics': { load: () => import('./pages/AnalyticsPage.js').then(m => m.AnalyticsPage), roles: ['owner', 'admin'] },
+  '/forecasting': { load: () => import('./pages/ForecastingPage.js').then(m => m.ForecastingPage), roles: ['owner', 'admin'] },
+  '/ai-assistant': { load: () => import('./pages/AIAssistantPage.js').then(m => m.AIAssistantPage), roles: ['owner', 'admin'] },
+  '/categories': { load: () => import('./pages/CategoriesPage.js').then(m => m.CategoriesPage), roles: ['owner', 'admin'] },
+  '/suppliers': { load: () => import('./pages/SuppliersPage.js').then(m => m.SuppliersPage), roles: ['owner', 'admin'] },
+  '/users': { load: () => import('./pages/UsersPage.js').then(m => m.UsersPage), roles: ['owner'] },
+  '/profile': { load: () => import('./pages/ProfilePage.js').then(m => m.ProfilePage), roles: ['owner', 'admin', 'staff_gudang', 'staff_keuangan'] },
+  '/shopee': { load: () => import('./pages/ShopeePage.js').then(m => m.ShopeePage), roles: ['owner', 'admin'] },
+  '/settings': { load: () => import('./pages/SettingsPage.js').then(m => m.SettingsPage), roles: ['owner', 'admin'] },
+  '/settings/roles': { load: () => import('./pages/SettingsRolePage.js').then(m => m.SettingsRolePage), roles: ['owner'] },
+  '/assets': { load: () => import('./pages/AssetsPage.js').then(m => m.AssetsPage), roles: ['owner', 'admin'] }
 }
-
-let layout
 
 export async function initApp() {
   const app = document.getElementById('app')
@@ -89,13 +59,9 @@ export async function initApp() {
   auth = new AuthService(supabase)
   router = new Router(routes, auth)
 
-  if (isDemo) {
-    // In demo mode, don't auto-login - let user login manually
-  } else {
-    const { data: { session } } = await supabase.auth.getSession()
-    if (session) {
-      await auth.setUser(session.user)
-    }
+  const { data: { session } } = await supabase.auth.getSession()
+  if (session) {
+    await auth.setUser(session.user)
   }
 
   // Setup auto-logout callback
@@ -114,20 +80,27 @@ export async function initApp() {
 
   renderApp()
 
-  router.onRouteChange = (route) => {
+  router.onRouteChange = async (route) => {
+    if (activePage?.destroy) {
+      try { await activePage.destroy() } catch (e) { console.warn('Destroy error:', e) }
+      activePage = null
+    }
+
+    const ComponentClass = route.load ? await route.load() : route.component
+    if (!ComponentClass) return
+
     if (route.public) {
-      // Untuk halaman public (login/register), render tanpa layout
-      const app = document.getElementById('app')
-      const page = new route.component({ auth, router, supabase, path: route.path })
-      app.innerHTML = page.render()
-      page.bindEvents?.()
+      const appEl = document.getElementById('app')
+      activePage = new ComponentClass({ auth, router, supabase, path: route.path })
+      appEl.innerHTML = activePage.render()
+      activePage.bindEvents?.()
     } else {
       renderApp()
       const outlet = document.getElementById('router-outlet')
-      if (outlet && route.component) {
-        const page = new route.component({ supabase, auth, router, path: route.path })
-        outlet.innerHTML = page.render()
-        page.bindEvents?.()
+      if (outlet) {
+        activePage = new ComponentClass({ supabase, auth, router, path: route.path })
+        outlet.innerHTML = activePage.render()
+        activePage.bindEvents?.()
       }
       if (layout) layout.updateActiveLink(route.path)
     }
@@ -145,7 +118,15 @@ export async function initApp() {
 
 function renderApp() {
   const app = document.getElementById('app')
-  layout = new Layout(router, auth)
-  app.innerHTML = layout.render()
-  layout.bindEvents()
+  if (!layout) {
+    layout = new Layout(router, auth)
+    app.innerHTML = layout.render()
+    layout.bindEvents()
+  } else {
+    // Check if layout DOM is still attached
+    if (!document.getElementById('router-outlet')) {
+      app.innerHTML = layout.render()
+      layout.bindEvents()
+    }
+  }
 }

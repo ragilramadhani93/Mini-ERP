@@ -1,3 +1,5 @@
+import { Exporter } from '../utils/export.js'
+
 export class ProductsPage {
   constructor({ supabase, auth, router }) {
     this.supabase = supabase
@@ -11,6 +13,9 @@ export class ProductsPage {
     this.showModal = false
     this.editingProduct = null
     this.searchQuery = ''
+    this.selectedCategory = ''
+    this.selectedSupplier = ''
+    this.stockFilter = ''
     this.currentPage = 1
     this.totalPages = 1
     this.itemsPerPage = 10
@@ -71,10 +76,22 @@ export class ProductsPage {
   }
 
   render() {
-    const filtered = this.products.filter(p =>
-      !this.searchQuery || p.name?.toLowerCase().includes(this.searchQuery.toLowerCase()) ||
-      p.sku?.toLowerCase().includes(this.searchQuery.toLowerCase())
-    )
+    if (this.router?.currentRoute?.query?.filter === 'low-stock' && !this.stockFilter) {
+      this.stockFilter = 'low'
+    }
+    if (this.router?.currentRoute?.query?.search && !this.searchQuery) {
+      this.searchQuery = this.router.currentRoute.query.search
+    }
+
+    const filtered = this.products.filter(p => {
+      const matchSearch = !this.searchQuery ||
+        p.name?.toLowerCase().includes(this.searchQuery.toLowerCase()) ||
+        p.sku?.toLowerCase().includes(this.searchQuery.toLowerCase())
+      const matchCategory = !this.selectedCategory || p.category_id === this.selectedCategory
+      const matchSupplier = !this.selectedSupplier || p.supplier_id === this.selectedSupplier
+      const matchStock = !this.stockFilter || (this.stockFilter === 'low' ? p.current_stock <= p.min_stock : true)
+      return matchSearch && matchCategory && matchSupplier && matchStock
+    })
     const start = (this.currentPage - 1) * this.itemsPerPage
     const pageItems = filtered.slice(start, start + this.itemsPerPage)
     const stats = this.getStats()
@@ -94,59 +111,69 @@ export class ProductsPage {
           <!-- KPI -->
           <div class="summary-grid">
             <div class="summary-card">
-              <span>Total Produk</span>
-              <h2>${stats.totalProducts}</h2>
+              <span>Total Katalog</span>
+              <h2 class="tnum">${stats.totalProducts} <span class="text-xs font-normal text-stone-500">item</span></h2>
             </div>
             <div class="summary-card">
-              <span>Total Stok</span>
-              <h2>${this.formatNumber(stats.totalStock)}</h2>
+              <span>Total Unit Fisik</span>
+              <h2 class="tnum">${this.formatNumber(stats.totalStock)} <span class="text-xs font-normal text-stone-500">pcs</span></h2>
             </div>
             <div class="summary-card">
-              <span>Nilai Inventori</span>
-              <h2>Rp ${this.formatNumber(stats.totalInventoryValue)}</h2>
+              <span>Nilai Valuasi Modal</span>
+              <h2 class="tnum">Rp ${this.formatNumber(stats.totalInventoryValue)}</h2>
             </div>
             <div class="summary-card danger">
-              <span>Stok Menipis</span>
-              <h2>${stats.lowStockCount} Produk</h2>
+              <span>Perlu Restock</span>
+              <h2 class="tnum text-rose-700">${stats.lowStockCount} <span class="text-xs font-normal text-rose-600">produk</span></h2>
             </div>
           </div>
 
-          <!-- TAB: Aktif / Nonaktif -->
-          <div class="flex items-center gap-2" style="border-bottom:1px solid #e2e8f0;padding-bottom:8px">
-            <button id="tab-active" class="tab-btn" data-show="false" style="padding:5px 14px;border-radius:6px;font-size:12px;font-weight:500;cursor:pointer;border:none;${!this.showInactive ? 'background:#7A3B58;color:#fff' : 'color:#64748b;background:transparent'}">Aktif</button>
-            <button id="tab-inactive" class="tab-btn" data-show="true" style="padding:5px 14px;border-radius:6px;font-size:12px;font-weight:500;cursor:pointer;border:none;${this.showInactive ? 'background:#7A3B58;color:#fff' : 'color:#64748b;background:transparent'}">Nonaktif</button>
+          <!-- TAB: Aktif / Nonaktif (shadcn Tabs) -->
+          <div class="inline-flex h-9 items-center justify-center rounded-lg bg-muted p-1 text-muted-foreground w-fit mb-2">
+            <button id="tab-active" class="tab-btn inline-flex items-center justify-center whitespace-nowrap rounded-md px-3 py-1 text-xs font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ${!this.showInactive ? 'bg-background text-foreground shadow-sm' : 'hover:text-foreground'}" data-show="false">Produk Aktif</button>
+            <button id="tab-inactive" class="tab-btn inline-flex items-center justify-center whitespace-nowrap rounded-md px-3 py-1 text-xs font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ${this.showInactive ? 'bg-background text-foreground shadow-sm' : 'hover:text-foreground'}" data-show="true">Arsip Nonaktif</button>
           </div>
 
           <!-- FILTER -->
-          <div class="filter-card">
-            <div class="filter-left">
-              <input
-                type="text"
-                id="search-product"
-                placeholder="Cari produk atau SKU..."
-                value="${this.searchQuery}"
-              >
-              <select id="category-filter">
+          <div class="filter-card bg-white p-3.5 rounded-xl border border-stone-200/80 shadow-sm flex flex-wrap items-center justify-between gap-3">
+            <div class="filter-left flex flex-wrap items-center gap-2.5 flex-1 min-w-[280px]">
+              <div class="relative flex-1 min-w-[200px]">
+                <input
+                  type="text"
+                  id="search-product"
+                  placeholder="Cari nama produk, varian, atau SKU..."
+                  value="${this.searchQuery}"
+                  class="w-full text-xs"
+                >
+              </div>
+              <select id="category-filter" class="w-auto text-xs min-w-[130px]">
                 <option value="">Semua Kategori</option>
-                ${this.categories.map(c => `<option value="${c.id}">${c.name}</option>`).join('')}
+                ${this.categories.map(c => `<option value="${c.id}" ${this.selectedCategory === c.id ? 'selected' : ''}>${c.name}</option>`).join('')}
               </select>
-              <select id="supplier-filter">
+              <select id="supplier-filter" class="w-auto text-xs min-w-[130px]">
                 <option value="">Semua Supplier</option>
-                ${this.suppliers.map(s => `<option value="${s.id}">${s.supplier_name}</option>`).join('')}
+                ${this.suppliers.map(s => `<option value="${s.id}" ${this.selectedSupplier === s.id ? 'selected' : ''}>${s.supplier_name}</option>`).join('')}
               </select>
-              <select id="stock-filter">
-                <option value="">Semua Stok</option>
-                <option value="low">Stok Menipis</option>
+              <select id="stock-filter" class="w-auto text-xs min-w-[130px]">
+                <option value="">Status Stok</option>
+                <option value="low" ${this.stockFilter === 'low' ? 'selected' : ''}>Stok Menipis Saja</option>
               </select>
             </div>
-            <button class="btn-outline" id="export-btn">Export Data</button>
+            <button class="btn-outline text-xs px-3.5 py-2 flex items-center gap-1.5" id="export-btn">
+              <i data-lucide="download" class="w-3.5 h-3.5 text-stone-500"></i> Ekspor CSV
+            </button>
           </div>
 
           <!-- ALERT -->
           ${stats.lowStockCount > 0 ? `
-            <div class="alert-box">
-              <span>⚠ ${stats.lowStockCount} produk hampir habis dan membutuhkan restock</span>
-              <a href="#" id="view-low-stock">Lihat Detail →</a>
+            <div class="alert-box flex items-center justify-between p-3.5 rounded-xl bg-amber-50/80 border border-amber-200/80 text-amber-900 text-xs">
+              <div class="flex items-center gap-2">
+                <i data-lucide="alert-triangle" class="w-4 h-4 text-amber-600 flex-shrink-0"></i>
+                <span class="font-medium">${stats.lowStockCount} produk berada pada atau di bawah batas minimum stok</span>
+              </div>
+              <a href="#" id="view-low-stock" class="font-semibold text-amber-800 hover:text-amber-950 flex items-center gap-1">
+                <span>Filter Menipis</span> <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>
+              </a>
             </div>
           ` : ''}
 
@@ -215,10 +242,16 @@ export class ProductsPage {
                       </td>
                       <td>
                         <div style="display:flex;gap:6px;align-items:center">
-                          <button class="action-btn icon-btn edit-product" data-id="${p.id}" title="Edit">✏️</button>
+                          <button class="action-btn icon-btn edit-product flex items-center justify-center p-1.5 rounded-lg border border-stone-200 text-stone-700 hover:bg-stone-50" data-id="${p.id}" title="Edit">
+                            <i data-lucide="pencil" class="w-3.5 h-3.5"></i>
+                          </button>
                           ${this.showInactive 
-                            ? `<button class="action-btn text-btn activate-product" data-id="${p.id}" title="Aktifkan">↩ Aktifkan</button>` 
-                            : `<button class="action-btn text-btn danger delete-product" data-id="${p.id}" title="Nonaktifkan">✕ Nonaktifkan</button>`}
+                            ? `<button class="action-btn text-btn activate-product text-xs px-2.5 py-1 rounded-lg border border-emerald-300 text-emerald-700 hover:bg-emerald-50 flex items-center gap-1" data-id="${p.id}" title="Aktifkan">
+                                 <i data-lucide="rotate-ccw" class="w-3 h-3"></i> Aktifkan
+                               </button>` 
+                            : `<button class="action-btn text-btn danger delete-product text-xs px-2.5 py-1 rounded-lg border border-rose-200 text-rose-700 hover:bg-rose-50 flex items-center gap-1" data-id="${p.id}" title="Nonaktifkan">
+                                 <i data-lucide="archive" class="w-3 h-3"></i> Nonaktifkan
+                               </button>`}
                         </div>
                       </td>
                     </tr>
@@ -240,12 +273,16 @@ export class ProductsPage {
     if (this.totalPages <= 1) return ''
 
     return `
-      <div style="padding: 18px; border-top: 1px solid #f1f5f9; display: flex; justify-content: space-between; align-items: center;">
-        <p style="color: #64748b; font-size: 14px;">Total ${total} produk</p>
-        <div style="display: flex; gap: 8px;">
-          <button class="btn-outline" data-page="${this.currentPage - 1}" ${this.currentPage <= 1 ? 'disabled' : ''} style="padding: 8px 12px;">←</button>
-          <span style="padding: 8px 16px; color: #374151;">${this.currentPage} / ${this.totalPages}</span>
-          <button class="btn-outline" data-page="${this.currentPage + 1}" ${this.currentPage >= this.totalPages ? 'disabled' : ''} style="padding: 8px 12px;">→</button>
+      <div class="p-4 border-t border-stone-200/80 flex items-center justify-between text-xs">
+        <p class="text-stone-500">Total <span class="font-medium text-stone-800 tnum">${total}</span> produk katalog</p>
+        <div class="flex items-center gap-1.5">
+          <button class="btn-outline flex items-center justify-center p-1.5 rounded-lg border border-stone-200" data-page="${this.currentPage - 1}" ${this.currentPage <= 1 ? 'disabled style="opacity:0.4;cursor:default"' : ''}>
+            <i data-lucide="chevron-left" class="w-4 h-4 text-stone-600"></i>
+          </button>
+          <span class="px-2.5 py-1 text-xs text-stone-700 font-medium tnum">${this.currentPage} / ${this.totalPages}</span>
+          <button class="btn-outline flex items-center justify-center p-1.5 rounded-lg border border-stone-200" data-page="${this.currentPage + 1}" ${this.currentPage >= this.totalPages ? 'disabled style="opacity:0.4;cursor:default"' : ''}>
+            <i data-lucide="chevron-right" class="w-4 h-4 text-stone-600"></i>
+          </button>
         </div>
       </div>
     `
@@ -341,12 +378,12 @@ export class ProductsPage {
                         <label style="font-size: 11px; color: #64748b;">Nilai (koma)</label>
                         <input type="text" class="variant-values" data-index="${i}" value="${(v.values || []).join(', ')}" placeholder="S, M, L, XL" style="width: 100%; padding: 8px; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 13px;">
                       </div>
-                      <button type="button" class="remove-variant" data-index="${i}" style="width: 32px; height: 32px; border: 1px solid #fecaca; background: #fef2f2; color: #ef4444; border-radius: 8px; cursor: pointer; flex-shrink: 0; font-size: 14px;">✕</button>
+                      <button type="button" class="remove-variant flex items-center justify-center" data-index="${i}" style="width: 32px; height: 32px; border: 1px solid #fecaca; background: #fef2f2; color: #ef4444; border-radius: 8px; cursor: pointer; flex-shrink: 0;"><i data-lucide="x" class="w-4 h-4"></i></button>
                     </div>
                   `).join('')}
                 </div>
                 <button type="button" id="add-variant" style="display: inline-flex; align-items: center; gap: 4px; padding: 6px 12px; border: 1px dashed #D7B1C1; background: #F4E5EC; color: #7A3B58; border-radius: 8px; cursor: pointer; font-size: 12px; font-weight: 500;">
-                  + Tambah Variasi
+                  <i data-lucide="plus" class="w-3.5 h-3.5"></i> Tambah Variasi
                 </button>
 
                 ${p ? this._renderSkuTable(p) : ''}
@@ -429,17 +466,34 @@ export class ProductsPage {
       this.renderAndBind()
     })
 
+    document.getElementById('category-filter')?.addEventListener('change', (e) => {
+      this.selectedCategory = e.target.value
+      this.currentPage = 1
+      this.renderAndBind()
+    })
+
+    document.getElementById('supplier-filter')?.addEventListener('change', (e) => {
+      this.selectedSupplier = e.target.value
+      this.currentPage = 1
+      this.renderAndBind()
+    })
+
+    document.getElementById('stock-filter')?.addEventListener('change', (e) => {
+      this.stockFilter = e.target.value
+      this.currentPage = 1
+      this.renderAndBind()
+    })
+
     document.getElementById('export-btn')?.addEventListener('click', () => {
-      alert('Export feature coming soon!')
+      const config = Exporter.exportProducts(this.products)
+      Exporter.downloadCSV(config.filename, config.headers, config.rows)
     })
 
     document.getElementById('view-low-stock')?.addEventListener('click', (e) => {
       e.preventDefault()
-      const stockFilter = document.getElementById('stock-filter')
-      if (stockFilter) {
-        stockFilter.value = 'low'
-        stockFilter.dispatchEvent(new Event('change'))
-      }
+      this.stockFilter = 'low'
+      this.currentPage = 1
+      this.renderAndBind()
     })
 
     document.querySelectorAll('.edit-product').forEach(btn => {
@@ -508,7 +562,19 @@ export class ProductsPage {
   }
 
   _bindModalEvents() {
+    const onModalKeydown = (e) => {
+      if (e.key === 'Escape' && this.showModal) {
+        this.showModal = false
+        this.editingProduct = null
+        this.modalVariants = []
+        document.removeEventListener('keydown', onModalKeydown)
+        this.renderAndBind()
+      }
+    }
+    document.addEventListener('keydown', onModalKeydown)
+
     document.getElementById('close-modal')?.addEventListener('click', () => {
+      document.removeEventListener('keydown', onModalKeydown)
       this.showModal = false
       this.editingProduct = null
       this.modalVariants = []
@@ -516,6 +582,7 @@ export class ProductsPage {
     })
 
     document.getElementById('cancel-modal')?.addEventListener('click', () => {
+      document.removeEventListener('keydown', onModalKeydown)
       this.showModal = false
       this.editingProduct = null
       this.modalVariants = []
@@ -524,6 +591,7 @@ export class ProductsPage {
 
     document.getElementById('modal-overlay')?.addEventListener('click', (e) => {
       if (e.target === e.currentTarget) {
+        document.removeEventListener('keydown', onModalKeydown)
         this.showModal = false
         this.editingProduct = null
         this.modalVariants = []

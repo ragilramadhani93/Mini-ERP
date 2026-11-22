@@ -98,10 +98,21 @@ serve(async (req) => {
 
       const shopInfoData = await shopInfoResponse.json() as any;
 
-      // Step 4: Save to database
+      // Step 4: Save to database (require valid authenticated user)
+      const authHeader = req.headers.get("authorization") || req.headers.get("Authorization");
+      const userToken = authHeader ? authHeader.replace(/^Bearer\s+/i, "") : null;
+      let targetUserId = null;
+      if (userToken) {
+        const { data: userData } = await supabase.auth.getUser(userToken);
+        targetUserId = userData?.user?.id || null;
+      }
+      if (!targetUserId) {
+        throw new Error("Unauthorized: valid session token required to link Shopee account");
+      }
+
       const tokenExpiresAt = new Date(Date.now() + (tokenData.expire_in * 1000));
       const { error } = await supabase.from("shopee_accounts").upsert({
-        user_id: (await supabase.auth.getUser()).data.user?.id,
+        user_id: targetUserId,
         shop_id: shop_id,
         shop_name: shopInfoData.response.shop_name,
         access_token: tokenData.access_token,

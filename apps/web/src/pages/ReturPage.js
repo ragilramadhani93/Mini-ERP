@@ -16,6 +16,7 @@ export class ReturPage {
     this.currentPage = 1
     this.perPage = 10
     this.successMessage = ''
+    this.modalError = ''
   }
 
   async loadData() {
@@ -60,6 +61,16 @@ export class ReturPage {
       )
     }
     return filtered
+  }
+
+  escapeHtml(str) {
+    if (!str) return ''
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;')
   }
 
   formatNumber(num) {
@@ -175,25 +186,27 @@ export class ReturPage {
 
                 return `
                   <tr>
-                    <td><span class="invoice-code">${s.invoice_number}</span></td>
+                    <td><span class="invoice-code">${this.escapeHtml(s.invoice_number)}</span></td>
                     <td class="date-cell">
                       ${createdDate.toLocaleDateString('id-ID', { day: '2-digit', month: 'short' })}
                       <div class="date-time">${createdDate.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', hour12: false })}</div>
                     </td>
-                    <td><span class="customer-cell">${s.customer_name || '-'}</span></td>
+                    <td><span class="customer-cell">${this.escapeHtml(s.customer_name || '-')}</span></td>
                     <td><span class="items-badge">${totalQty} item</span></td>
                     <td class="text-right"><span class="amount-cell">Rp ${this.formatNumber(s.total_amount)}</span></td>
                     <td class="text-right"><span class="amount-received">Rp ${this.formatNumber(totalReceived)}</span></td>
                     <td>
                       ${returSummary ? `
                         <span style="background:#fee2e2;color:#dc2626;padding:3px 8px;border-radius:6px;font-size:11px;font-weight:600;display:inline-flex;align-items:center;gap:4px">
-                          🔄 ${returSummary.count}x (Rp ${this.formatNumber(returSummary.totalRefunded)})
+                          <i data-lucide="rotate-ccw" class="w-3 h-3"></i> ${returSummary.count}x (Rp ${this.formatNumber(returSummary.totalRefunded)})
                         </span>
                       ` : '<span style="color:#94a3b8;font-size:12px">-</span>'}
                     </td>
                     <td>
                       <div class="action-cell">
-                        <button class="action-btn return-sale" data-id="${s.id}" title="Retur Transaksi" style="border-color:#7A3B58;color:#7A3B58;font-size:14px">🔄</button>
+                        <button class="action-btn return-sale" data-id="${s.id}" title="Retur Transaksi" style="border-color:#7A3B58;color:#7A3B58;padding:6px;border-radius:8px">
+                          <i data-lucide="corner-up-left" class="w-4 h-4"></i>
+                        </button>
                       </div>
                     </td>
                   </tr>
@@ -237,8 +250,8 @@ export class ReturPage {
       return `
         <tr style="border-bottom:1px solid #f1f5f9">
           <td style="padding:10px 12px">
-            <div style="font-weight:600;color:#0f172a;font-size:13px">${item.products?.name || '-'}</div>
-            <div style="color:#94a3b8;font-size:11px">${item.products?.sku || '-'}</div>
+            <div style="font-weight:600;color:#0f172a;font-size:13px">${this.escapeHtml(item.products?.name || '-')}</div>
+            <div style="color:#94a3b8;font-size:11px">${this.escapeHtml(item.products?.sku || '-')}</div>
           </td>
           <td style="padding:10px 12px;text-align:center;color:#64748b;font-size:13px">${item.quantity}</td>
           <td style="padding:10px 12px;text-align:right;color:#64748b;font-size:13px">Rp ${this.formatNumber(item.unit_price)}</td>
@@ -265,15 +278,27 @@ export class ReturPage {
       <div class="modal-overlay" id="return-modal-overlay" style="display:flex;align-items:center;justify-content:center;background:rgba(15,23,42,0.5);z-index:100;overflow-y:auto;padding:20px">
         <div style="background:white;border-radius:16px;max-width:700px;width:100%;max-height:90vh;overflow-y:auto;box-shadow:0 25px 50px -12px rgba(0,0,0,0.25)">
           <div style="padding:20px 24px;border-bottom:1px solid #f1f5f9;display:flex;align-items:center;justify-content:space-between">
-            <div>
-              <h3 style="margin:0;font-size:16px;font-weight:700;color:#0f172a">🔄 Retur Penjualan</h3>
-              <p style="margin:4px 0 0;font-size:12px;color:#64748b">${sale.invoice_number} — ${sale.customer_name || 'Pelanggan umum'}</p>
+            <div style="display:flex;align-items:center;gap:10px">
+              <div style="width:36px;height:36px;border-radius:10px;background:#ffe4e6;color:#e11d48;display:flex;align-items:center;justify-content:center">
+                <i data-lucide="rotate-ccw" class="w-4 h-4"></i>
+              </div>
+              <div>
+                <h3 style="margin:0;font-size:16px;font-weight:700;color:#0f172a">Form Retur Penjualan</h3>
+                <p style="margin:2px 0 0;font-size:12px;color:#64748b">${this.escapeHtml(sale.invoice_number)} · ${this.escapeHtml(sale.customer_name || 'Pelanggan umum')}</p>
+              </div>
             </div>
-            <button id="close-return-modal" style="width:32px;height:32px;border:none;background:#f8fafc;border-radius:8px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#64748b;font-size:16px">✕</button>
+            <button id="close-return-modal" style="width:32px;height:32px;border:none;background:#f8fafc;border-radius:8px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#64748b;font-size:16px">
+              <i data-lucide="x" class="w-4 h-4"></i>
+            </button>
           </div>
 
           <form id="return-form">
           <div style="padding:20px 24px">
+            ${this.modalError ? `
+              <div style="background:#fef2f2;border:1px solid #fecaca;color:#991b1b;padding:10px 14px;border-radius:8px;font-size:13px;margin-bottom:14px;font-weight:500;">
+                ${this.modalError}
+              </div>
+            ` : ''}
             <div style="margin-bottom:16px">
               <label style="display:block;font-size:12px;font-weight:600;color:#475569;margin-bottom:6px">Pilih Item yang Dikembalikan</label>
               <div style="border:1px solid #e2e8f0;border-radius:12px;overflow:hidden">
@@ -295,7 +320,7 @@ export class ReturPage {
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px">
               <div>
                 <label style="display:block;font-size:12px;font-weight:600;color:#475569;margin-bottom:6px">Ongkos Kirim Retur (Rp)</label>
-                <input type="number" id="return-shipping" name="shipping_cost" value="${this.shippingCost || 0}" min="0" placeholder="0" style="width:100%;padding:10px 12px;border:1px solid #e2e8f0;border-radius:8px;font-size:13px;color:#0f172a">
+                <input type="text" inputmode="numeric" id="return-shipping" name="shipping_cost" value="${this.shippingCost > 0 ? this.shippingCost.toLocaleString('id-ID') : '0'}" placeholder="0" autocomplete="off" style="width:100%;padding:10px 12px;border:1px solid #e2e8f0;border-radius:8px;font-size:13px;color:#0f172a">
               </div>
               <div>
                 <label style="display:block;font-size:12px;font-weight:600;color:#475569;margin-bottom:6px">Alasan Retur (opsional)</label>
@@ -306,25 +331,23 @@ export class ReturPage {
             <div style="background:#f8fafc;border-radius:12px;padding:16px">
               <div style="display:flex;justify-content:space-between;font-size:13px;color:#64748b;margin-bottom:8px">
                 <span>Total Nilai Produk Dikembalikan</span>
-                <strong style="color:#0f172a">Rp ${this.formatNumber(totalProductReturn)}</strong>
+                <strong id="summary-product-refund" style="color:#0f172a">Rp ${this.formatNumber(totalProductReturn)}</strong>
               </div>
-              ${this.shippingCost > 0 ? `
-              <div style="display:flex;justify-content:space-between;font-size:13px;color:#64748b;margin-bottom:8px">
+              <div id="summary-shipping-row" style="display:${this.shippingCost > 0 ? 'flex' : 'none'};justify-content:space-between;font-size:13px;color:#64748b;margin-bottom:8px">
                 <span>Ongkos Kirim Retur</span>
-                <strong style="color:#0f172a">Rp ${this.formatNumber(this.shippingCost)}</strong>
+                <strong id="summary-shipping-amount" style="color:#0f172a">Rp ${this.formatNumber(this.shippingCost)}</strong>
               </div>
-              ` : ''}
               <div style="display:flex;justify-content:space-between;font-size:15px;font-weight:700;color:#0f172a;border-top:1px solid #e2e8f0;padding-top:10px">
                 <span>Total Pengembalian</span>
-                <span style="color:#dc2626">Rp ${this.formatNumber(totalRefund)}</span>
+                <span id="summary-total-refund" style="color:#dc2626">Rp ${this.formatNumber(totalRefund)}</span>
               </div>
             </div>
           </div>
 
           <div style="padding:16px 24px;border-top:1px solid #f1f5f9;display:flex;gap:12px;justify-content:flex-end">
             <button type="button" id="cancel-return" style="padding:10px 20px;border:1px solid #e2e8f0;background:white;border-radius:8px;font-size:13px;font-weight:500;color:#64748b;cursor:pointer">Batal</button>
-            <button type="submit" id="confirm-return" style="padding:10px 24px;border:none;background:linear-gradient(135deg,#dc2626,#b91c1c);color:white;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;${totalProductReturn <= 0 ? 'opacity:0.5;cursor:not-allowed' : ''}" ${totalProductReturn <= 0 ? 'disabled' : ''}>
-              ✅ Proses Retur Rp ${this.formatNumber(totalRefund)}
+            <button type="submit" id="confirm-return" style="padding:10px 24px;border:none;background:linear-gradient(135deg,#dc2626,#b91c1c);color:white;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:6px;${totalProductReturn <= 0 ? 'opacity:0.5;cursor:not-allowed' : ''}" ${totalProductReturn <= 0 ? 'disabled' : ''}>
+              <i data-lucide="check" class="w-4 h-4"></i> <span id="confirm-btn-text">Proses Retur Rp ${this.formatNumber(totalRefund)}</span>
             </button>
           </div>
           </form>
@@ -403,10 +426,21 @@ export class ReturPage {
       }
     })
 
-    document.getElementById('return-shipping')?.addEventListener('input', (e) => {
-      this.shippingCost = parseInt(e.target.value) || 0
-      this._refreshTotals()
-    })
+    const shippingEl = document.getElementById('return-shipping')
+    if (shippingEl) {
+      shippingEl.addEventListener('focus', () => {
+        if (this.shippingCost === 0) shippingEl.value = ''
+        else shippingEl.value = this.shippingCost
+      })
+      shippingEl.addEventListener('input', (e) => {
+        const raw = e.target.value.replace(/\D/g, '')
+        this.shippingCost = raw ? parseInt(raw, 10) : 0
+        this._refreshTotals()
+      })
+      shippingEl.addEventListener('blur', () => {
+        shippingEl.value = this.shippingCost > 0 ? this.shippingCost.toLocaleString('id-ID') : '0'
+      })
+    }
 
     document.getElementById('return-reason')?.addEventListener('input', (e) => {
       this.returnReason = e.target.value
@@ -472,15 +506,18 @@ export class ReturPage {
     form?.addEventListener('submit', async (e) => {
       e.preventDefault()
       if (!this.auth?.user?.id) {
-        alert('Sesi habis. Silakan login kembali.')
+        this.modalError = 'Sesi habis. Silakan login kembali.'
+        this._refreshTotals()
         return
       }
 
       const validItems = this.returnItems.filter(r => r.quantity > 0)
       if (validItems.length === 0) {
-        alert('Pilih minimal 1 item untuk diretur')
+        this.modalError = 'Pilih minimal 1 item dengan kuantitas lebih dari 0 untuk diretur.'
+        this._refreshTotals()
         return
       }
+      this.modalError = ''
 
       const sale = this.selectedSale
       const items = sale.sale_items || []
@@ -498,10 +535,6 @@ export class ReturPage {
       })
       const totalProductAmount = returnItemsData.reduce((sum, ri) => sum + ri.subtotal, 0)
       const totalRefund = totalProductAmount + shipping
-
-      if (!confirm(`Yakin ingin memproses retur?\n\nNilai produk: Rp ${this.formatNumber(totalProductAmount)}\nOngkir: Rp ${this.formatNumber(shipping)}\nTotal: Rp ${this.formatNumber(totalRefund)}\n\nStok akan dikembalikan dan revenue akan dikurangi.`)) {
-        return
-      }
 
       this.loading = true
       this.renderAndBind()
@@ -527,22 +560,34 @@ export class ReturPage {
           return
         }
 
-        // 2. Restore stock for each returned item
+        // 2. Restore stock for each returned item (including variant SKUs)
         for (const ri of returnItemsData) {
+          if (ri.sku_id) {
+            const { data: skuRecord } = await this.supabase
+              .from('product_skus')
+              .select('current_stock')
+              .eq('id', ri.sku_id)
+              .single()
+            if (skuRecord) {
+              await this.supabase.from('product_skus').update({
+                current_stock: (skuRecord.current_stock || 0) + ri.quantity
+              }).eq('id', ri.sku_id)
+            }
+          }
           await this.supabase.rpc('add_stock_movement', {
             p_product_id: ri.product_id,
             p_quantity: ri.quantity,
             p_type: 'in',
             p_reason: 'return',
-            p_notes: `Retur dari ${sale.invoice_number}`,
+            p_notes: `Retur dari ${sale.invoice_number}${ri.sku_id ? ' (Varian)' : ''}`,
             p_created_by: this.auth.user.id
           })
         }
 
-        // 3. Deduct revenue — cash transaction out
+        // 3. Deduct revenue — cash transaction out (using 'refund' category)
         await this.supabase.from('cash_transactions').insert({
           type: 'out',
-          category: 'return',
+          category: 'refund',
           amount: totalRefund,
           reference_type: 'sales_returns',
           reference_id: sale.id,
@@ -581,15 +626,41 @@ export class ReturPage {
   }
 
   _refreshTotals() {
-    const shippingEl = document.getElementById('return-shipping')
-    if (shippingEl) shippingEl.value = this.shippingCost
+    const totalProductReturn = this.returnItems.reduce((sum, ri) => {
+      const item = this.selectedSale?.sale_items?.find(i => i.product_id === ri.productId)
+      return sum + (ri.quantity * (item?.unit_price || 0))
+    }, 0)
+    const totalRefund = totalProductReturn + (this.shippingCost || 0)
 
-    // Re-render to update the summary box
-    if (this.showConfirmModal && this.selectedSale) {
-      const modal = document.querySelector('.modal-overlay')
-      if (modal) {
-        modal.outerHTML = this.renderReturnModal()
-        this._bindModalEvents()
+    const prodRefundEl = document.getElementById('summary-product-refund')
+    if (prodRefundEl) prodRefundEl.textContent = `Rp ${this.formatNumber(totalProductReturn)}`
+
+    const shipRow = document.getElementById('summary-shipping-row')
+    const shipVal = document.getElementById('summary-shipping-amount')
+    if (shipRow && shipVal) {
+      if (this.shippingCost > 0) {
+        shipRow.style.display = 'flex'
+        shipVal.textContent = `Rp ${this.formatNumber(this.shippingCost)}`
+      } else {
+        shipRow.style.display = 'none'
+      }
+    }
+
+    const totalRefundEl = document.getElementById('summary-total-refund')
+    if (totalRefundEl) totalRefundEl.textContent = `Rp ${this.formatNumber(totalRefund)}`
+
+    const confirmBtn = document.getElementById('confirm-return')
+    const confirmText = document.getElementById('confirm-btn-text')
+    if (confirmText) confirmText.textContent = `Proses Retur Rp ${this.formatNumber(totalRefund)}`
+    if (confirmBtn) {
+      if (totalProductReturn <= 0) {
+        confirmBtn.disabled = true
+        confirmBtn.style.opacity = '0.5'
+        confirmBtn.style.cursor = 'not-allowed'
+      } else {
+        confirmBtn.disabled = false
+        confirmBtn.style.opacity = '1'
+        confirmBtn.style.cursor = 'pointer'
       }
     }
   }

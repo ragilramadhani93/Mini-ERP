@@ -119,8 +119,9 @@ export class ImportExportPage {
   renderImportResult() {
     return `
       <div class="mt-4 p-4 rounded-lg ${this.importResult.success ? 'bg-success-50' : 'bg-danger-50'}">
-        <p class="font-semibold ${this.importResult.success ? 'text-success-600' : 'text-danger-600'}">
-          ${this.importResult.success ? '✓ Berhasil!' : '✗ Gagal'}
+        <p class="font-semibold flex items-center gap-1.5 ${this.importResult.success ? 'text-success-600' : 'text-danger-600'}">
+          <i data-lucide="${this.importResult.success ? 'check-circle' : 'alert-circle'}" class="w-4 h-4"></i>
+          ${this.importResult.success ? 'Berhasil!' : 'Gagal'}
         </p>
         <p class="text-sm mt-1">${this.importResult.message}</p>
       </div>

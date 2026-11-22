@@ -151,6 +151,10 @@ export class SalesPage {
             <div class="page-subtitle">Kelola dan pantau seluruh transaksi penjualan Anda</div>
           </div>
           <div class="header-actions">
+            <a href="#/returns" class="btn-secondary" style="text-decoration:none;">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 102.13-9.36L1 10"/></svg>
+              Kelola Retur
+            </a>
             <button id="export-btn" class="btn-secondary">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
               Export
@@ -243,17 +247,17 @@ export class SalesPage {
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
                 Filter
               </button>
-              <button class="btn-secondary" id="filter-overpaid-btn" style="${this.showOnlyOverpaid ? 'background:#d97706;color:white;border-color:#d97706;' : ''}">
-                ➕ ${this.showOnlyOverpaid ? 'Hanya Lebih Bayar' : 'Lebih Bayar'}
+              <button class="btn-secondary h-8 px-3 text-xs rounded-md inline-flex items-center gap-1.5" id="filter-overpaid-btn" style="${this.showOnlyOverpaid ? 'background:#d97706;color:white;border-color:#d97706;' : ''}">
+                <i data-lucide="plus-circle" class="w-3.5 h-3.5 shrink-0"></i><span>${this.showOnlyOverpaid ? 'Hanya Lebih Bayar' : 'Lebih Bayar'}</span>
               </button>
               <div class="date-filter" style="display:flex;align-items:center;gap:6px">
-                <input type="date" id="filter-start-date" value="${this.startDate}" style="border:1px solid #e2e8f0;border-radius:6px;font-size:12px;padding:6px 8px">
-                <span style="color:#94a3b8;font-size:12px">–</span>
-                <input type="date" id="filter-end-date" value="${this.endDate}" style="border:1px solid #e2e8f0;border-radius:6px;font-size:12px;padding:6px 8px">
+                <input type="date" id="filter-start-date" value="${this.startDate}" style="border:1px solid hsl(var(--input));border-radius:6px;font-size:12px;padding:4px 8px;height:32px;background:hsl(var(--background));color:hsl(var(--foreground));outline:none;">
+                <span style="color:hsl(var(--muted-foreground));font-size:12px">–</span>
+                <input type="date" id="filter-end-date" value="${this.endDate}" style="border:1px solid hsl(var(--input));border-radius:6px;font-size:12px;padding:4px 8px;height:32px;background:hsl(var(--background));color:hsl(var(--foreground));outline:none;">
               </div>
               <div class="search-box" style="position:relative">
-                <svg style="position:absolute;left:10px;top:50%;transform:translateY(-50%);width:13px;height:13px;color:#94a3b8" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-                <input type="text" id="search-sale" placeholder="Cari invoice atau pelanggan..." value="${this.searchQuery}" style="padding-left:30px;width:200px;border:1px solid #e2e8f0;border-radius:6px;font-size:12px;padding-top:7px;padding-bottom:7px">
+                <svg style="position:absolute;left:10px;top:50%;transform:translateY(-50%);width:13px;height:13px;color:hsl(var(--muted-foreground))" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                <input type="text" id="search-sale" placeholder="Cari invoice atau pelanggan..." value="${this.searchQuery}" style="padding-left:30px;width:220px;border:1px solid hsl(var(--input));border-radius:6px;font-size:12px;height:32px;background:hsl(var(--background));color:hsl(var(--foreground));outline:none;">
               </div>
             </div>
           </div>
@@ -272,7 +276,7 @@ export class SalesPage {
                 <th style="text-align:right">Diterima</th>
                 <th>Pembayaran</th>
                 <th>Oleh</th>
-                <th style="text-align:center">Aksi</th>
+                <th style="text-align:center" class="sticky-action-col">Aksi</th>
               </tr>
             </thead>
             <tbody>
@@ -315,13 +319,13 @@ export class SalesPage {
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
                     Pelanggan umum
                   </span>
-                ` : `<span class="customer-cell">${s.customer_name}</span>`
+                ` : `<span class="customer-cell">${this.escapeHtml(s.customer_name)}</span>`
 
                 const marketplaceHtml = s.marketplace ? `<span class="badge" style="background:#F4E5EC;color:#7A3B58">${marketplaceNames[s.marketplace]}</span>` : '-'
 
                 const platformFeeHtml = s.platform_fee > 0 ? `<span style="color:#ef4444;font-weight:600">- Rp ${this.formatNumber(s.platform_fee)}</span>` : '-'
 
-                const overpaidHtml = isOverpaid ? `<span style="color:#d97706;font-weight:600;font-size:11px;display:block;margin-top:2px">➕ Lebih bayar Rp ${this.formatNumber(overpaidAmount)}</span>` : ''
+                const overpaidHtml = isOverpaid ? `<span style="color:#d97706;font-weight:600;font-size:11px;display:block;margin-top:2px">+ Lebih bayar Rp ${this.formatNumber(overpaidAmount)}</span>` : ''
 
                 const byNameHtml = byName.length > 10 ? byName.split(' ')[0] + ' ' + (byName.split(' ')[1]?.[0] || '') + '.' : byName
 
@@ -341,12 +345,16 @@ export class SalesPage {
                     <td class="text-right">${s.status === 'completed' ? `<span class="amount-received">Rp ${this.formatNumber(totalReceived)}</span>${overpaidHtml}` : '<span class="amount-pending">-</span>'}</td>
                     <td><div class="payment-cell">${this.renderPaymentBadges(s)}</div></td>
                     <td class="by-cell"><span class="by-avatar">${byInitials}</span>${byNameHtml}</td>
-                    <td><div class="action-cell">
-                      <button class="action-btn view-sale" data-id="${s.id}" title="Lihat Detail">👁️</button>
-                      <button class="action-btn print-sale" data-id="${s.id}" title="Cetak Invoice">🖨️</button>
-                      ${s.status !== 'completed' ? `<button class="action-btn edit-sale" data-id="${s.id}" title="Edit Draft" style="border-color:#7A3B58;color:#7A3B58">✏️</button>` : ''}
-                      ${s.status !== 'completed' ? `<button class="action-btn close-sale" data-id="${s.id}" title="Tutup (Lunas)" style="border-color:#22c55e;color:#16a34a">✓</button>` : ''}
-                      ${s.status !== 'completed' ? `<button class="action-btn delete-sale" data-id="${s.id}" title="Hapus Draft" style="border-color:#ef4444;color:#ef4444">🗑️</button>` : ''}
+                    <td class="sticky-action-col"><div class="action-cell" style="display:flex;gap:6px;align-items:center;justify-content:center;">
+                      <button class="action-btn view-sale" data-id="${s.id}" title="Lihat Detail" aria-label="Lihat Detail" style="width:32px;height:32px;min-width:32px;padding:0;display:inline-flex;align-items:center;justify-content:center;border:1px solid #cbd5e1;border-radius:8px;background:#ffffff;cursor:pointer;color:#334155;">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="#334155" stroke-width="2.2" width="16" height="16" style="width:16px;height:16px;display:block;stroke:#334155;"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                      </button>
+                      <button class="action-btn print-sale" data-id="${s.id}" title="Cetak Invoice" aria-label="Cetak Invoice" style="width:32px;height:32px;min-width:32px;padding:0;display:inline-flex;align-items:center;justify-content:center;border:1px solid #cbd5e1;border-radius:8px;background:#ffffff;cursor:pointer;color:#334155;">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="#334155" stroke-width="2.2" width="16" height="16" style="width:16px;height:16px;display:block;stroke:#334155;"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+                      </button>
+                      ${s.status !== 'completed' ? `<button class="action-btn edit-sale" data-id="${s.id}" title="Edit Draft" aria-label="Edit Draft" style="width:32px;height:32px;min-width:32px;padding:0;display:inline-flex;align-items:center;justify-content:center;border:1px solid #7A3B58;border-radius:8px;background:#ffffff;cursor:pointer;color:#7A3B58;"><svg viewBox="0 0 24 24" fill="none" stroke="#7A3B58" stroke-width="2.2" width="16" height="16" style="width:16px;height:16px;display:block;stroke:#7A3B58;"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>` : ''}
+                      ${s.status !== 'completed' ? `<button class="action-btn close-sale" data-id="${s.id}" title="Tutup (Lunas)" aria-label="Tutup (Lunas)" style="width:32px;height:32px;min-width:32px;padding:0;display:inline-flex;align-items:center;justify-content:center;border:1px solid #22c55e;border-radius:8px;background:#ffffff;cursor:pointer;color:#16a34a;"><svg viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2.5" width="16" height="16" style="width:16px;height:16px;display:block;stroke:#16a34a;"><polyline points="20 6 9 17 4 12"/></svg></button>` : ''}
+                      ${s.status !== 'completed' ? `<button class="action-btn delete-sale" data-id="${s.id}" title="Hapus Draft" aria-label="Hapus Draft" style="width:32px;height:32px;min-width:32px;padding:0;display:inline-flex;align-items:center;justify-content:center;border:1px solid #ef4444;border-radius:8px;background:#ffffff;cursor:pointer;color:#ef4444;"><svg viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2.2" width="16" height="16" style="width:16px;height:16px;display:block;stroke:#ef4444;"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg></button>` : ''}
                     </div></td>
                   </tr>
                 `
@@ -412,9 +420,16 @@ export class SalesPage {
     return `
       <div class="modal-overlay" id="modal-overlay" style="display:flex;align-items:center;justify-content:center;background:rgba(15,23,42,0.5);z-index:100;overflow-y:auto;padding:20px">
         <div class="sales-modal">
-          <div class="modal-header">
-            <h2>🛒 ${this.editingSale ? 'Edit Draft' : 'Input Penjualan'}</h2>
-            <button id="close-modal" class="close-btn">✕</button>
+          <div class="modal-header flex items-center justify-between">
+            <div class="flex items-center gap-2.5">
+              <div class="w-8 h-8 rounded-lg bg-primary-50 text-primary-700 flex items-center justify-center">
+                <i data-lucide="shopping-bag" class="w-4 h-4"></i>
+              </div>
+              <h2 class="text-base font-semibold text-stone-900">${this.editingSale ? 'Edit Draft Penjualan' : 'Input Penjualan Kasir'}</h2>
+            </div>
+            <button id="close-modal" class="close-btn flex items-center justify-center">
+              <i data-lucide="x" class="w-4 h-4"></i>
+            </button>
           </div>
 
           <form id="sale-form">
@@ -491,14 +506,16 @@ export class SalesPage {
                         Rp ${this.formatNumber(item.subtotal)}
                         <small>Rp ${this.formatNumber(item.price || 0)}/pc</small>
                       </div>
-                      <button type="button" class="remove-btn remove-item" data-index="${i}">✕</button>
+                      <button type="button" class="remove-btn remove-item flex items-center justify-center" data-index="${i}" title="Hapus baris">
+                        <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                      </button>
                     </div>
                   `
                 }).join('')}
               </div>
 
-              <button type="button" id="add-item" class="add-item-btn">
-                + Tambah Produk
+              <button type="button" id="add-item" class="add-item-btn flex items-center justify-center gap-1.5">
+                <i data-lucide="plus" class="w-4 h-4"></i> Tambah Baris Produk
               </button>
 
             </div>
@@ -515,7 +532,7 @@ export class SalesPage {
           <option value="Pelanggan Umum">
           ${this.customers.map(c => `<option value="${c}">`).join('')}
         </datalist>
-        ${customerDeposit > 0 ? `<p style="font-size:12px;color:#16a34a;margin-top:4px;">💰 Saldo Deposit: Rp ${this.formatNumber(customerDeposit)}</p>` : ''}
+        ${customerDeposit > 0 ? `<p class="flex items-center gap-1.5 text-xs text-emerald-700 font-medium mt-1"><i data-lucide="wallet" class="w-3.5 h-3.5"></i> Saldo Deposit: Rp ${this.formatNumber(customerDeposit)}</p>` : ''}
       </div>
       
       ${customerDeposit > 0 ? `
@@ -596,13 +613,13 @@ export class SalesPage {
                 </div>
                 ${depositToUse > 0 ? `
                 <div class="total-row" style="display:block;background:#dcfce7;padding:10px;border-radius:8px;">
-                  <span style="color:#166534;font-weight:600;">💰 Deposit Digunakan</span>
+                  <span style="color:#166534;font-weight:600;"><i data-lucide="wallet" class="w-4 h-4 inline mr-1"></i>Deposit Digunakan</span>
                   <strong style="color:#166534;">- Rp ${this.formatNumber(depositToUse)}</strong>
                 </div>
                 ` : ''}
                 <div id="overpaidSection" class="hidden">
                   <div class="total-row" style="display:block;background:#fef3c7;padding:10px;border-radius:8px;">
-                    <span style="color:#d97706;font-weight:600;">➕ Lebih Bayar</span>
+                    <span style="color:#d97706;font-weight:600;"><i data-lucide="plus-circle" class="w-4 h-4 inline mr-1"></i>Lebih Bayar</span>
                     <strong id="overpaidAmount" style="color:#d97706;">Rp 0</strong>
                   </div>
                 </div>
@@ -684,7 +701,7 @@ export class SalesPage {
             <div class="dv-info-grid">
               <div class="dv-info-cell">
                 <div class="dv-ic-label">Pelanggan</div>
-                <div class="dv-ic-value">${sale?.customer_name || '-'}</div>
+                <div class="dv-ic-value">${this.escapeHtml(sale?.customer_name || '-')}</div>
               </div>
               <div class="dv-info-cell">
                 <div class="dv-ic-label">Tanggal</div>
@@ -784,7 +801,7 @@ export class SalesPage {
               </div>
               ${isOverpaid ? `
               <div class="dv-sum-row" style="background:#fff7ed;padding:10px;border-radius:8px;margin-top:10px;">
-                <span class="dv-sum-label" style="color:#d97706;font-weight:600;">➕ Lebih bayar</span>
+                <span class="dv-sum-label" style="color:#d97706;font-weight:600;">+ Lebih bayar</span>
                 <span class="dv-sum-val" style="color:#d97706;font-weight:700;">Rp ${this.formatNumber(overpaidAmount)}</span>
               </div>
               ` : ''}
@@ -883,6 +900,16 @@ export class SalesPage {
     }, 0)
   }
 
+  escapeHtml(str) {
+    if (!str) return ''
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;')
+  }
+
   formatNumber(num) {
     return num ? num.toLocaleString('id-ID') : '0'
   }
@@ -950,7 +977,7 @@ export class SalesPage {
             ${sale.marketplace ? `<p><span class="label">Marketplace:</span> ${marketplaceNames[sale.marketplace]}</p>` : ''}
           </div>
           <div style="text-align:right">
-            <p><span class="label">Pelanggan:</span> ${sale.customer_name || '-'}</p>
+            <p><span class="label">Pelanggan:</span> ${this.escapeHtml(sale.customer_name || '-')}</p>
             <p><span class="label">Kasir:</span> ${sale.created_by_user?.full_name || '-'}</p>
             <p><span class="label">Status:</span> ${sale.status === 'completed' ? 'Lunas' : 'Belum Lunas'}</p>
             <p><span class="label">Pembayaran:</span> ${paymentLabel}</p>
@@ -975,6 +1002,23 @@ export class SalesPage {
 
   async bindEvents() {
     await this.loadData()
+    try {
+      const pendingItem = sessionStorage.getItem('pending_sale_item')
+      if (pendingItem) {
+        sessionStorage.removeItem('pending_sale_item')
+        const item = JSON.parse(pendingItem)
+        const prod = this.products.find(p => p.id === item.product_id)
+        const price = prod?.sell_price || item.sell_price || 0
+        this.transactionItems = [{
+          productId: item.product_id,
+          qty: item.quantity || 1,
+          price: price,
+          discount: 0,
+          subtotal: price * (item.quantity || 1)
+        }]
+        this.showModal = true
+      }
+    } catch (e) {}
     this.renderAndBind()
   }
 
@@ -1483,136 +1527,145 @@ export class SalesPage {
       const saleDateValue = formData.get('sale_date') || new Date().toISOString().slice(0, 10)
       const saleCreatedAt = new Date(saleDateValue + 'T' + new Date().toTimeString().slice(0, 8)).toISOString()
 
-      let sale, saleError
-      const saleTotalAmount = markupAmount > 0 ? markedUpTotal : totalAmount
-      if (isEdit) {
-        const result = await this.supabase.from('sales').update({
-          customer_name: formData.get('customer_name') || null,
-          total_amount: saleTotalAmount,
-          payment_method: paymentMethod,
-          marketplace: saleMarketplace,
-          platform_fee: platformFee,
-          total_received: totalReceived,
-          status: status,
-          payment_status: status === 'completed' ? 'paid' : 'unpaid',
-          paid_amount: status === 'completed' ? totalReceived : 0,
-          payment_details: paymentDetails,
-          created_at: saleCreatedAt
-        }).eq('id', this.editingSale.id).select().single()
-        sale = result.data
-        saleError = result.error
-        if (saleError) { alert('Gagal update penjualan: ' + saleError.message); this.loading = false; this.renderAndBind(); return }
-      } else {
-        const result = await this.supabase.from('sales').insert({
-          invoice_number: 'INV-' + Date.now().toString(36).toUpperCase(),
-          customer_name: formData.get('customer_name') || null,
-          total_amount: saleTotalAmount,
-          payment_method: paymentMethod,
-          marketplace: saleMarketplace,
-          platform_fee: platformFee,
-          total_received: totalReceived,
-          status: status,
-          payment_status: status === 'completed' ? 'paid' : 'unpaid',
-          paid_amount: status === 'completed' ? totalReceived : 0,
-          payment_details: paymentDetails,
-          created_at: saleCreatedAt,
-          created_by: this.auth.user.id
-        }).select().single()
-        sale = result.data
-        saleError = result.error
-        if (saleError) { alert('Gagal simpan penjualan: ' + saleError.message); this.loading = false; this.renderAndBind(); return }
+      const salePayload = {
+        invoice_number: isEdit ? this.editingSale.invoice_number : ('INV-' + Date.now().toString(36).toUpperCase()),
+        customer_name: formData.get('customer_name') || null,
+        total_amount: saleTotalAmount,
+        payment_method: paymentMethod,
+        marketplace: saleMarketplace,
+        platform_fee: platformFee,
+        total_received: totalReceived,
+        status: status,
+        payment_details: paymentDetails,
+        created_at: saleCreatedAt,
+        created_by: this.auth.user.id
       }
 
-      // Save sale_items
-      if (isEdit) {
-        // Delete old items FIRST before inserting new ones
-        await this.supabase.from('sale_items').delete().eq('sale_id', this.editingSale.id)
-      }
-
-      const saleItems = validItems.map(item => ({
-        sale_id: sale.id, product_id: item.productId, quantity: item.qty,
-        unit_price: item.price, discount: item.discount,
-        sku_id: item.skuId || null, marketplace: item.marketplace || null
+      const formattedItems = validItems.map(item => ({
+        product_id: item.productId,
+        sku_id: item.skuId || null,
+        quantity: item.qty,
+        unit_price: item.price,
+        discount: item.discount || 0,
+        marketplace: item.marketplace || null
       }))
-      const { error: itemsError } = await this.supabase.from('sale_items').insert(saleItems)
-      if (itemsError) { alert('Gagal menyimpan item: ' + itemsError.message); this.loading = false; this.renderAndBind(); return }
 
-      // Save split payments
-      if (isSplit) {
-        await this.supabase.from('split_payments').delete().eq('sale_id', sale.id)
-        if (this.splitPayments.length > 0) {
-          const splitInserts = this.splitPayments.filter(sp => sp.amount > 0).map(sp => ({
-            sale_id: sale.id, method: sp.method, amount: sp.amount
-          }))
-          if (splitInserts.length > 0) {
-            const { error: splitError } = await this.supabase.from('split_payments').insert(splitInserts)
-            if (splitError) { alert('Gagal menyimpan split payment: ' + splitError.message) }
-          }
+      const formattedSplits = isSplit && this.splitPayments.length > 0
+        ? this.splitPayments.filter(sp => sp.amount > 0).map(sp => ({ method: sp.method, amount: sp.amount }))
+        : []
+
+      // Attempt atomic execution via process_sale RPC
+      const { data: rpcData, error: rpcError } = await this.supabase.rpc('process_sale', {
+        p_sale: salePayload,
+        p_items: formattedItems,
+        p_splits: formattedSplits,
+        p_is_edit: isEdit,
+        p_editing_sale_id: isEdit ? this.editingSale.id : null
+      })
+
+      if (!rpcError && rpcData?.success) {
+        sale = { id: rpcData.sale_id, invoice_number: rpcData.invoice_number }
+      } else {
+        // Fallback for environments where RPC is pending deployment
+        if (isEdit) {
+          const result = await this.supabase.from('sales').update({
+            customer_name: formData.get('customer_name') || null,
+            total_amount: saleTotalAmount,
+            payment_method: paymentMethod,
+            marketplace: saleMarketplace,
+            platform_fee: platformFee,
+            total_received: totalReceived,
+            status: status,
+            payment_status: status === 'completed' ? 'paid' : 'unpaid',
+            paid_amount: status === 'completed' ? totalReceived : 0,
+            payment_details: paymentDetails,
+            created_at: saleCreatedAt
+          }).eq('id', this.editingSale.id).select().single()
+          sale = result.data
+          saleError = result.error
+          if (saleError) { alert('Gagal update penjualan: ' + saleError.message); this.loading = false; this.renderAndBind(); return }
+        } else {
+          const result = await this.supabase.from('sales').insert({
+            invoice_number: salePayload.invoice_number,
+            customer_name: formData.get('customer_name') || null,
+            total_amount: saleTotalAmount,
+            payment_method: paymentMethod,
+            marketplace: saleMarketplace,
+            platform_fee: platformFee,
+            total_received: totalReceived,
+            status: status,
+            payment_status: status === 'completed' ? 'paid' : 'unpaid',
+            paid_amount: status === 'completed' ? totalReceived : 0,
+            payment_details: paymentDetails,
+            created_at: saleCreatedAt,
+            created_by: this.auth.user.id
+          }).select().single()
+          sale = result.data
+          saleError = result.error
+          if (saleError) { alert('Gagal simpan penjualan: ' + saleError.message); this.loading = false; this.renderAndBind(); return }
         }
-      }
-      if (itemsError) { alert('Gagal menyimpan item: ' + itemsError.message); this.loading = false; this.renderAndBind(); return }
 
-      // Only deduct stock when status is completed (not draft)
-      if (status === 'completed' && !isEdit) {
-        const isBackdated = saleDateValue < new Date().toISOString().slice(0, 10)
-        const stockPromises = validItems.map(item => {
-          if (item.skuId) {
-            const sku = this.productSkus.find(s => s.id === item.skuId)
-            const skuStock = sku?.current_stock || 0
-            if (!isBackdated && skuStock < item.qty) {
-              alert(`Stok varian tidak mencukupi. Stok: ${skuStock}`)
-              return null
+        if (isEdit) {
+          await this.supabase.from('sale_items').delete().eq('sale_id', this.editingSale.id)
+        }
+
+        const saleItems = validItems.map(item => ({
+          sale_id: sale.id, product_id: item.productId, quantity: item.qty,
+          unit_price: item.price, discount: item.discount,
+          sku_id: item.skuId || null, marketplace: item.marketplace || null
+        }))
+        const { error: itemsError } = await this.supabase.from('sale_items').insert(saleItems)
+        if (itemsError) { alert('Gagal menyimpan item: ' + itemsError.message); this.loading = false; this.renderAndBind(); return }
+
+        if (isSplit && formattedSplits.length > 0) {
+          await this.supabase.from('split_payments').delete().eq('sale_id', sale.id)
+          const splitInserts = formattedSplits.map(sp => ({ sale_id: sale.id, method: sp.method, amount: sp.amount }))
+          await this.supabase.from('split_payments').insert(splitInserts)
+        }
+
+        if (status === 'completed') {
+          for (const item of validItems) {
+            if (item.skuId) {
+              const sku = this.productSkus.find(s => s.id === item.skuId)
+              const skuStock = sku?.current_stock || 0
+              await this.supabase.from('product_skus').update({ current_stock: Math.max(0, skuStock - item.qty) }).eq('id', item.skuId)
+              await this.supabase.from('stock_movements').insert({
+                product_id: item.productId, quantity: item.qty, type: 'out', reason: 'sale',
+                notes: `Penjualan ${sale.invoice_number} (Varian)`, created_by: this.auth.user.id, created_at: saleCreatedAt
+              })
+            } else {
+              await this.supabase.rpc('add_stock_movement', {
+                p_product_id: item.productId, p_quantity: item.qty, p_type: 'out',
+                p_reason: 'sale', p_notes: `Penjualan ${sale.invoice_number}`, p_created_by: this.auth.user.id
+              })
             }
-            return this.supabase.from('product_skus').update({
-              current_stock: skuStock - item.qty
-            }).eq('id', item.skuId)
-          } else {
-            return this.supabase.rpc('add_stock_movement', {
-              p_product_id: item.productId, p_quantity: item.qty, p_type: 'out',
-              p_reason: 'sale', p_notes: `Penjualan ${sale.invoice_number}`, p_created_by: this.auth.user.id
-            })
           }
-        }).filter(Boolean)
-        const stockResults = await Promise.all(stockPromises)
-        const stockError = stockResults.find(r => r.error)
-        if (stockError) { alert('Gagal update stok: ' + stockError.error.message); this.loading = false; this.renderAndBind(); return }
-      }
 
-      if (status === 'completed') {
-        await this.supabase.from('cash_transactions').insert({
-          type: 'in', category: 'sales', amount: totalReceived,
-          reference_type: 'sales', reference_id: sale.id,
-          description: `Penjualan ${sale.invoice_number}${customerName ? ` - ${customerName}` : ''}${paymentDetails.is_overpaid ? ` (Lebih bayar Rp ${this.formatNumber(paymentDetails.overpaid_amount)})` : ''}${paymentDetails.deposit_used ? ` (Menggunakan deposit Rp ${this.formatNumber(paymentDetails.deposit_used)})` : ''}`,
-          created_by: this.auth.user.id,
-          created_at: saleCreatedAt
-        })
-        
-        // Handle deposits
-        if (customerName) {
-          // If we used deposit, subtract it
-          if (paymentDetails.deposit_used > 0) {
-            await this.supabase.from('customer_deposits').insert({
-              customer_name: customerName,
-              amount: -paymentDetails.deposit_used,
-              reference_type: 'sales',
-              reference_id: sale.id,
-              description: `Penggunaan deposit untuk ${sale.invoice_number}`,
-              created_by: this.auth.user.id,
-              created_at: saleCreatedAt
-            })
-          }
-          
-          // If there's an overpayment, add it to deposit
-          if (paymentDetails.is_overpaid && paymentDetails.overpaid_amount > 0) {
-            await this.supabase.from('customer_deposits').insert({
-              customer_name: customerName,
-              amount: paymentDetails.overpaid_amount,
-              reference_type: 'sales',
-              reference_id: sale.id,
-              description: `Tambah deposit dari lebih bayar ${sale.invoice_number}`,
-              created_by: this.auth.user.id,
-              created_at: saleCreatedAt
-            })
+          await this.supabase.from('cash_transactions').insert({
+            type: 'in', category: 'sales', amount: totalReceived,
+            reference_type: 'sales', reference_id: sale.id,
+            description: `Penjualan ${sale.invoice_number}${customerName ? ` - ${customerName}` : ''}`,
+            created_by: this.auth.user.id,
+            created_at: saleCreatedAt
+          })
+
+          if (customerName) {
+            if (paymentDetails.deposit_used > 0) {
+              await this.supabase.from('customer_deposits').insert({
+                customer_name: customerName, amount: -paymentDetails.deposit_used,
+                reference_type: 'sales', reference_id: sale.id,
+                description: `Penggunaan deposit untuk ${sale.invoice_number}`,
+                created_by: this.auth.user.id, created_at: saleCreatedAt
+              })
+            }
+            if (paymentDetails.is_overpaid && paymentDetails.overpaid_amount > 0) {
+              await this.supabase.from('customer_deposits').insert({
+                customer_name: customerName, amount: paymentDetails.overpaid_amount,
+                reference_type: 'sales', reference_id: sale.id,
+                description: `Tambah deposit dari lebih bayar ${sale.invoice_number}`,
+                created_by: this.auth.user.id, created_at: saleCreatedAt
+              })
+            }
           }
         }
       }

@@ -86,7 +86,13 @@ export class PurchaseOrderPage {
             </thead>
             <tbody>
               ${orders.length === 0 ? `
-                <tr><td colspan="7" class="text-center text-gray-500 py-8">Belum ada Purchase Order</td></tr>
+                <tr>
+                  <td colspan="7" class="text-center py-12 text-stone-400">
+                    <i data-lucide="file-text" class="w-8 h-8 mx-auto mb-2 text-stone-300"></i>
+                    <p class="text-sm font-medium text-stone-600">Belum ada Purchase Order</p>
+                    <p class="text-xs text-stone-400 mt-0.5">Buat pesanan pengadaan barang baru ke supplier</p>
+                  </td>
+                </tr>
               ` : orders.map(po => {
                 const items = po.purchase_items || []
                 return `
@@ -94,7 +100,7 @@ export class PurchaseOrderPage {
                     <td class="font-mono text-xs font-medium">${po.po_number}</td>
                     <td class="font-medium">${po.suppliers?.supplier_name || '-'}</td>
                     <td>${items.length} item</td>
-                    <td class="text-right font-semibold">Rp ${this.formatNumber(po.total_amount)}</td>
+                    <td class="text-right font-semibold tnum">Rp ${this.formatNumber(po.total_amount)}</td>
                     <td><span class="badge ${this.getStatusBadgeClass(po.status)}">${this.getStatusLabel(po.status)}</span></td>
                     <td class="text-sm text-gray-500 whitespace-nowrap">${this.formatDate(po.created_at)}</td>
                     <td class="text-right">

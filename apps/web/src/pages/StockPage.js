@@ -6,6 +6,7 @@ export class StockPage {
     this.products = []
     this.activeTab = 'in'
     this.showModal = false
+    this.showBulkModal = false
     this.loading = false
   }
 
@@ -80,11 +81,17 @@ export class StockPage {
               </thead>
               <tbody>
                 ${filtered.length === 0 ? `
-                  <tr><td colspan="7" class="text-center text-gray-500 py-8">Belum ada pergerakan stok</td></tr>
+                  <tr>
+                    <td colspan="7" class="text-center py-12 text-stone-400">
+                      <i data-lucide="package-search" class="w-8 h-8 mx-auto mb-2 text-stone-300"></i>
+                      <p class="text-sm font-medium text-stone-600">Belum ada pergerakan stok</p>
+                      <p class="text-xs text-stone-400 mt-0.5">Riwayat stok masuk dan keluar gudang akan dicatat di sini</p>
+                    </td>
+                  </tr>
                 ` : filtered.map(m => `
                   <tr>
-                    <td class="text-sm text-gray-500 whitespace-nowrap">${this.formatDate(m.created_at)}</td>
-                    <td class="font-medium">${m.products?.name || '-'}</td>
+                    <td class="text-sm text-stone-600 whitespace-nowrap">${this.formatDate(m.created_at)}</td>
+                    <td class="font-medium text-stone-900">${m.products?.name || '-'}</td>
                     <td class="font-mono text-xs">${m.products?.sku || '-'}</td>
                     <td>
                       <span class="badge ${m.type === 'in' ? 'badge-success' : 'badge-danger'}">
@@ -92,7 +99,7 @@ export class StockPage {
                       </span>
                     </td>
                     <td>${this.getReasonLabel(m.reason)}</td>
-                    <td class="text-right font-semibold">${m.type === 'in' ? '+' : '-'}${m.quantity}</td>
+                    <td class="text-right font-semibold tnum ${m.type === 'in' ? 'text-emerald-700' : 'text-rose-700'}">${m.type === 'in' ? '+' : '-'}${m.quantity}</td>
                     <td class="text-sm text-gray-500">${m.created_by_user?.full_name || '-'}</td>
                   </tr>
                 `).join('')}
@@ -102,6 +109,29 @@ export class StockPage {
         </div>
 
         ${this.showModal ? this.renderModal() : ''}
+        ${this.showBulkModal ? this.renderBulkModal() : ''}
+      </div>
+    `
+  }
+
+  renderBulkModal() {
+    return `
+      <div class="modal-overlay" id="bulk-modal-overlay">
+        <div class="modal-content p-6 max-w-md">
+          <div class="flex items-center justify-between mb-4">
+            <h3 class="text-base font-semibold text-gray-900">Konfirmasi Input Stok Massal</h3>
+            <button id="close-bulk-modal" class="text-gray-400 hover:text-gray-600"><i data-lucide="x" class="w-5 h-5"></i></button>
+          </div>
+          <p class="text-sm text-gray-600 mb-4">
+            Aksi ini akan menambahkan <strong>+100 stok masuk</strong> untuk seluruh <strong>${this.products.length} produk</strong>. Lanjutkan penambahan?
+          </p>
+          <div class="flex justify-end gap-3 pt-3 border-t border-gray-100">
+            <button type="button" id="cancel-bulk-modal" class="btn-secondary">Batal</button>
+            <button type="button" id="confirm-bulk-submit" class="btn-primary" ${this.loading ? 'disabled' : ''}>
+              ${this.loading ? 'Memproses...' : 'Ya, Tambahkan Stok'}
+            </button>
+          </div>
+        </div>
       </div>
     `
   }
@@ -198,16 +228,31 @@ export class StockPage {
       this.renderAndBind()
     })
 
-    document.getElementById('bulk-stock-btn')?.addEventListener('click', async () => {
-      if (!confirm(`Anda yakin ingin menambahkan stok masuk 100 untuk SEMUA ${this.products.length} produk?`)) {
-        return
+    document.getElementById('bulk-stock-btn')?.addEventListener('click', () => {
+      this.showBulkModal = true
+      this.renderAndBind()
+    })
+
+    document.getElementById('close-bulk-modal')?.addEventListener('click', () => {
+      this.showBulkModal = false
+      this.renderAndBind()
+    })
+    document.getElementById('cancel-bulk-modal')?.addEventListener('click', () => {
+      this.showBulkModal = false
+      this.renderAndBind()
+    })
+    document.getElementById('bulk-modal-overlay')?.addEventListener('click', (e) => {
+      if (e.target === e.currentTarget) {
+        this.showBulkModal = false
+        this.renderAndBind()
       }
-      
+    })
+
+    document.getElementById('confirm-bulk-submit')?.addEventListener('click', async () => {
       this.loading = true
       this.renderAndBind()
 
       try {
-        // Insert stock movements dan update current_stock secara manual
         const now = new Date().toISOString()
         const movements = this.products.map(product => ({
           product_id: product.id,
@@ -219,11 +264,9 @@ export class StockPage {
           created_at: now
         }))
 
-        // Insert ke stock_movements
         const { error: insertError } = await this.supabase.from('stock_movements').insert(movements)
         if (insertError) throw insertError
 
-        // Update current_stock untuk setiap produk
         const updatePromises = this.products.map(product => 
           this.supabase.from('products')
             .update({ current_stock: (product.current_stock || 0) + 100 })
@@ -231,16 +274,15 @@ export class StockPage {
         )
 
         await Promise.all(updatePromises)
-
-        alert(`Berhasil menambahkan stok masuk 100 untuk SEMUA ${this.products.length} produk!`)
         
         this.loading = false
+        this.showBulkModal = false
         await this.loadData()
         this.renderAndBind()
       } catch (error) {
         console.error('Bulk error:', error)
-        alert('Gagal: ' + (error.message || 'Terjadi kesalahan'))
         this.loading = false
+        this.showBulkModal = false
         this.renderAndBind()
       }
     })
@@ -249,16 +291,31 @@ export class StockPage {
   }
 
   _bindModalEvents() {
+    const onModalKeydown = (e) => {
+      if (e.key === 'Escape') {
+        if (this.showModal || this.showBulkModal) {
+          this.showModal = false
+          this.showBulkModal = false
+          document.removeEventListener('keydown', onModalKeydown)
+          this.renderAndBind()
+        }
+      }
+    }
+    document.addEventListener('keydown', onModalKeydown)
+
     document.getElementById('close-modal')?.addEventListener('click', () => {
+      document.removeEventListener('keydown', onModalKeydown)
       this.showModal = false
       this.renderAndBind()
     })
     document.getElementById('cancel-modal')?.addEventListener('click', () => {
+      document.removeEventListener('keydown', onModalKeydown)
       this.showModal = false
       this.renderAndBind()
     })
     document.getElementById('modal-overlay')?.addEventListener('click', (e) => {
       if (e.target === e.currentTarget) {
+        document.removeEventListener('keydown', onModalKeydown)
         this.showModal = false
         this.renderAndBind()
       }

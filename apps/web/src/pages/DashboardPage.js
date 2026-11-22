@@ -42,13 +42,29 @@ export class DashboardPage {
         stockMovements: stockMovements || [],
         saleItems: saleItems || []
       }
+      this.error = null
     } catch (error) {
       console.error('Error loading data:', error)
+      this.error = error.message || 'Terjadi kesalahan saat menghubungkan ke database.'
       this.data = { sales: [], cash: [], products: [], purchaseOrders: [], stockMovements: [], saleItems: [] }
     }
   }
 
   render() {
+    if (this.error) {
+      return `
+        <div class="dashboard-container">
+          <div class="p-8 text-center bg-rose-50 rounded-2xl border border-rose-200 my-8 max-w-lg mx-auto">
+            <div style="width:48px;height:48px;border-radius:50%;background:#fee2e2;color:#dc2626;display:flex;align-items:center;justify-content:center;margin:0 auto 12px">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+            </div>
+            <h3 style="font-size:16px;font-weight:700;color:#991b1b;margin-bottom:4px">Gagal Memuat Data Dashboard</h3>
+            <p style="font-size:13px;color:#7f1d1d;margin-bottom:16px">${this.error}</p>
+            <button id="retry-dashboard-btn" class="btn-primary" style="padding:8px 20px">Muat Ulang</button>
+          </div>
+        </div>
+      `
+    }
     const products = this.data.products || []
     const sales = this.data.sales || []
     const cash = this.data.cash || []
@@ -75,8 +91,9 @@ export class DashboardPage {
 
     const userName = this.auth.profile?.full_name || 'Pengguna'
     const profitMargin = todaySalesAmount > 0 ? Math.round((todayProfit / todaySalesAmount) * 100) : 0
-    const cuanTarget = 500000
-    const cuanProgress = Math.min((todayProfit / cuanTarget) * 100, 100)
+    const omsetComparisonText = yesterdayAmount > 0
+      ? `${omsetChange >= 0 ? '+' : ''}${omsetChange.toFixed(1)}% vs kemarin`
+      : 'Hari pertama periode'
 
     const chartData = this.generateChartData(sales, this.chartPeriod)
     const topProducts = this.getTopProducts(sales, products)
@@ -87,53 +104,91 @@ export class DashboardPage {
     return `
       <div class="dashboard-container">
         <!-- HEADER -->
-        <section class="welcome-card">
+        <section class="welcome-card mb-6">
           <div>
-            <h1 style="font-size:24px; font-weight:700; color:#111827;">Halo kembali, ${userName} 👋</h1>
-            <p style="font-size:14px; color:#6b7280; margin-top:4px;">Berikut ringkasan bisnis tokomu hari ini</p>
+            <h1 class="text-2xl font-bold text-stone-900 tracking-tight">Selamat datang, <span class="text-primary-600">${userName}</span></h1>
+            <p class="text-sm text-stone-500 mt-1">Ringkasan performa penjualan dan inventori toko hari ini</p>
           </div>
-          <div class="quick-actions">
-            <a href="#/sales" class="action-btn primary">+ Penjualan</a>
-            <a href="#/products" class="action-btn">+ Produk</a>
-            <a href="#/stock" class="action-btn">+ Stok Masuk</a>
-            <a href="#/suppliers" class="action-btn">+ Supplier</a>
+          <div class="quick-actions flex items-center gap-2 flex-wrap">
+            <a href="#/sales" class="btn-primary inline-flex items-center gap-2 h-9 px-4 rounded-md font-medium text-sm shadow whitespace-nowrap">
+              <i data-lucide="plus-circle" class="w-4 h-4 shrink-0"></i>
+              <span>Transaksi Baru</span>
+            </a>
+            <a href="#/products" class="btn-outline inline-flex items-center gap-2 h-9 px-4 rounded-md font-medium text-sm shadow-sm whitespace-nowrap">
+              <i data-lucide="box" class="w-4 h-4 shrink-0"></i>
+              <span>Kelola Produk</span>
+            </a>
+            <a href="#/stock" class="btn-outline inline-flex items-center gap-2 h-9 px-4 rounded-md font-medium text-sm shadow-sm whitespace-nowrap">
+              <i data-lucide="arrow-down-left" class="w-4 h-4 shrink-0"></i>
+              <span>Stok Masuk</span>
+            </a>
+            <a href="#/purchase-orders" class="btn-outline inline-flex items-center gap-2 h-9 px-4 rounded-md font-medium text-sm shadow-sm whitespace-nowrap">
+              <i data-lucide="file-text" class="w-4 h-4 shrink-0"></i>
+              <span>Purchase Order</span>
+            </a>
           </div>
         </section>
 
         <!-- KPI -->
         <section class="kpi-grid">
-          <div class="hero-kpi">
-            <span>Omset Hari Ini</span>
-            <h2>Rp ${this.formatNumber(todaySalesAmount)}</h2>
-            <small>Target Rp ${this.formatNumber(cuanTarget)} • ${Math.round(cuanProgress)}%</small>
+          <div class="hero-kpi relative overflow-hidden">
+            <span class="text-xs uppercase tracking-wider text-rose-100/90 font-medium">Omset Hari Ini</span>
+            <h2 class="text-3xl font-bold tracking-tight text-white my-1 tnum">Rp ${this.formatNumber(todaySalesAmount)}</h2>
+            <div class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-white/15 text-white backdrop-blur-sm">
+              <i data-lucide="${omsetChange >= 0 ? 'trending-up' : 'trending-down'}" class="w-3.5 h-3.5"></i>
+              <span>${omsetComparisonText}</span>
+            </div>
           </div>
-          <div class="mini-kpi">
-            <span>Profit</span>
-            <h3>Rp ${this.formatNumber(todayProfit)}</h3>
+          <div class="mini-kpi card p-5 border border-stone-200/80">
+            <div class="flex items-center justify-between text-stone-500 mb-2">
+              <span class="text-xs font-medium">Estimasi Profit</span>
+              <div class="w-7 h-7 rounded-lg bg-emerald-50 text-emerald-700 flex items-center justify-center">
+                <i data-lucide="wallet" class="w-4 h-4"></i>
+              </div>
+            </div>
+            <h3 class="text-xl font-bold text-stone-900 tnum">Rp ${this.formatNumber(todayProfit)}</h3>
+            <p class="text-xs text-stone-400 mt-1 font-medium">${profitMargin}% margin penjualan</p>
           </div>
-          <div class="mini-kpi">
-            <span>Order</span>
-            <h3>${totalOrder}</h3>
+          <div class="mini-kpi card p-5 border border-stone-200/80">
+            <div class="flex items-center justify-between text-stone-500 mb-2">
+              <span class="text-xs font-medium">Total Pesanan</span>
+              <div class="w-7 h-7 rounded-lg bg-sky-50 text-sky-700 flex items-center justify-center">
+                <i data-lucide="shopping-bag" class="w-4 h-4"></i>
+              </div>
+            </div>
+            <h3 class="text-xl font-bold text-stone-900 tnum">${totalOrder} <span class="text-xs font-normal text-stone-500">transaksi</span></h3>
+            <p class="text-xs text-stone-400 mt-1 font-medium">Hari ini tercatat</p>
           </div>
-          <div class="mini-kpi">
-            <span>Saldo Kas</span>
-            <h3>Rp ${this.formatNumber(cashBalance)}</h3>
+          <div class="mini-kpi card p-5 border border-stone-200/80">
+            <div class="flex items-center justify-between text-stone-500 mb-2">
+              <span class="text-xs font-medium">Saldo Kas & Bank</span>
+              <div class="w-7 h-7 rounded-lg bg-indigo-50 text-indigo-700 flex items-center justify-center">
+                <i data-lucide="credit-card" class="w-4 h-4"></i>
+              </div>
+            </div>
+            <h3 class="text-xl font-bold text-stone-900 tnum">Rp ${this.formatNumber(cashBalance)}</h3>
+            <p class="text-xs text-stone-400 mt-1 font-medium">Posisi kas aktif</p>
           </div>
         </section>
 
         <!-- CHART + ALERT -->
         <section class="grid-2">
-          <div class="card">
-            <div class="card-header" style="display:flex; align-items:center; justify-content:space-between;">
-              <h3>Tren Penjualan</h3>
+          <div class="card p-5 border border-stone-200/80">
+            <div class="card-header flex items-center justify-between mb-4">
+              <div>
+                <h3 class="text-base font-semibold text-stone-900">Tren Penjualan</h3>
+                <p class="text-xs text-stone-500">Histori omset kotor toko harian</p>
+              </div>
               <div class="relative">
-                <button id="chart-filter-btn" class="text-xs text-gray-600 bg-gray-100 px-3 py-1.5 rounded-lg flex items-center gap-1 hover:bg-gray-200 transition-colors">
-                  ${this.chartPeriod} Hari <i data-lucide="chevron-down" class="w-3 h-3"></i>
+                <button id="chart-filter-btn" class="text-xs font-medium text-stone-700 bg-stone-100 hover:bg-stone-200/80 px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition-colors border border-stone-200">
+                  <i data-lucide="calendar" class="w-3.5 h-3.5 text-stone-500"></i>
+                  <span>${this.chartPeriod} Hari</span>
+                  <i data-lucide="chevron-down" class="w-3 h-3 text-stone-400"></i>
                 </button>
-                <div id="chart-filter-dropdown" class="absolute right-0 top-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-10 hidden min-w-[100px]">
-                  <button data-days="7" class="chart-filter-option w-full text-left px-3 py-2 text-xs hover:bg-gray-50 ${this.chartPeriod === 7 ? 'bg-primary-50 text-primary-600 font-medium' : 'text-gray-700'}">7 Hari</button>
-                  <button data-days="14" class="chart-filter-option w-full text-left px-3 py-2 text-xs hover:bg-gray-50 ${this.chartPeriod === 14 ? 'bg-primary-50 text-primary-600 font-medium' : 'text-gray-700'}">14 Hari</button>
-                  <button data-days="30" class="chart-filter-option w-full text-left px-3 py-2 text-xs hover:bg-gray-50 ${this.chartPeriod === 30 ? 'bg-primary-50 text-primary-600 font-medium' : 'text-gray-700'}">30 Hari</button>
+                <div id="chart-filter-dropdown" class="absolute right-0 top-full mt-1 bg-white border border-stone-200 rounded-xl shadow-lg z-10 hidden min-w-[120px] p-1">
+                  <button data-days="7" class="chart-filter-option w-full text-left px-3 py-2 text-xs rounded-lg hover:bg-stone-50 ${this.chartPeriod === 7 ? 'bg-primary-50 text-primary-700 font-semibold' : 'text-stone-700'}">7 Hari</button>
+                  <button data-days="14" class="chart-filter-option w-full text-left px-3 py-2 text-xs rounded-lg hover:bg-stone-50 ${this.chartPeriod === 14 ? 'bg-primary-50 text-primary-700 font-semibold' : 'text-stone-700'}">14 Hari</button>
+                  <button data-days="30" class="chart-filter-option w-full text-left px-3 py-2 text-xs rounded-lg hover:bg-stone-50 ${this.chartPeriod === 30 ? 'bg-primary-50 text-primary-700 font-semibold' : 'text-stone-700'}">30 Hari</button>
                 </div>
               </div>
             </div>
@@ -141,113 +196,162 @@ export class DashboardPage {
               ${this.renderChart(chartData)}
             </div>
           </div>
-          <div class="card">
-            <div class="card-header">
-              <h3>Alert Center</h3>
+          <div class="card p-5 border border-stone-200/80">
+            <div class="card-header mb-4">
+              <h3 class="text-base font-semibold text-stone-900">Alert Center</h3>
+              <p class="text-xs text-stone-500">Pemberitahuan operasional mendesak</p>
             </div>
-            ${lowStock.length > 0 ? `
-              <div class="alert-item warning">
-                ⚠ ${lowStock.length} Produk Hampir Habis
-              </div>
-            ` : ''}
-            ${pendingPO.length > 0 ? `
-              <div class="alert-item info">
-                📦 ${pendingPO.length} PO Menunggu Persetujuan
-              </div>
-            ` : ''}
-            ${lowStock.length === 0 && pendingPO.length === 0 ? `
-              <div class="alert-item" style="background:#f0fdf4; color:#16a34a;">
-                ✅ Semua dalam kondisi baik
-              </div>
-            ` : ''}
+            <div class="space-y-2.5">
+              ${lowStock.length > 0 ? `
+                <a href="#/products?filter=low-stock" class="flex items-center gap-3 p-3.5 rounded-xl bg-amber-50/70 border border-amber-200/70 hover:bg-amber-100/60 transition-colors">
+                  <div class="w-8 h-8 rounded-lg bg-amber-100 text-amber-700 flex items-center justify-center flex-shrink-0">
+                    <i data-lucide="alert-triangle" class="w-4 h-4"></i>
+                  </div>
+                  <div class="flex-1 min-w-0">
+                    <p class="text-xs font-semibold text-amber-900">${lowStock.length} Produk Menipis</p>
+                    <p class="text-[11px] text-amber-700">Stok berada di bawah batas minimum</p>
+                  </div>
+                  <i data-lucide="chevron-right" class="w-4 h-4 text-amber-500"></i>
+                </a>
+              ` : ''}
+              ${pendingPO.length > 0 ? `
+                <a href="#/purchase-orders" class="flex items-center gap-3 p-3.5 rounded-xl bg-sky-50/70 border border-sky-200/70 hover:bg-sky-100/60 transition-colors">
+                  <div class="w-8 h-8 rounded-lg bg-sky-100 text-sky-700 flex items-center justify-center flex-shrink-0">
+                    <i data-lucide="clipboard-list" class="w-4 h-4"></i>
+                  </div>
+                  <div class="flex-1 min-w-0">
+                    <p class="text-xs font-semibold text-sky-900">${pendingPO.length} PO Perlu Diproses</p>
+                    <p class="text-[11px] text-sky-700">Purchase order menunggu approval atau penerimaan</p>
+                  </div>
+                  <i data-lucide="chevron-right" class="w-4 h-4 text-sky-500"></i>
+                </a>
+              ` : ''}
+              ${lowStock.length === 0 && pendingPO.length === 0 ? `
+                <div class="flex items-center gap-3 p-4 rounded-xl bg-emerald-50/70 border border-emerald-200/70 text-emerald-800">
+                  <div class="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center flex-shrink-0">
+                    <i data-lucide="check-circle-2" class="w-4 h-4"></i>
+                  </div>
+                  <div>
+                    <p class="text-xs font-semibold text-emerald-900">Operasional Terkendali</p>
+                    <p class="text-[11px] text-emerald-700">Semua stok dan status pesanan dalam kondisi normal</p>
+                  </div>
+                </div>
+              ` : ''}
+            </div>
           </div>
         </section>
 
         <!-- TOP PRODUCT + EXPENSE BREAKDOWN -->
         <section class="grid-2">
-          <div class="card">
-            <div class="card-header">
-              <h3>Top Produk</h3>
-            </div>
-            ${topProducts.length === 0 ? `
-              <p style="color:#9ca3af; text-align:center; padding:20px 0;">Belum ada data</p>
-            ` : topProducts.slice(0, 2).map(p => `
-              <div class="product-row">
-                <div style="width:44px; height:44px; border-radius:10px; background:#f3f4f6; display:flex; align-items:center; justify-content:center;">
-                  <i data-lucide="package" style="width:22px; height:22px; color:#6b7280;"></i>
-                </div>
-                <div>
-                  <strong>${p.name}</strong>
-                  <small>${p.sold} terjual</small>
-                </div>
-                <span>Rp ${this.formatNumber(p.revenue)}</span>
+          <div class="card p-5 border border-stone-200/80">
+            <div class="card-header flex items-center justify-between mb-4">
+              <div>
+                <h3 class="text-base font-semibold text-stone-900">Produk Terlaris</h3>
+                <p class="text-xs text-stone-500">Penjualan tertinggi periode ini</p>
               </div>
-            `).join('')}
+              <a href="#/analytics" class="text-xs font-medium text-primary-600 hover:text-primary-700 flex items-center gap-1">
+                Analitik <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>
+              </a>
+            </div>
+            <div class="space-y-3">
+              ${topProducts.length === 0 ? `
+                <div class="p-8 text-center text-stone-400 text-xs">Belum ada data penjualan</div>
+              ` : topProducts.slice(0, 4).map((p, idx) => `
+                <div class="flex items-center justify-between p-2.5 rounded-lg hover:bg-stone-50 transition-colors">
+                  <div class="flex items-center gap-3">
+                    <div class="w-8 h-8 rounded-lg ${idx === 0 ? 'bg-amber-100 text-amber-800' : 'bg-stone-100 text-stone-600'} flex items-center justify-center font-bold text-xs">
+                      ${idx + 1}
+                    </div>
+                    <div>
+                      <p class="font-medium text-stone-900 text-xs truncate max-w-[160px] sm:max-w-[200px]">${p.name}</p>
+                      <p class="text-[11px] text-stone-400">${p.sold} terjual</p>
+                    </div>
+                  </div>
+                  <span class="font-semibold text-stone-900 text-xs tnum">Rp ${this.formatNumber(p.revenue)}</span>
+                </div>
+              `).join('')}
+            </div>
           </div>
 
-          <div class="card">
-            <div class="card-header">
-              <h3>Pengeluaran Terbesar</h3>
+          <div class="card p-5 border border-stone-200/80">
+            <div class="card-header mb-4">
+              <h3 class="text-base font-semibold text-stone-900">Alokasi Pengeluaran</h3>
+              <p class="text-xs text-stone-500">Kategori operasional terbesar bulan ini</p>
             </div>
             ${expenseBreakdown.length === 0 ? `
-              <p style="color:#9ca3af; text-align:center; padding:20px 0;">Belum ada pengeluaran</p>
+              <div class="p-8 text-center text-stone-400 text-xs">Belum ada catatan pengeluaran</div>
             ` : expenseBreakdown.slice(0, 4).map((item, i) => {
               const barW = item.percentage
-              const colors = ['bg-rose-500', 'bg-orange-500', 'bg-amber-500', 'bg-sky-500']
+              const colors = ['bg-[#7A3B58]', 'bg-amber-600', 'bg-sky-600', 'bg-emerald-600']
               return `
-                <div style="margin-bottom:12px;">
-                  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
-                    <div style="display:flex; align-items:center; gap:6px;">
-                      <span style="width:6px;height:6px;border-radius:50%;background:${['#f43f5e','#f97316','#f59e0b','#0ea5e9'][i]}"></span>
-                      <strong style="font-size:13px;color:#1e293b;">${item.label}</strong>
-                    </div>
-                    <span style="font-size:13px;font-weight:600;color:#0f172a;">Rp ${this.formatNumber(item.total)}</span>
+                <div class="mb-3.5 last:mb-0">
+                  <div class="flex justify-between items-center mb-1 text-xs">
+                    <span class="font-medium text-stone-700">${item.label}</span>
+                    <span class="font-semibold text-stone-900 tnum">Rp ${this.formatNumber(item.total)}</span>
                   </div>
-                  <div style="height:6px;background:#f1f5f9;border-radius:4px;overflow:hidden;">
-                    <div style="height:100%;width:${barW}%;background:${['#f43f5e','#f97316','#f59e0b','#0ea5e9'][i]};border-radius:4px;transition:width 0.3s;"></div>
+                  <div class="h-2 bg-stone-100 rounded-full overflow-hidden">
+                    <div class="h-full ${colors[i % colors.length]} rounded-full transition-all duration-300" style="width:${barW}%"></div>
                   </div>
-                  <span style="font-size:10px;color:#94a3b8;">${item.percentage}% dari total pengeluaran</span>
+                  <span class="text-[10px] text-stone-400">${item.percentage}% dari total pengeluaran</span>
                 </div>
               `
             }).join('')}
           </div>
         </section>
 
-        <!-- AI FORECAST -->
-        <section class="card" style="margin-bottom: 20px;">
-          <div class="card-header">
-            <h3>AI Forecast</h3>
-          </div>
-          <div class="forecast-grid">
-            <div class="forecast-box">
-              <h4>Prediksi Omset</h4>
-              <span style="color:#16a34a;">↑ 12%</span>
-            </div>
-            <div class="forecast-box">
-              <h4>Produk Restok</h4>
-              <span>${topProducts[0]?.name || 'Produk Populer'}</span>
-            </div>
-            <div class="forecast-box">
-              <h4>Produk Potensial</h4>
-              <span>${topProducts[1]?.name || 'Produk Terlaris'}</span>
-            </div>
-          </div>
-        </section>
-
-        <!-- AKTIVITAS -->
-        <section class="card">
-          <div class="card-header">
-            <h3>Aktivitas Terbaru</h3>
-          </div>
-          <div class="activity-list">
-            ${recentActivities.length === 0 ? `
-              <p style="color:#9ca3af; text-align:center; padding:20px 0;">Belum ada aktivitas</p>
-            ` : recentActivities.slice(0, 3).map(a => `
-              <div class="activity-item">
-                <span>${a.text}</span>
-                <strong>${a.amount}</strong>
+        <!-- AKTIVITAS & PERFORMA -->
+        <section class="grid grid-cols-1 lg:grid-cols-2 gap-5 mb-6">
+          <div class="card p-5 border border-stone-200/80">
+            <div class="card-header flex items-center justify-between mb-4">
+              <div>
+                <h3 class="text-base font-semibold text-stone-900">Aktivitas Transaksi</h3>
+                <p class="text-xs text-stone-500">Penjualan dan mutasi kas terakhir</p>
               </div>
-            `).join('')}
+              <a href="#/sales" class="text-xs font-medium text-primary-600 hover:text-primary-700 flex items-center gap-1">
+                Semua <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>
+              </a>
+            </div>
+            <div class="divide-y divide-stone-100">
+              ${recentActivities.length === 0 ? `
+                <div class="p-6 text-center text-stone-400 text-xs">Belum ada aktivitas tercatat</div>
+              ` : recentActivities.slice(0, 4).map(a => `
+                <div class="py-3 flex items-center justify-between text-xs">
+                  <div class="flex items-center gap-3">
+                    <div class="w-7 h-7 rounded-lg bg-stone-100 text-stone-600 flex items-center justify-center">
+                      <i data-lucide="receipt" class="w-3.5 h-3.5"></i>
+                    </div>
+                    <span class="font-medium text-stone-800">${a.text}</span>
+                  </div>
+                  <span class="font-semibold text-stone-900 tnum">${a.amount}</span>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+
+          <div class="card p-5 border border-stone-200/80">
+            <div class="card-header flex items-center justify-between mb-4">
+              <div>
+                <h3 class="text-base font-semibold text-stone-900">Status Stok Produk</h3>
+                <p class="text-xs text-stone-500">Ringkasan kondisi inventori saat ini</p>
+              </div>
+              <a href="#/products" class="text-xs font-medium text-primary-600 hover:text-primary-700 flex items-center gap-1">
+                Katalog <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>
+              </a>
+            </div>
+            <div class="grid grid-cols-3 gap-3 text-center">
+              <div class="p-3.5 rounded-xl bg-stone-50 border border-stone-200/60">
+                <p class="text-[11px] text-stone-500 mb-1">Total Produk</p>
+                <p class="text-lg font-bold text-stone-900 tnum">${products.length}</p>
+              </div>
+              <div class="p-3.5 rounded-xl bg-emerald-50/70 border border-emerald-200/60">
+                <p class="text-[11px] text-emerald-800 mb-1">Stok Aman</p>
+                <p class="text-lg font-bold text-emerald-900 tnum">${products.filter(p => p.current_stock > p.min_stock).length}</p>
+              </div>
+              <div class="p-3.5 rounded-xl ${lowStock.length > 0 ? 'bg-amber-50/70 border border-amber-200/60' : 'bg-stone-50 border border-stone-200/60'}">
+                <p class="text-[11px] ${lowStock.length > 0 ? 'text-amber-800' : 'text-stone-500'} mb-1">Menipis</p>
+                <p class="text-lg font-bold ${lowStock.length > 0 ? 'text-amber-900' : 'text-stone-900'} tnum">${lowStock.length}</p>
+              </div>
+            </div>
           </div>
         </section>
       </div>
@@ -543,6 +647,10 @@ export class DashboardPage {
       outlet.innerHTML = this.render()
     }
     if (window.lucide) window.lucide.createIcons()
+
+    document.getElementById('retry-dashboard-btn')?.addEventListener('click', async () => {
+      await this.bindEvents()
+    })
 
     const filterBtn = document.getElementById('chart-filter-btn')
     const dropdown = document.getElementById('chart-filter-dropdown')

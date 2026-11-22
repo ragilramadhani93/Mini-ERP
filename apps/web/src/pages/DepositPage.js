@@ -6,6 +6,7 @@ export class DepositPage {
     this.selectedCustomer = ''
     this.showModal = false
     this.saving = false
+    this.modalError = null
   }
 
   async loadData() {
@@ -54,55 +55,70 @@ export class DepositPage {
     
     return `
       <div class="dashboard-container">
-        <section class="welcome-card">
+        <section class="welcome-card mb-6">
           <div>
-            <h1 style="font-size:24px; font-weight:700; color:#111827;">💰 Deposit Pelanggan</h1>
-            <p style="font-size:14px; color:#6b7280; margin-top:4px;">Kelola dan pantau deposit pelanggan</p>
+            <h1 class="text-2xl font-bold text-stone-900 tracking-tight">Deposit Pelanggan</h1>
+            <p class="text-sm text-stone-500 mt-1">Kelola dan pantau saldo titipan atau lebih bayar pelanggan</p>
           </div>
-          <button id="add-deposit-btn" class="btn-primary" style="display:inline-flex; align-items:center; gap:8px; white-space:nowrap;">
-            <i data-lucide="plus" class="w-5 h-5"></i> Tambah Deposit
+          <button id="add-deposit-btn" class="btn-primary">
+            <i data-lucide="plus-circle" class="w-4 h-4"></i> Tambah Deposit Baru
           </button>
         </section>
 
-        <section class="kpi-grid">
-          <div class="hero-kpi">
-            <span>Total Pelanggan dengan Deposit</span>
-            <h2>${customers.length}</h2>
+        <section class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+          <div class="hero-kpi p-5 rounded-xl">
+            <span class="text-xs uppercase tracking-wider text-rose-100/90 font-medium">Total Akun Deposit</span>
+            <h2 class="text-3xl font-bold tracking-tight text-white my-1 tnum">${customers.length} <span class="text-sm font-normal text-rose-200">pelanggan</span></h2>
+            <p class="text-xs text-rose-100/80">Pelanggan dengan riwayat saldo aktif</p>
           </div>
-          <div class="mini-kpi">
-            <span>Total Semua Deposit</span>
-            <h3>Rp ${this.formatNumber(Object.values(balances).reduce((a, b) => a + b, 0))}</h3>
+          <div class="card p-5 border border-stone-200/80 flex flex-col justify-between">
+            <div class="flex items-center justify-between text-stone-500 mb-2">
+              <span class="text-xs font-medium">Total Akumulasi Saldo</span>
+              <div class="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-700 flex items-center justify-center">
+                <i data-lucide="piggy-bank" class="w-4 h-4"></i>
+              </div>
+            </div>
+            <h3 class="text-2xl font-bold text-stone-900 tnum">Rp ${this.formatNumber(Object.values(balances).reduce((a, b) => a + b, 0))}</h3>
+            <p class="text-xs text-stone-400 mt-1 font-medium">Liabilitas saldo titipan berjalan</p>
           </div>
         </section>
 
-        <section class="card">
-          <div class="card-header">
-            <h3>Saldo Deposit Pelanggan</h3>
+        <section class="card p-5 border border-stone-200/80">
+          <div class="flex items-center justify-between mb-4">
+            <div>
+              <h3 class="text-base font-semibold text-stone-900">Saldo Deposit Pelanggan</h3>
+              <p class="text-xs text-stone-500">Daftar saldo titipan aktif per pelanggan</p>
+            </div>
+            <span class="text-xs font-medium text-stone-500">${customers.length} Akun</span>
           </div>
           ${customers.length === 0 ? `
-            <p style="color:#9ca3af; text-align:center; padding:40px 0;">Belum ada deposit</p>
+            <div class="p-12 text-center text-stone-400">
+              <i data-lucide="piggy-bank" class="w-10 h-10 mx-auto mb-2 text-stone-300"></i>
+              <p class="text-sm font-medium text-stone-600">Belum ada catatan deposit</p>
+              <p class="text-xs text-stone-400 mt-0.5">Saldo deposit atau lebih bayar pelanggan akan muncul di sini</p>
+            </div>
           ` : `
-            <div style="overflow-x:auto;">
-              <table style="width:100%; border-collapse:collapse;">
+            <div class="table-container">
+              <table class="table">
                 <thead>
-                  <tr style="border-bottom:1px solid #e5e7eb;">
-                    <th style="text-align:left; padding:12px 8px; font-size:12px; color:#6b7280; font-weight:600;">Pelanggan</th>
-                    <th style="text-align:right; padding:12px 8px; font-size:12px; color:#6b7280; font-weight:600;">Saldo Deposit</th>
-                    <th style="text-align:center; padding:12px 8px; font-size:12px; color:#6b7280; font-weight:600;">Aksi</th>
+                  <tr>
+                    <th>Pelanggan</th>
+                    <th class="text-right">Saldo Deposit</th>
+                    <th class="text-right">Aksi</th>
                   </tr>
                 </thead>
                 <tbody>
                   ${customers.map(customer => `
-                    <tr style="border-bottom:1px solid #f3f4f6;">
-                      <td style="padding:12px 8px; font-weight:600;">${customer}</td>
-                      <td style="padding:12px 8px; text-align:right;">
-                        <span style="${balances[customer] > 0 ? 'color:#16a34a;' : balances[customer] < 0 ? 'color:#ef4444;' : 'color:#6b7280;'} font-weight:700;">
+                    <tr>
+                      <td class="font-medium text-stone-900">${customer}</td>
+                      <td class="text-right tnum">
+                        <span class="font-bold ${balances[customer] > 0 ? 'text-emerald-700' : balances[customer] < 0 ? 'text-rose-700' : 'text-stone-500'}">
                           Rp ${this.formatNumber(balances[customer])}
                         </span>
                       </td>
-                      <td style="padding:12px 8px; text-align:center;">
-                        <button class="view-history-btn" data-customer="${customer}" style="background:#7A3B58; color:white; border:none; padding:8px 16px; border-radius:8px; cursor:pointer; font-size:12px; font-weight:600;">
-                          Lihat Riwayat
+                      <td class="text-right">
+                        <button class="view-history-btn btn-outline btn-sm inline-flex items-center gap-1.5" data-customer="${customer}">
+                          <i data-lucide="history" class="w-3.5 h-3.5"></i> Riwayat
                         </button>
                       </td>
                     </tr>
@@ -114,31 +130,37 @@ export class DepositPage {
         </section>
 
         ${this.selectedCustomer ? `
-          <section class="card">
-            <div class="card-header">
-              <h3>Riwayat Deposit - ${this.selectedCustomer}</h3>
+          <section class="card p-5 border border-stone-200/80">
+            <div class="flex items-center justify-between mb-4">
+              <div>
+                <h3 class="text-base font-semibold text-stone-900">Riwayat Deposit - ${this.selectedCustomer}</h3>
+                <p class="text-xs text-stone-500">Mutasi saldo titipan dan pemakaian transaksi</p>
+              </div>
+              <button id="close-history-btn" class="text-xs text-stone-500 hover:text-stone-700 flex items-center gap-1">
+                <i data-lucide="x" class="w-3.5 h-3.5"></i> Tutup
+              </button>
             </div>
-            <div style="overflow-x:auto;">
-              <table style="width:100%; border-collapse:collapse;">
+            <div class="table-container">
+              <table class="table">
                 <thead>
-                  <tr style="border-bottom:1px solid #e5e7eb;">
-                    <th style="text-align:left; padding:12px 8px; font-size:12px; color:#6b7280; font-weight:600;">Tanggal</th>
-                    <th style="text-align:left; padding:12px 8px; font-size:12px; color:#6b7280; font-weight:600;">Deskripsi</th>
-                    <th style="text-align:right; padding:12px 8px; font-size:12px; color:#6b7280; font-weight:600;">Jumlah</th>
-                    <th style="text-align:left; padding:12px 8px; font-size:12px; color:#6b7280; font-weight:600;">Referensi</th>
+                  <tr>
+                    <th>Tanggal</th>
+                    <th>Deskripsi</th>
+                    <th class="text-right">Jumlah</th>
+                    <th>Referensi</th>
                   </tr>
                 </thead>
                 <tbody>
                   ${this.getCustomerHistory(this.selectedCustomer).map(dep => `
-                    <tr style="border-bottom:1px solid #f3f4f6;">
-                      <td style="padding:12px 8px;">${this.formatDate(dep.created_at)}</td>
-                      <td style="padding:12px 8px;">${dep.description || '-'}</td>
-                      <td style="padding:12px 8px; text-align:right;">
-                        <span style="${dep.amount > 0 ? 'color:#16a34a;' : 'color:#ef4444;'} font-weight:700;">
+                    <tr>
+                      <td class="text-stone-600 text-xs whitespace-nowrap">${this.formatDate(dep.created_at)}</td>
+                      <td class="text-stone-800">${dep.description || '-'}</td>
+                      <td class="text-right tnum">
+                        <span class="font-bold ${dep.amount > 0 ? 'text-emerald-700' : 'text-rose-700'}">
                           ${dep.amount > 0 ? '+' : ''}Rp ${this.formatNumber(dep.amount)}
                         </span>
                       </td>
-                      <td style="padding:12px 8px;">${dep.reference_type || '-'} ${dep.reference_id ? `#${dep.reference_id}` : ''}</td>
+                      <td class="text-stone-600 font-mono text-xs">${dep.reference_type || '-'} ${dep.reference_id ? `#${dep.reference_id}` : ''}</td>
                     </tr>
                   `).join('')}
                 </tbody>
@@ -164,6 +186,11 @@ export class DepositPage {
             </button>
           </div>
           <form id="deposit-form" class="space-y-4">
+            ${this.modalError ? `
+              <div class="p-3 bg-rose-50 border border-rose-200 text-rose-700 rounded-lg text-xs font-medium">
+                ${this.modalError}
+              </div>
+            ` : ''}
             <div>
               <label for="customer_name" style="display:block; font-size:13px; font-weight:600; color:#374151; margin-bottom:6px;">Nama Pelanggan</label>
               <input type="text" id="customer_name" name="customer_name" list="customer-list" required placeholder="Nama pelanggan" style="width:100%; padding:10px 12px; border:1px solid #d1d5db; border-radius:8px; font-size:14px;">
@@ -219,6 +246,11 @@ export class DepositPage {
       })
     })
 
+    document.getElementById('close-history-btn')?.addEventListener('click', () => {
+      this.selectedCustomer = null
+      this.renderAndBind()
+    })
+
     document.getElementById('add-deposit-btn')?.addEventListener('click', () => {
       this.showModal = true
       this.saving = false
@@ -255,13 +287,16 @@ export class DepositPage {
       const description = formData.get('description')?.toString().trim()
 
       if (!customerName) {
-        alert('Nama pelanggan wajib diisi')
+        this.modalError = 'Nama pelanggan wajib diisi'
+        this.renderAndBind()
         return
       }
       if (!amount || amount <= 0) {
-        alert('Jumlah deposit harus lebih dari 0')
+        this.modalError = 'Jumlah deposit harus lebih dari 0'
+        this.renderAndBind()
         return
       }
+      this.modalError = null
 
       this.saving = true
       this.renderAndBind()

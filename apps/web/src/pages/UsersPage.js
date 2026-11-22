@@ -177,7 +177,14 @@ export class UsersPage {
         }
         await this.supabase.from('users').update(data).eq('id', this.editingUser.id)
       } else {
-        const { data: authData, error: authError } = await this.supabase.auth.signUp({
+        // Use a detached client instance so owner's localStorage session is preserved
+        const { createClient } = await import('@supabase/supabase-js')
+        const detachedAuth = createClient(
+          import.meta.env.VITE_SUPABASE_URL,
+          import.meta.env.VITE_SUPABASE_ANON_KEY,
+          { auth: { persistSession: false, autoRefreshToken: false } }
+        )
+        const { data: authData, error: authError } = await detachedAuth.auth.signUp({
           email: formData.get('email'),
           password: formData.get('password')
         })

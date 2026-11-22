@@ -6,10 +6,14 @@ export class Router {
     this.onRouteChange = null
   }
 
-  navigate(path) {
-    const route = this.routes[path]
+  navigate(fullPath) {
+    const rawPath = fullPath || '/'
+    const [pathOnly, queryString] = rawPath.split('?')
+    const route = this.routes[pathOnly]
     if (!route) {
-      this.navigate('/')
+      if (pathOnly !== '/') {
+        this.navigate('/')
+      }
       return
     }
 
@@ -24,8 +28,11 @@ export class Router {
       }
     }
 
-    this.currentRoute = { path, ...route }
-    window.location.hash = path
+    const params = new URLSearchParams(queryString || '')
+    const query = Object.fromEntries(params.entries())
+
+    this.currentRoute = { path: pathOnly, fullPath: rawPath, query, ...route }
+    window.location.hash = rawPath
     this.onRouteChange?.(this.currentRoute)
   }
 

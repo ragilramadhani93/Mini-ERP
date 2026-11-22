@@ -6,10 +6,9 @@ export class AIAssistantPage {
     this.insights = []
     this.lastUpdated = null
     this.error = null
-    this.useGroqAI = import.meta.env.VITE_USE_GROQ_AI === 'true'
-    this.groqApiKey = import.meta.env.VITE_GROQ_API_KEY
+    this.useGroqAI = import.meta.env.VITE_USE_GROQ_AI === 'true' && !!import.meta.env.VITE_GROQ_API_KEY
+    this.groqApiKey = import.meta.env.VITE_GROQ_API_KEY || ''
     this.groqModel = import.meta.env.VITE_GROQ_MODEL || 'llama-3.3-70b-versatile'
-    console.log('🔧 AI Config:', { useGroqAI: this.useGroqAI, hasKey: !!this.groqApiKey, model: this.groqModel })
   }
 
   async loadData() {
@@ -176,8 +175,8 @@ Berikan 5-7 insight bisnis paling penting!`
       insights.push({
         type: 'success',
         icon: 'trophy',
-        title: '🏆 Produk Terlaris',
-        message: `"${top.name}" adalah produk terlaris dengan ${top.qty} terjual dalam ${days} hari (rata-rata ${avgDaily}/hari). Stok saat ini ${top.current_stock}. ${daysLeft !== '∞' && daysLeft <= 14 ? `⚠️ Estimasi habis dalam ${daysLeft} hari, segera restock!` : daysLeft !== '∞' ? `Estimasi habis dalam ${daysLeft} hari.` : 'Stok mencukupi untuk saat ini.'}`,
+        title: 'Produk Terlaris',
+        message: `"${top.name}" adalah produk terlaris dengan ${top.qty} terjual dalam ${days} hari (rata-rata ${avgDaily}/hari). Stok saat ini ${top.current_stock}. ${daysLeft !== '∞' && daysLeft <= 14 ? `Estimasi habis dalam ${daysLeft} hari, segera restock!` : daysLeft !== '∞' ? `Estimasi habis dalam ${daysLeft} hari.` : 'Stok mencukupi untuk saat ini.'}`,
         action: { label: 'Lihat Produk', link: '#/products' }
       })
     }
@@ -190,8 +189,8 @@ Berikan 5-7 insight bisnis paling penting!`
       const totalValue = topSlow.current_stock * topSlow.cost_price
       insights.push({
         type: 'warning',
-        icon: 'sleep',
-        title: '🐌 Produk Slow Moving',
+        icon: 'clock',
+        title: 'Produk Slow Moving',
         message: `"${topSlow.name}" hanya terjual ${topSlow.qty} dalam ${days} hari dengan stok ${topSlow.current_stock} (nilai Rp ${this.fmt(totalValue)}). Pertimbangkan diskon atau bundling untuk mengurangi stok mati.`,
         action: { label: 'Atur Diskon', link: '#/products' }
       })
@@ -215,7 +214,7 @@ Berikan 5-7 insight bisnis paling penting!`
         insights.push({
           type: 'danger',
           icon: 'alert-triangle',
-          title: '🚨 Restock Mendesak!',
+          title: 'Restock Mendesak',
           message: `${urgencyMap.high.length} produk dengan stok kritis (habis dalam ≤3 hari): ${urgencyMap.high.map(p => `"${p.name}"`).join(', ')}. Estimasi kebutuhan dana: Rp ${this.fmt(total)}.`,
           action: { label: 'Buat PO', link: '#/purchase-orders' }
         })
@@ -234,7 +233,7 @@ Berikan 5-7 insight bisnis paling penting!`
       insights.push({
         type: profit >= 0 ? 'success' : 'danger',
         icon: 'trending-up',
-        title: profit >= 0 ? '📈 Analisa Cash Flow' : '📉 Analisa Cash Flow',
+        title: profit >= 0 ? 'Analisa Cash Flow (Surplus)' : 'Analisa Cash Flow (Defisit)',
         message: msg,
         action: { label: 'Buka Keuangan', link: '#/finance' }
       })
@@ -246,7 +245,7 @@ Berikan 5-7 insight bisnis paling penting!`
     insights.push({
       type: 'info',
       icon: 'bar-chart-3',
-      title: '📊 Ringkasan Bisnis',
+      title: 'Ringkasan Bisnis',
       message: `Dalam ${days} hari terakhir: ${sales.length} transaksi penjualan dengan total Rp ${this.fmt(totalSales)} (rata-rata Rp ${this.fmt(avgPerDay)}/hari). ${stocks.filter(s => s.type === 'in').length} kali stok masuk, ${stocks.filter(s => s.type === 'out').length} kali stok keluar.`,
       action: { label: 'Dashboard', link: '#/' }
     })
@@ -267,9 +266,9 @@ Berikan 5-7 insight bisnis paling penting!`
               ${this.useGroqAI ? '<span class="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full">AI Active (Groq)</span>' : '<span class="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">Rule-Based</span>'}
             </h2>
             <p class="text-sm text-gray-500">Analisa cerdas untuk bisnis Anda ${this.lastUpdated ? `• Diperbarui ${this.lastUpdated.toLocaleTimeString('id-ID')}` : ''}</p>
-            <p class="text-xs text-gray-400 mt-1">
-              ${this.useGroqAI ? `✅ AI aktif (model: ${this.groqModel})` : '⚠️ Mode rule-based (tidak pakai AI)'}
-              ${this.groqApiKey ? '✅ API Key tersedia' : '❌ API Key tidak ditemukan'}
+            <p class="text-xs text-gray-500 mt-1 flex items-center gap-3">
+              ${this.useGroqAI ? `<span class="inline-flex items-center gap-1 text-emerald-600 font-medium"><i data-lucide="check-circle" class="w-3.5 h-3.5"></i> AI aktif (${this.groqModel})</span>` : '<span class="inline-flex items-center gap-1 text-stone-500"><i data-lucide="info" class="w-3.5 h-3.5"></i> Mode analitik rule-based</span>'}
+              ${this.groqApiKey ? '<span class="inline-flex items-center gap-1 text-emerald-600 font-medium"><i data-lucide="key" class="w-3.5 h-3.5"></i> API Key terhubung</span>' : '<span class="inline-flex items-center gap-1 text-stone-400"><i data-lucide="shield" class="w-3.5 h-3.5"></i> Model lokal</span>'}
             </p>
           </div>
           <div class="flex gap-2">
@@ -310,24 +309,28 @@ Berikan 5-7 insight bisnis paling penting!`
   }
 
   renderInsightCard(insight) {
-    const colors = {
-      success: 'border-l-success-500 bg-success-50/30',
-      warning: 'border-l-warning-500 bg-warning-50/30',
-      danger: 'border-l-danger-500 bg-danger-50/30',
-      info: 'border-l-primary-500 bg-primary-50/30'
+    const iconConfig = {
+      success: { bg: 'bg-emerald-50', text: 'text-emerald-700', border: 'border-l-emerald-600', icon: 'trophy' },
+      warning: { bg: 'bg-amber-50', text: 'text-amber-700', border: 'border-l-amber-600', icon: 'alert-circle' },
+      danger: { bg: 'bg-rose-50', text: 'text-rose-700', border: 'border-l-rose-600', icon: 'alert-triangle' },
+      info: { bg: 'bg-sky-50', text: 'text-sky-700', border: 'border-l-sky-600', icon: 'bar-chart-3' }
     }
+    const conf = iconConfig[insight.type] || iconConfig.info
+    const cleanTitle = insight.title.replace(/^[^\w\s]+\s*/, '')
 
     return `
-      <div class="card p-5 border-l-4 ${colors[insight.type] || colors.info}">
-        <div class="flex items-start gap-3">
-          <div class="mt-0.5 text-xl">${insight.title.split(' ')[0]}</div>
+      <div class="card p-5 border-l-4 ${conf.border} border-stone-200/80 bg-white">
+        <div class="flex items-start gap-3.5">
+          <div class="w-9 h-9 rounded-xl ${conf.bg} ${conf.text} flex items-center justify-center flex-shrink-0 mt-0.5">
+            <i data-lucide="${insight.icon || conf.icon}" class="w-4.5 h-4.5"></i>
+          </div>
           <div class="flex-1 min-w-0">
-            <h3 class="font-semibold text-sm mb-2">${insight.title}</h3>
-            <p class="text-sm text-gray-600 leading-relaxed">${insight.message}</p>
+            <h3 class="font-semibold text-sm text-stone-900 mb-1">${cleanTitle}</h3>
+            <p class="text-xs text-stone-600 leading-relaxed">${insight.message}</p>
             ${insight.action ? `
-              <a href="${insight.action.link}" class="inline-flex items-center gap-1 text-sm font-medium text-primary-600 hover:text-primary-700 mt-3">
+              <a href="${insight.action.link}" class="inline-flex items-center gap-1 text-xs font-semibold text-primary-600 hover:text-primary-700 mt-3">
                 ${insight.action.label}
-                <i data-lucide="arrow-right" class="w-4 h-4"></i>
+                <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>
               </a>
             ` : ''}
           </div>

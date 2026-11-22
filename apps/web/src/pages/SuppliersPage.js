@@ -23,7 +23,11 @@ export class SuppliersPage {
 
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           ${this.suppliers.length === 0 ? `
-            <div class="col-span-full text-center text-gray-500 py-8">Belum ada supplier</div>
+            <div class="col-span-full card p-12 text-center text-stone-400 border border-stone-200/80">
+              <i data-lucide="truck" class="w-10 h-10 mx-auto mb-2 text-stone-300"></i>
+              <p class="text-sm font-medium text-stone-600">Belum ada data supplier</p>
+              <p class="text-xs text-stone-400 mt-0.5">Daftarkan mitra pemasok barang untuk pembuatan Purchase Order</p>
+            </div>
           ` : this.suppliers.map(s => `
             <div class="card p-4">
               <div class="flex items-start justify-between mb-3">

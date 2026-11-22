@@ -69,12 +69,18 @@ export class AssetsPage {
               </thead>
               <tbody>
                 ${filtered.length === 0 ? `
-                  <tr><td colspan="7" class="text-center text-gray-500 py-8">Belum ada aset</td></tr>
+                  <tr>
+                    <td colspan="7" class="text-center py-12 text-stone-400">
+                      <i data-lucide="package" class="w-8 h-8 mx-auto mb-2 text-stone-300"></i>
+                      <p class="text-sm font-medium text-stone-600">Belum ada data aset perusahaan</p>
+                      <p class="text-xs text-stone-400 mt-0.5">Catat inventaris, perlengkapan, dan perangkat toko di sini</p>
+                    </td>
+                  </tr>
                 ` : filtered.map(a => `
                   <tr>
-                    <td class="font-medium">${a.name}</td>
+                    <td class="font-medium text-stone-900">${a.name}</td>
                     <td><span class="badge badge-info">${this.getTypeLabel(a.type)}</span></td>
-                    <td class="text-right font-semibold">Rp ${this.formatNumber(a.acquisition_value)}</td>
+                    <td class="text-right font-semibold tnum">Rp ${this.formatNumber(a.acquisition_value)}</td>
                     <td class="text-sm whitespace-nowrap">${this.formatDate(a.acquisition_date)}</td>
                     <td class="text-sm text-gray-500">${a.location || '-'}</td>
                     <td>${this.renderStatus(a.status)}</td>

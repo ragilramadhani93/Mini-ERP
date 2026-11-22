@@ -12,9 +12,10 @@ export class Layout {
   getSections(role) {
     const menuPerms = this.auth.menuPermissions
     const canView = (item) => {
-      if (item.path === '/deposits') return true // Always show deposit menu for test
+      if (role === 'owner') return true // Owner selalu memiliki akses ke seluruh menu
+      if (item.path === '/deposits' || item.path === '/returns' || item.path === '/retur') return true
       if (!menuPerms) return item.roles.includes(role)
-      return menuPerms[item.path] === true
+      return menuPerms[item.path] === true || menuPerms['/returns'] === true || menuPerms['/retur'] === true
     }
     const all = [
       {
@@ -96,7 +97,7 @@ export class Layout {
     const currentPath = window.location.hash.slice(1) || '/'
 
     return `
-      <div class="flex h-screen overflow-hidden" style="background:#f8fafc">
+      <div class="flex h-screen overflow-hidden" style="background:#FBF9F7">
         ${this.renderSidebar(sections, currentPath)}
         ${this.renderMobileOverlay(sections, currentPath)}
         <div class="main-content">
@@ -127,6 +128,7 @@ export class Layout {
       'dollar-sign': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>',
       package: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16.5 9.4l-9-5.19M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 002 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>',
       'piggy-bank': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 5c-1.5 0-2.8.8-3.5 2-1.4-1.2-3-2-5-2-5 0-9 4-9 9s4 9 9 9h.5A5.5 5.5 0 0020 19.5v-.5a5 5 0 00-1-3 5 5 0 001-3V5z"/><path d="M2 13l2 2 2-2"/><path d="M12 17v3"/><path d="M12 9v2"/></svg>',
+      'refresh-ccw': '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 102.13-9.36L1 10"/></svg>',
       settings: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>'
     }
   }
@@ -252,27 +254,61 @@ export class Layout {
 
   renderHeader() {
     const p = this.auth.profile
+    const userName = p?.full_name || 'Pengguna'
     const initials = (p?.full_name || 'P').split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()
+    const role = this.auth.getRole()
 
     return `
-      <header style="height:56px;background:#fff;border-bottom:1px solid #f1f5f9;display:flex;align-items:center;padding:0 24px;gap:16px;position:sticky;top:0;z-index:5">
-        <button id="hamburger-btn" class="md:hidden" style="border:none;background:none;cursor:pointer;color:#475569;padding:4px">
+      <header style="height:56px;background:#ffffff;border-bottom:1px solid #E7E2DD;display:flex;align-items:center;padding:0 24px;gap:16px;position:sticky;top:0;z-index:15">
+        <button id="hamburger-btn" class="md:hidden" aria-label="Buka menu navigasi" style="border:none;background:none;cursor:pointer;color:#475569;padding:8px;min-width:44px;min-height:44px;display:flex;align-items:center;justify-content:center">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
         </button>
         <div style="flex:1;max-width:340px;position:relative" class="hidden sm:block">
           <svg style="position:absolute;left:10px;top:50%;transform:translateY(-50%);width:15px;height:15px;color:#94a3b8" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-          <input type="text" placeholder="Cari data..." style="width:100%;padding:8px 12px 8px 32px;border:1px solid #e2e8f0;border-radius:6px;font-size:13px;color:#0f172a;background:#f8fafc;outline:none">
+          <input type="text" id="global-header-search" placeholder="Cari data produk..." style="width:100%;padding:8px 12px 8px 32px;border:1px solid #E7E2DD;border-radius:8px;font-size:13px;color:#0f172a;background:#FAF8F5;min-height:40px;" class="focus:outline-none focus:ring-2 focus:ring-primary-500 focus:bg-white focus:border-transparent transition-all">
         </div>
         <div style="margin-left:auto;display:flex;align-items:center;gap:12px">
-          <span style="font-size:13px;color:#64748b;font-weight:500" class="hidden md:inline">
+          <span style="font-size:13px;color:#475569;font-weight:500" class="hidden md:inline">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle;margin-right:4px"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
             ${new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}
           </span>
-          <button style="width:34px;height:34px;border:1px solid #e2e8f0;border-radius:6px;background:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;position:relative">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
-            <span style="width:7px;height:7px;background:#ef4444;border-radius:50%;position:absolute;top:6px;right:6px;border:1.5px solid white"></span>
-          </button>
-          <div style="width:34px;height:34px;background:linear-gradient(135deg,#7A3B58,#54283D);border-radius:50%;display:flex;align-items:center;justify-content:center;color:white;font-size:12px;font-weight:700;cursor:pointer;flex-shrink:0">${initials}</div>
+          <div style="position:relative">
+            <button id="header-notif-btn" aria-label="Pusat notifikasi" style="width:36px;height:36px;border:1px solid hsl(var(--border));border-radius:8px;background:hsl(var(--background));display:flex;align-items:center;justify-content:center;cursor:pointer;position:relative" class="hover:bg-accent text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring transition-colors">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
+              <span style="width:8px;height:8px;background:hsl(var(--destructive));border-radius:50%;position:absolute;top:7px;right:7px;border:1.5px solid white"></span>
+            </button>
+            <div id="header-notif-menu" class="hidden absolute right-0 mt-2 w-72 bg-popover text-popover-foreground rounded-lg shadow-lg border border-border z-50 p-3">
+              <div class="flex items-center justify-between pb-2 mb-2 border-b border-border">
+                <span class="text-xs font-semibold text-foreground">Pusat Notifikasi</span>
+                <span class="text-[10px] text-primary font-medium">Aktif</span>
+              </div>
+              <div class="space-y-2 text-xs text-muted-foreground">
+                <div class="p-2.5 rounded-md border border-amber-200/60 bg-amber-50 text-amber-900 flex items-start gap-2">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="shrink-0 mt-0.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                  <span>Pantau produk dengan stok rendah di menu Inventori &gt; Produk.</span>
+                </div>
+                <div class="p-2.5 rounded-md border border-emerald-200/60 bg-emerald-50 text-emerald-800 flex items-start gap-2">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="shrink-0 mt-0.5"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                  <span>Sistem terhubung dan operasional normal.</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div style="position:relative">
+            <button id="header-profile-btn" aria-label="Menu profil ${userName}" style="width:36px;height:36px;border:none;background:none;padding:0;display:flex;align-items:center;justify-content:center;cursor:pointer" class="focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring rounded-full">
+              <div style="width:36px;height:36px;background:hsl(var(--primary));border-radius:50%;display:flex;align-items:center;justify-content:center;color:hsl(var(--primary-foreground));font-size:13px;font-weight:700;flex-shrink:0">${initials}</div>
+            </button>
+            <div id="header-profile-menu" class="hidden absolute right-0 mt-2 w-48 bg-popover text-popover-foreground rounded-lg shadow-lg border border-border z-50 py-1">
+              <div class="px-4 py-2 border-b border-border">
+                <p class="text-xs font-semibold text-foreground">${userName}</p>
+                <p class="text-[11px] text-muted-foreground capitalize">${role}</p>
+              </div>
+              <a href="#/profile" class="block px-4 py-2 text-xs text-foreground hover:bg-accent transition-colors">Profil Saya</a>
+              <a href="#/settings" class="block px-4 py-2 text-xs text-foreground hover:bg-accent transition-colors">Pengaturan</a>
+              <button id="header-logout-btn" class="w-full text-left px-4 py-2 text-xs text-destructive hover:bg-destructive/10 border-t border-border transition-colors">Logout</button>
+            </div>
+          </div>
         </div>
       </header>
     `
@@ -343,6 +379,61 @@ export class Layout {
     document.getElementById('close-mobile-menu')?.addEventListener('click', () => this.closeMobileMenu())
     document.getElementById('mobile-menu-overlay')?.addEventListener('click', (e) => {
       if (e.target === e.currentTarget) this.closeMobileMenu()
+    })
+
+    // Header Search, Notification & Profile Menu handlers
+    const notifBtn = document.getElementById('header-notif-btn')
+    const notifMenu = document.getElementById('header-notif-menu')
+    const profileBtn = document.getElementById('header-profile-btn')
+    const profileMenu = document.getElementById('header-profile-menu')
+
+    notifBtn?.addEventListener('click', (e) => {
+      e.stopPropagation()
+      notifMenu?.classList.toggle('hidden')
+      profileMenu?.classList.add('hidden')
+    })
+
+    profileBtn?.addEventListener('click', (e) => {
+      e.stopPropagation()
+      profileMenu?.classList.toggle('hidden')
+      notifMenu?.classList.add('hidden')
+    })
+
+    document.getElementById('header-logout-btn')?.addEventListener('click', async (e) => {
+      e.preventDefault()
+      await this.auth.logout()
+      this.router.navigate('/login')
+    })
+
+    document.getElementById('global-header-search')?.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        const q = e.target.value.trim()
+        if (q) {
+          this.router.navigate(`/products?search=${encodeURIComponent(q)}`)
+        }
+      }
+    })
+
+    document.addEventListener('click', (e) => {
+      if (!notifBtn?.contains(e.target) && !notifMenu?.contains(e.target)) {
+        notifMenu?.classList.add('hidden')
+      }
+      if (!profileBtn?.contains(e.target) && !profileMenu?.contains(e.target)) {
+        profileMenu?.classList.add('hidden')
+      }
+    })
+
+    // Universal Escape key listener for Modals and Drawers
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        if (this.menuOpen) this.closeMobileMenu()
+        notifMenu?.classList.add('hidden')
+        profileMenu?.classList.add('hidden')
+        const modalCloser = document.querySelector('#close-modal, #cancel-modal, #close-return-modal, #cancel-return, [data-modal-close]')
+        if (modalCloser && modalCloser.offsetParent !== null) {
+          modalCloser.click()
+        }
+      }
     })
 
     document.querySelectorAll('.sidebar .nav-item, .sidebar .nav-sub-item, #mobile-nav a, .bottom-tab').forEach(link => {

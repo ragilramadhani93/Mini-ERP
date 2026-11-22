@@ -6,6 +6,7 @@ export class DebtPage {
     this.suppliers = []
     this.purchases = []
     this.showModal = false
+    this.payingDebt = null
     this.activeTab = 'supplier'
     this.loading = false
     this.editingDebt = null
@@ -69,19 +70,28 @@ export class DebtPage {
               </thead>
               <tbody>
                 ${filtered.length === 0 ? `
-                  <tr><td colspan="8" class="text-center text-gray-500 py-8">Belum ada data</td></tr>
+                  <tr>
+                    <td colspan="8" class="text-center py-12 text-stone-400">
+                      <i data-lucide="receipt" class="w-8 h-8 mx-auto mb-2 text-stone-300"></i>
+                      <p class="text-sm font-medium text-stone-600">Belum ada catatan ${this.activeTab === 'supplier' ? 'hutang supplier' : 'piutang customer'}</p>
+                      <p class="text-xs text-stone-400 mt-0.5">Daftar jatuh tempo dan pembayaran akan ditampilkan di sini</p>
+                    </td>
+                  </tr>
                 ` : filtered.map(p => {
                   const remaining = p.amount - p.paid_amount
                   const isOverdue = new Date(p.due_date) < new Date() && p.status !== 'paid'
                   return `
                     <tr class="${isOverdue ? 'bg-danger-50/30' : ''}">
                       <td class="font-mono text-xs">${p.reference_type === 'purchase' ? `#${this.getPoNumber(p.reference_id)}` : 'Manual'}</td>
-                      <td class="font-medium">${this.getDueName(p)}</td>
-                      <td class="text-right font-semibold">Rp ${this.formatNumber(p.amount)}</td>
-                      <td class="text-right">Rp ${this.formatNumber(p.paid_amount)}</td>
-                      <td class="text-right font-semibold ${remaining > 0 ? 'text-danger-600' : 'text-success-600'}">Rp ${this.formatNumber(remaining)}</td>
+                      <td class="font-medium text-stone-900">${this.getDueName(p)}</td>
+                      <td class="text-right font-semibold tnum">Rp ${this.formatNumber(p.amount)}</td>
+                      <td class="text-right tnum">Rp ${this.formatNumber(p.paid_amount)}</td>
+                      <td class="text-right font-semibold tnum ${remaining > 0 ? 'text-rose-600' : 'text-emerald-600'}">Rp ${this.formatNumber(remaining)}</td>
                       <td class="text-sm whitespace-nowrap ${isOverdue ? 'text-danger-600 font-semibold' : ''}">
-                        ${this.formatDate(p.due_date)}${isOverdue ? ' ⚠️' : ''}
+                        <div class="flex items-center gap-1.5">
+                          <span>${this.formatDate(p.due_date)}</span>
+                          ${isOverdue ? '<span class="inline-flex items-center gap-0.5 text-xs text-danger-600 font-semibold"><i data-lucide="alert-circle" class="w-3.5 h-3.5"></i> Lewat</span>' : ''}
+                        </div>
                       </td>
                       <td><span class="badge ${p.status === 'paid' ? 'badge-success' : p.status === 'partial' ? 'badge-warning' : 'badge-danger'}">
                         ${p.status === 'paid' ? 'Lunas' : p.status === 'partial' ? 'Sebagian' : 'Pending'}
@@ -102,6 +112,40 @@ export class DebtPage {
         </div>
 
         ${this.showModal ? this.renderModal() : ''}
+        ${this.payingDebt ? this.renderPayModal() : ''}
+      </div>
+    `
+  }
+
+  renderPayModal() {
+    const debt = this.payingDebt
+    const remaining = debt.amount - debt.paid_amount
+    return `
+      <div class="modal-overlay" id="pay-modal-overlay">
+        <div class="modal-content p-6" style="max-width: 440px;">
+          <div class="flex items-center justify-between mb-4">
+            <h3 class="text-lg font-semibold text-gray-900">Pembayaran</h3>
+            <button id="close-pay-modal" class="text-gray-400 hover:text-gray-600"><i data-lucide="x" class="w-5 h-5"></i></button>
+          </div>
+          <form id="pay-form" class="space-y-4">
+            <div>
+              <p class="text-xs text-gray-500 mb-1">Pihak Terkait</p>
+              <p class="font-medium text-gray-800">${this.getDueName(debt)}</p>
+            </div>
+            <div>
+              <p class="text-xs text-gray-500 mb-1">Sisa Pembayaran</p>
+              <p class="font-semibold text-danger-600">Rp ${this.formatNumber(remaining)}</p>
+            </div>
+            <div>
+              <label for="pay-amount">Nominal Pembayaran (Rp)</label>
+              <input type="number" id="pay-amount" name="pay-amount" required min="1" max="${remaining}" value="${remaining}" class="w-full text-base font-semibold">
+            </div>
+            <div class="flex justify-end gap-3 pt-3 border-t border-gray-100">
+              <button type="button" id="cancel-pay-modal" class="btn-secondary">Batal</button>
+              <button type="submit" class="btn-success">Konfirmasi Bayar</button>
+            </div>
+          </form>
+        </div>
       </div>
     `
   }
@@ -217,25 +261,10 @@ export class DebtPage {
     })
 
     document.querySelectorAll('.pay-debt').forEach(btn => {
-      btn.addEventListener('click', async () => {
+      btn.addEventListener('click', () => {
         const debt = this.payables.find(p => p.id === btn.dataset.id)
         if (!debt) return
-        const remaining = debt.amount - debt.paid_amount
-        const amount = prompt(`Jumlah pembayaran (sisa: Rp ${this.formatNumber(remaining)}):`, remaining)
-        if (!amount || parseInt(amount) <= 0) return
-        const payAmount = parseInt(amount)
-        const newPaid = debt.paid_amount + payAmount
-        const newStatus = newPaid >= debt.amount ? 'paid' : 'partial'
-
-        await this.supabase.from('payables').update({ paid_amount: newPaid, status: newStatus }).eq('id', debt.id)
-        await this.supabase.from('cash_transactions').insert({
-          type: 'out',
-          category: 'purchase',
-          amount: payAmount,
-          description: `Pembayaran hutang: ${this.getDueName(debt)}`,
-          created_by: this.auth.user.id
-        })
-        await this.loadData()
+        this.payingDebt = debt
         this.renderAndBind()
       })
     })
@@ -244,9 +273,77 @@ export class DebtPage {
   }
 
   _bindModalEvents() {
-    document.getElementById('close-modal')?.addEventListener('click', () => { this.showModal = false; this.renderAndBind() })
-    document.getElementById('cancel-modal')?.addEventListener('click', () => { this.showModal = false; this.renderAndBind() })
-    document.getElementById('modal-overlay')?.addEventListener('click', (e) => { if (e.target === e.currentTarget) { this.showModal = false; this.renderAndBind() } })
+    const onModalKeydown = (e) => {
+      if (e.key === 'Escape') {
+        if (this.showModal || this.payingDebt) {
+          this.showModal = false
+          this.payingDebt = null
+          document.removeEventListener('keydown', onModalKeydown)
+          this.renderAndBind()
+        }
+      }
+    }
+    document.addEventListener('keydown', onModalKeydown)
+
+    document.getElementById('close-modal')?.addEventListener('click', () => {
+      document.removeEventListener('keydown', onModalKeydown)
+      this.showModal = false
+      this.renderAndBind()
+    })
+    document.getElementById('cancel-modal')?.addEventListener('click', () => {
+      document.removeEventListener('keydown', onModalKeydown)
+      this.showModal = false
+      this.renderAndBind()
+    })
+    document.getElementById('modal-overlay')?.addEventListener('click', (e) => {
+      if (e.target === e.currentTarget) {
+        document.removeEventListener('keydown', onModalKeydown)
+        this.showModal = false
+        this.renderAndBind()
+      }
+    })
+
+    document.getElementById('close-pay-modal')?.addEventListener('click', () => {
+      document.removeEventListener('keydown', onModalKeydown)
+      this.payingDebt = null
+      this.renderAndBind()
+    })
+    document.getElementById('cancel-pay-modal')?.addEventListener('click', () => {
+      document.removeEventListener('keydown', onModalKeydown)
+      this.payingDebt = null
+      this.renderAndBind()
+    })
+    document.getElementById('pay-modal-overlay')?.addEventListener('click', (e) => {
+      if (e.target === e.currentTarget) {
+        document.removeEventListener('keydown', onModalKeydown)
+        this.payingDebt = null
+        this.renderAndBind()
+      }
+    })
+
+    const payForm = document.getElementById('pay-form')
+    payForm?.addEventListener('submit', async (e) => {
+      e.preventDefault()
+      const debt = this.payingDebt
+      if (!debt) return
+      const payAmount = parseInt(document.getElementById('pay-amount')?.value) || 0
+      if (payAmount <= 0) return
+
+      const newPaid = debt.paid_amount + payAmount
+      const newStatus = newPaid >= debt.amount ? 'paid' : 'partial'
+
+      await this.supabase.from('payables').update({ paid_amount: newPaid, status: newStatus }).eq('id', debt.id)
+      await this.supabase.from('cash_transactions').insert({
+        type: 'out',
+        category: 'purchase',
+        amount: payAmount,
+        description: `Pembayaran hutang: ${this.getDueName(debt)}`,
+        created_by: this.auth.user.id
+      })
+      this.payingDebt = null
+      await this.loadData()
+      this.renderAndBind()
+    })
 
     const form = document.getElementById('debt-form')
     form?.addEventListener('submit', async (e) => {

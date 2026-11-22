@@ -16,6 +16,7 @@ export class SettingsRolePage {
       { path: '/stock/opname', label: 'Opname', section: 'Inventori' },
       { path: '/barcode', label: 'Scanner', section: 'Inventori' },
       { path: '/sales', label: 'Penjualan', section: 'Transaksi' },
+      { path: '/returns', label: 'Retur', section: 'Transaksi' },
       { path: '/shopee', label: 'Import Marketplace', section: 'Transaksi' },
       { path: '/purchase-orders', label: 'PO', section: 'Transaksi' },
       { path: '/suppliers', label: 'Supplier', section: 'Transaksi' },
@@ -26,6 +27,7 @@ export class SettingsRolePage {
       { path: '/import-export', label: 'Laporan', section: 'Lainnya' },
       { path: '/finance', label: 'Keuangan', section: 'Lainnya' },
       { path: '/debts', label: 'Hutang', section: 'Lainnya' },
+      { path: '/deposits', label: 'Deposit', section: 'Lainnya' },
       { path: '/assets', label: 'Aset', section: 'Lainnya' },
       { path: '/settings', label: 'Pengaturan', section: 'Lainnya' }
     ]

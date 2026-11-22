@@ -2,6 +2,7 @@
   "name": "online-seller-erp",
   "version": "1.0.0",
   "private": true,
+  "type": "module",
   "workspaces": [
     "apps/*",
     "packages/*"
@@ -10,6 +11,7 @@
     "dev": "npm run --prefix apps/web dev",
     "build": "turbo run build",
     "lint": "turbo run lint",
+    "test": "node --test tests/erp-math.test.js",
     "format": "prettier --write \"**/*.{js,json,html,css}\"",
     "db:migrate": "cd supabase && npx supabase migration up",
     "db:seed": "cd supabase && npx supabase db seed",

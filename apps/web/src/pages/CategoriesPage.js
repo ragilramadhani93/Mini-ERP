@@ -33,7 +33,13 @@ export class CategoriesPage {
               </thead>
               <tbody>
                 ${this.categories.length === 0 ? `
-                  <tr><td colspan="3" class="text-center text-gray-500 py-8">Belum ada kategori</td></tr>
+                  <tr>
+                    <td colspan="3" class="text-center py-12 text-stone-400">
+                      <i data-lucide="tags" class="w-8 h-8 mx-auto mb-2 text-stone-300"></i>
+                      <p class="text-sm font-medium text-stone-600">Belum ada kategori produk</p>
+                      <p class="text-xs text-stone-400 mt-0.5">Tambahkan kategori untuk memudahkan pengelompokan barang</p>
+                    </td>
+                  </tr>
                 ` : this.categories.map(c => `
                   <tr>
                     <td>

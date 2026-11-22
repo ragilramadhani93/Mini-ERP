@@ -226,11 +226,31 @@ export class BarcodePage {
 
   async stopScanner() {
     if (this.scanner) {
-      await this.scanner.stop()
-      this.scanner.clear()
+      try {
+        await this.scanner.stop()
+      } catch (e) {
+        // scanner may already be stopped
+      }
+      try {
+        this.scanner.clear()
+      } catch (e) {}
+      this.scanner = null
     }
     this.isScanning = false
     this.renderAndBind()
+  }
+
+  async destroy() {
+    if (this.scanner) {
+      try {
+        await this.scanner.stop()
+      } catch (e) {}
+      try {
+        this.scanner.clear()
+      } catch (e) {}
+      this.scanner = null
+    }
+    this.isScanning = false
   }
 
   async bindEvents() {
@@ -297,8 +317,16 @@ export class BarcodePage {
 
     document.getElementById('action-sale')?.addEventListener('click', () => {
       const qty = parseInt(document.getElementById('scan-qty')?.value) || 1
-      this.router.navigate(`/sales`)
-      setTimeout(() => alert(`Tambahkan "${this.scannedProduct.name}" (qty: ${qty}) ke halaman penjualan`), 300)
+      try {
+        sessionStorage.setItem('pending_sale_item', JSON.stringify({
+          product_id: this.scannedProduct.id,
+          name: this.scannedProduct.name,
+          quantity: qty,
+          sell_price: this.scannedProduct.sell_price,
+          cost_price: this.scannedProduct.cost_price
+        }))
+      } catch (e) {}
+      this.router.navigate('/sales')
     })
 
     document.getElementById('search-prod')?.addEventListener('search', () => {
